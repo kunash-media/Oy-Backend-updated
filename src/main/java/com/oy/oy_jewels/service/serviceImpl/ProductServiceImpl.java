@@ -69,4 +69,7 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductEntity> getProductsByStock(String stock) {
         return productRepository.findByStock(stock);
     }
+
+
+
 }

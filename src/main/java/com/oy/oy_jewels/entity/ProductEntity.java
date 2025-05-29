@@ -110,5 +110,6 @@ public class ProductEntity {
     public void setOrders(List<OrderEntity> orders) { this.orders = orders; }
 
 
+
 }
 

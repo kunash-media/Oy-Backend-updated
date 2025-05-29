@@ -26,4 +26,6 @@ public interface ProductService {
 
     // Get products by stock status
     List<ProductEntity> getProductsByStock(String stock);
+
+
 }

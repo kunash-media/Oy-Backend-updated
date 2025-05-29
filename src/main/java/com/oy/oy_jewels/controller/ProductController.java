@@ -64,4 +64,7 @@ public class ProductController {
         List<ProductEntity> products = productService.getProductsByStock(stock);
         return new ResponseEntity<>(products, HttpStatus.OK);
     }
+
+
+
 }
