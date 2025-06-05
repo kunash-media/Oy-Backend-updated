@@ -1,13 +1,20 @@
 package com.oy.oy_jewels.dto.request;
 
-import java.time.LocalDate;
 
 public class StaffCreateRequest {
+
     private String staffName;
+
     private String emailAddress;
+
     private String password;
+
     private String contactNumber;
-    private String joiningDate; // Keep as String for form data
+
+
+    private String joiningDate;
+
+
     private String staffRole;
 
     // Default constructor
@@ -72,5 +79,17 @@ public class StaffCreateRequest {
     public void setStaffRole(String staffRole) {
         this.staffRole = staffRole;
     }
+
+    @Override
+    public String toString() {
+        return "StaffCreateRequest{" +
+                "staffName='" + staffName + '\'' +
+                ", emailAddress='" + emailAddress + '\'' +
+                ", contactNumber='" + contactNumber + '\'' +
+                ", joiningDate='" + joiningDate + '\'' +
+                ", staffRole='" + staffRole + '\'' +
+                '}';
+    }
 }
+
 
