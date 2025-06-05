@@ -1,6 +1,7 @@
 package com.oy.oy_jewels.controller;
 
 import com.oy.oy_jewels.dto.request.StaffCreateRequest;
+import com.oy.oy_jewels.dto.request.StaffUpdateRequest;
 import com.oy.oy_jewels.dto.response.ApiResponse;
 import com.oy.oy_jewels.dto.response.StaffResponse;
 import com.oy.oy_jewels.entity.OurStaffEntity;
@@ -57,7 +58,7 @@ public class OurStaffController {
                     .map(this::convertToResponse)
                     .collect(Collectors.toList());
 
-            return new ResponseEntity<>(ApiResponse.success(responseList), HttpStatus.OK);
+            return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", responseList), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(ApiResponse.error("Error retrieving staff: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -69,7 +70,7 @@ public class OurStaffController {
             Optional<OurStaffEntity> staff = staffService.getStaffById(id);
             if (staff.isPresent()) {
                 StaffResponse response = convertToResponse(staff.get());
-                return new ResponseEntity<>(ApiResponse.success(response), HttpStatus.OK);
+                return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", response), HttpStatus.OK);
             }
             return new ResponseEntity<>(ApiResponse.error("Staff not found"), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -83,7 +84,7 @@ public class OurStaffController {
             Optional<OurStaffEntity> staff = staffService.getStaffByEmail(emailAddress);
             if (staff.isPresent()) {
                 StaffResponse response = convertToResponse(staff.get());
-                return new ResponseEntity<>(ApiResponse.success(response), HttpStatus.OK);
+                return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", response), HttpStatus.OK);
             }
             return new ResponseEntity<>(ApiResponse.error("Staff not found"), HttpStatus.NOT_FOUND);
         } catch (Exception e) {
@@ -99,7 +100,7 @@ public class OurStaffController {
                     .map(this::convertToResponse)
                     .collect(Collectors.toList());
 
-            return new ResponseEntity<>(ApiResponse.success(responseList), HttpStatus.OK);
+            return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", responseList), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(ApiResponse.error("Error retrieving staff by role: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -113,7 +114,7 @@ public class OurStaffController {
                     .map(this::convertToResponse)
                     .collect(Collectors.toList());
 
-            return new ResponseEntity<>(ApiResponse.success(responseList), HttpStatus.OK);
+            return new ResponseEntity<>(ApiResponse.success("Staff search completed successfully", responseList), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(ApiResponse.error("Error searching staff: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -165,7 +166,7 @@ public class OurStaffController {
     public ResponseEntity<ApiResponse<Boolean>> checkEmailExists(@PathVariable String emailAddress) {
         try {
             boolean exists = staffService.emailExists(emailAddress);
-            return new ResponseEntity<>(ApiResponse.success(exists), HttpStatus.OK);
+            return new ResponseEntity<>(ApiResponse.success("Email check completed", exists), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(ApiResponse.error("Error checking email: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -179,7 +180,7 @@ public class OurStaffController {
                     .map(this::convertToResponse)
                     .collect(Collectors.toList());
 
-            return new ResponseEntity<>(ApiResponse.success(responseList), HttpStatus.OK);
+            return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", responseList), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(ApiResponse.error("Error retrieving ordered staff: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
@@ -193,7 +194,7 @@ public class OurStaffController {
                     .map(this::convertToResponse)
                     .collect(Collectors.toList());
 
-            return new ResponseEntity<>(ApiResponse.success(responseList), HttpStatus.OK);
+            return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", responseList), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(ApiResponse.error("Error retrieving ordered staff by role: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
