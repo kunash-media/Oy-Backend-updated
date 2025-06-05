@@ -1,26 +1,21 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.CancellationEntity;
+import com.oy.oy_jewels.dto.request.CancellationRequestDTO;
+import com.oy.oy_jewels.dto.response.CancellationResponseDTO;
 
 import java.util.List;
 
 public interface CancellationService {
 
-    // Create new cancellation policy
-    CancellationEntity createCancellationPolicy(CancellationEntity cancellationEntity);
+    CancellationResponseDTO createCancellationPolicy(CancellationRequestDTO cancellationRequestDTO);
 
-    // Get all cancellation policies
-    List<CancellationEntity> getAllCancellationPolicies();
+    List<CancellationResponseDTO> getAllCancellationPolicies();
 
-    // Get cancellation policy by ID
-    CancellationEntity getCancellationPolicyById(Long id);
+    CancellationResponseDTO getCancellationPolicyById(Long id);
 
-    // Update cancellation policy
-    CancellationEntity updateCancellationPolicy(Long id, CancellationEntity cancellationEntity);
+    CancellationResponseDTO updateCancellationPolicy(Long id, CancellationRequestDTO cancellationRequestDTO);
 
-    // Delete cancellation policy
     void deleteCancellationPolicy(Long id);
 
-    // Search by title
-    List<CancellationEntity> searchByTitle(String title);
+    List<CancellationResponseDTO> searchByTitle(String title);
 }

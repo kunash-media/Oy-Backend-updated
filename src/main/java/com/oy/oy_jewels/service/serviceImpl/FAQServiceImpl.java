@@ -1,6 +1,10 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+
+import com.oy.oy_jewels.dto.request.FAQRequestDTO;
+import com.oy.oy_jewels.dto.response.FAQResponseDTO;
 import com.oy.oy_jewels.entity.FAQEntity;
+import com.oy.oy_jewels.mapper.FAQMapper;
 import com.oy.oy_jewels.repository.FAQRepository;
 import com.oy.oy_jewels.service.FAQService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,78 +18,41 @@ public class FAQServiceImpl implements FAQService {
     @Autowired
     private FAQRepository faqRepository;
 
+    @Autowired
+    private FAQMapper faqMapper;
+
     @Override
-    public FAQEntity createFAQ(FAQEntity faqEntity) {
-        return faqRepository.save(faqEntity);
+    public FAQResponseDTO createFAQ(FAQRequestDTO requestDTO) {
+        FAQEntity entity = faqMapper.requestDtoToEntity(requestDTO);
+        FAQEntity savedEntity = faqRepository.save(entity);
+        return faqMapper.entityToResponseDto(savedEntity);
     }
 
     @Override
-    public FAQEntity getFAQById(Long id) {
-        return faqRepository.findById(id).orElse(null);
+    public FAQResponseDTO getFAQById(Long id) {
+        FAQEntity entity = faqRepository.findById(id).orElse(null);
+        return faqMapper.entityToResponseDto(entity);
     }
 
     @Override
-    public List<FAQEntity> getAllFAQs() {
-        return faqRepository.findAll();
+    public List<FAQResponseDTO> getAllFAQs() {
+        List<FAQEntity> entities = faqRepository.findAll();
+        return faqMapper.entityListToResponseDtoList(entities);
     }
 
     @Override
-    public FAQEntity updateFAQ(Long id, FAQEntity faqEntity) {
-        FAQEntity existingFAQ = faqRepository.findById(id).orElse(null);
+    public FAQResponseDTO updateFAQ(Long id, FAQRequestDTO requestDTO) {
+        FAQEntity existingEntity = faqRepository.findById(id).orElse(null);
 
-        if (existingFAQ == null) {
+        if (existingEntity == null) {
             return null;
         }
 
-        if (faqEntity.getFaq1Title() != null) {
-            existingFAQ.setFaq1Title(faqEntity.getFaq1Title());
-        }
+        // Use the mapper's update method which maintains the existing null-check logic
+        faqMapper.updateEntityFromRequestDto(existingEntity, requestDTO);
 
-        if (faqEntity.getFaq1Description() != null) {
-            existingFAQ.setFaq1Description(faqEntity.getFaq1Description());
-        }
-
-        if (faqEntity.getFaq2Title() != null) {
-            existingFAQ.setFaq2Title(faqEntity.getFaq2Title());
-        }
-
-        if (faqEntity.getFaq2Description() != null) {
-            existingFAQ.setFaq2Description(faqEntity.getFaq2Description());
-        }
-
-        if (faqEntity.getFaq3Title() != null) {
-            existingFAQ.setFaq3Title(faqEntity.getFaq3Title());
-        }
-
-        if (faqEntity.getFaq3Description() != null) {
-            existingFAQ.setFaq3Description(faqEntity.getFaq3Description());
-        }
-
-        if (faqEntity.getFaq4Title() != null) {
-            existingFAQ.setFaq4Title(faqEntity.getFaq4Title());
-        }
-
-        if (faqEntity.getFaq4Description() != null) {
-            existingFAQ.setFaq4Description(faqEntity.getFaq4Description());
-        }
-
-        if (faqEntity.getFaq5Title() != null) {
-            existingFAQ.setFaq5Title(faqEntity.getFaq5Title());
-        }
-
-        if (faqEntity.getFaq5Description() != null) {
-            existingFAQ.setFaq5Description(faqEntity.getFaq5Description());
-        }
-
-        if (faqEntity.getFaq6Title() != null) {
-            existingFAQ.setFaq6Title(faqEntity.getFaq6Title());
-        }
-
-        if (faqEntity.getFaq6Description() != null) {
-            existingFAQ.setFaq6Description(faqEntity.getFaq6Description());
-        }
-
-        return faqRepository.save(existingFAQ);
+        FAQEntity updatedEntity = faqRepository.save(existingEntity);
+        return faqMapper.entityToResponseDto(updatedEntity);
     }
 
     @Override

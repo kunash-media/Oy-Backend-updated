@@ -1,7 +1,5 @@
 package com.oy.oy_jewels.entity;
 
-
-
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
@@ -14,12 +12,6 @@ public class OrderEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long orderId;
-
-    @Column(name = "customer_name")
-    private String customerName;
-
-    @Column(name = "product_name")
-    private String productName;
 
     @Column(name = "quantity")
     private Integer quantity;
@@ -44,22 +36,20 @@ public class OrderEntity {
 
     // Many orders belong to one user
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id")
+    @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
-    // Many orders can have one product (foreign key relationship)
+    // Many orders can have one product
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "product_id")
+    @JoinColumn(name = "product_id", nullable = false)
     private ProductEntity product;
 
     // Constructors
     public OrderEntity() {}
 
-    public OrderEntity(String customerName, String productName, Integer quantity, BigDecimal productPrice,
-                       BigDecimal totalAmount, String paymentMode, String orderStatus,
-                       LocalDate deliveryDate, LocalDate orderDate) {
-        this.customerName = customerName;
-        this.productName = productName;
+    public OrderEntity(Integer quantity, BigDecimal productPrice, BigDecimal totalAmount,
+                       String paymentMode, String orderStatus, LocalDate deliveryDate,
+                       LocalDate orderDate, UserEntity user, ProductEntity product) {
         this.quantity = quantity;
         this.productPrice = productPrice;
         this.totalAmount = totalAmount;
@@ -67,17 +57,13 @@ public class OrderEntity {
         this.orderStatus = orderStatus;
         this.deliveryDate = deliveryDate;
         this.orderDate = orderDate;
+        this.user = user;
+        this.product = product;
     }
 
     // Getters and Setters
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
-
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
-
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
 
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
@@ -100,21 +86,11 @@ public class OrderEntity {
     public LocalDate getOrderDate() { return orderDate; }
     public void setOrderDate(LocalDate orderDate) { this.orderDate = orderDate; }
 
-    public UserEntity getUser() {
-        return user;
-    }
+    public UserEntity getUser() { return user; }
+    public void setUser(UserEntity user) { this.user = user; }
 
-    public void setUser(UserEntity user) {
-        this.user = user;
-    }
-
-    public ProductEntity getProduct() {
-        return product;
-    }
-
-    public void setProduct(ProductEntity product) {
-        this.product = product;
-    }
+    public ProductEntity getProduct() { return product; }
+    public void setProduct(ProductEntity product) { this.product = product; }
 }
 
 

@@ -3,7 +3,9 @@ package com.oy.oy_jewels.entity;
 import jakarta.persistence.*;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+
 
 @Entity
 @Table(name = "products")
@@ -12,6 +14,9 @@ public class ProductEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long productId;
+
+    @Column(name = "product_image", columnDefinition = "LONGBLOB")
+    private byte[] productImage;
 
     @Column(name = "product_name")
     private String productName;
@@ -48,7 +53,7 @@ public class ProductEntity {
 
     // One product can be in many orders
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderEntity> orders;
+    private List<OrderEntity> orders = new ArrayList<>();
 
     // Constructors
     public ProductEntity() {}
@@ -68,48 +73,117 @@ public class ProductEntity {
         this.shopBy = shopBy;
         this.totalPrice = totalPrice;
     }
-
     // Getters and Setters
-    public Long getProductId() { return productId; }
-    public void setProductId(Long productId) { this.productId = productId; }
+    public Long getProductId() {
+        return productId;
+    }
 
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
+    public void setProductId(Long productId) {
+        this.productId = productId;
+    }
 
-    public String getCategory() { return category; }
-    public void setCategory(String category) { this.category = category; }
+    public byte[] getProductImage() {
+        return productImage;
+    }
 
-    public String getCouponCode() { return couponCode; }
-    public void setCouponCode(String couponCode) { this.couponCode = couponCode; }
+    public void setProductImage(byte[] productImage) {
+        this.productImage = productImage;
+    }
 
-    public Integer getQuantity() { return quantity; }
-    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public String getProductName() {
+        return productName;
+    }
 
-    public String getOffer() { return offer; }
-    public void setOffer(String offer) { this.offer = offer; }
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
 
-    public BigDecimal getGst() { return gst; }
-    public void setGst(BigDecimal gst) { this.gst = gst; }
+    public String getCategory() {
+        return category;
+    }
 
-    public BigDecimal getDiscount() { return discount; }
-    public void setDiscount(BigDecimal discount) { this.discount = discount; }
+    public void setCategory(String category) {
+        this.category = category;
+    }
 
-    public BigDecimal getProductPrice() { return productPrice; }
-    public void setProductPrice(BigDecimal productPrice) { this.productPrice = productPrice; }
+    public String getCouponCode() {
+        return couponCode;
+    }
 
-    public String getStock() { return stock; }
-    public void setStock(String stock) { this.stock = stock; }
+    public void setCouponCode(String couponCode) {
+        this.couponCode = couponCode;
+    }
 
-    public String getShopBy() { return shopBy; }
-    public void setShopBy(String shopBy) { this.shopBy = shopBy; }
+    public Integer getQuantity() {
+        return quantity;
+    }
 
-    public BigDecimal getTotalPrice() { return totalPrice; }
-    public void setTotalPrice(BigDecimal totalPrice) { this.totalPrice = totalPrice; }
+    public void setQuantity(Integer quantity) {
+        this.quantity = quantity;
+    }
 
-    public List<OrderEntity> getOrders() { return orders; }
-    public void setOrders(List<OrderEntity> orders) { this.orders = orders; }
+    public String getOffer() {
+        return offer;
+    }
 
+    public void setOffer(String offer) {
+        this.offer = offer;
+    }
 
+    public BigDecimal getGst() {
+        return gst;
+    }
+
+    public void setGst(BigDecimal gst) {
+        this.gst = gst;
+    }
+
+    public BigDecimal getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(BigDecimal discount) {
+        this.discount = discount;
+    }
+
+    public BigDecimal getProductPrice() {
+        return productPrice;
+    }
+
+    public void setProductPrice(BigDecimal productPrice) {
+        this.productPrice = productPrice;
+    }
+
+    public String getStock() {
+        return stock;
+    }
+
+    public void setStock(String stock) {
+        this.stock = stock;
+    }
+
+    public String getShopBy() {
+        return shopBy;
+    }
+
+    public void setShopBy(String shopBy) {
+        this.shopBy = shopBy;
+    }
+
+    public BigDecimal getTotalPrice() {
+        return totalPrice;
+    }
+
+    public void setTotalPrice(BigDecimal totalPrice) {
+        this.totalPrice = totalPrice;
+    }
+
+    public List<OrderEntity> getOrders() {
+        return orders;
+    }
+
+    public void setOrders(List<OrderEntity> orders) {
+        this.orders = orders;
+    }
 
 }
-

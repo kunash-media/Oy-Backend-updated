@@ -3,6 +3,7 @@ package com.oy.oy_jewels.entity;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -36,7 +37,7 @@ public class UserEntity {
 
     // One user can have many orders
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderEntity> orders;
+    private List<OrderEntity> orders = new ArrayList<>();
 
     // Constructors
     public UserEntity() {}
@@ -79,8 +80,4 @@ public class UserEntity {
 
     public List<OrderEntity> getOrders() { return orders; }
     public void setOrders(List<OrderEntity> orders) { this.orders = orders; }
-
-
 }
-
-

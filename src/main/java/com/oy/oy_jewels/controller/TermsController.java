@@ -1,6 +1,8 @@
 package com.oy.oy_jewels.controller;
 
-import com.oy.oy_jewels.entity.TermsEntity;
+
+import com.oy.oy_jewels.dto.request.TermsRequestDTO;
+import com.oy.oy_jewels.dto.response.TermsResponseDTO;
 import com.oy.oy_jewels.service.TermsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,22 +19,22 @@ public class TermsController {
 
     // Create new terms policy
     @PostMapping("/create-terms")
-    public ResponseEntity<TermsEntity> createTermsPolicy(@RequestBody TermsEntity termsEntity) {
-        TermsEntity createdPolicy = termsService.createTermsPolicy(termsEntity);
+    public ResponseEntity<TermsResponseDTO> createTermsPolicy(@RequestBody TermsRequestDTO termsRequestDTO) {
+        TermsResponseDTO createdPolicy = termsService.createTermsPolicy(termsRequestDTO);
         return ResponseEntity.ok(createdPolicy);
     }
 
     // Get all terms policies
     @GetMapping("/get-allterms")
-    public ResponseEntity<List<TermsEntity>> getAllTermsPolicies() {
-        List<TermsEntity> policies = termsService.getAllTermsPolicies();
+    public ResponseEntity<List<TermsResponseDTO>> getAllTermsPolicies() {
+        List<TermsResponseDTO> policies = termsService.getAllTermsPolicies();
         return ResponseEntity.ok(policies);
     }
 
     // Get terms policy by ID
     @GetMapping("/{id}")
-    public ResponseEntity<TermsEntity> getTermsPolicyById(@PathVariable Long id) {
-        TermsEntity policy = termsService.getTermsPolicyById(id);
+    public ResponseEntity<TermsResponseDTO> getTermsPolicyById(@PathVariable Long id) {
+        TermsResponseDTO policy = termsService.getTermsPolicyById(id);
         if (policy != null) {
             return ResponseEntity.ok(policy);
         }
@@ -41,8 +43,8 @@ public class TermsController {
 
     // Update terms policy
     @PutMapping("/{id}")
-    public ResponseEntity<TermsEntity> updateTermsPolicy(@PathVariable Long id, @RequestBody TermsEntity termsEntity) {
-        TermsEntity updatedPolicy = termsService.updateTermsPolicy(id, termsEntity);
+    public ResponseEntity<TermsResponseDTO> updateTermsPolicy(@PathVariable Long id, @RequestBody TermsRequestDTO termsRequestDTO) {
+        TermsResponseDTO updatedPolicy = termsService.updateTermsPolicy(id, termsRequestDTO);
         if (updatedPolicy != null) {
             return ResponseEntity.ok(updatedPolicy);
         }
@@ -58,8 +60,8 @@ public class TermsController {
 
     // Search terms policies by title
     @GetMapping("/search")
-    public ResponseEntity<List<TermsEntity>> searchByTitle(@RequestParam String title) {
-        List<TermsEntity> policies = termsService.searchByTitle(title);
+    public ResponseEntity<List<TermsResponseDTO>> searchByTitle(@RequestParam String title) {
+        List<TermsResponseDTO> policies = termsService.searchByTitle(title);
         return ResponseEntity.ok(policies);
     }
 }

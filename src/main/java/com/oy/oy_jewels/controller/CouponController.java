@@ -18,6 +18,8 @@ import java.util.Map;
 public class CouponController {
 
     @Autowired
+
+
     private CouponService couponService;
 
     // COMPLETE CORRECTED CONTROLLER - Replace your existing controller method with this

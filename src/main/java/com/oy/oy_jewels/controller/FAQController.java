@@ -17,7 +17,7 @@ public class FAQController {
 
     @PostMapping("/create")
     public ResponseEntity<FAQEntity> createFAQ(@RequestBody FAQEntity faqEntity) {
-        FAQEntity createdFAQ = faqService.createFAQ(faqEntity);
+        FAQEntity createdFAQ = faqService.createFAQ(FAQEntity);
         return ResponseEntity.ok(createdFAQ);
     }
 

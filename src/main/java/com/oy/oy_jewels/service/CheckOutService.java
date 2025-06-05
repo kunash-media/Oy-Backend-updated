@@ -1,28 +1,28 @@
 package com.oy.oy_jewels.service;
 
-
-import com.oy.oy_jewels.entity.CheckOutEntity;
+import com.oy.oy_jewels.dto.request.CheckOutRequestDTO;
+import com.oy.oy_jewels.dto.response.CheckOutResponseDTO;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface CheckOutService {
 
-    CheckOutEntity createCheckOut(CheckOutEntity checkOut);
+    CheckOutResponseDTO createCheckOut(CheckOutRequestDTO checkOutRequestDTO);
 
-    List<CheckOutEntity> getAllCheckOuts();
+    List<CheckOutResponseDTO> getAllCheckOuts();
 
-    Optional<CheckOutEntity> getCheckOutById(Long id);
+    Optional<CheckOutResponseDTO> getCheckOutById(Long id);
 
-    CheckOutEntity updateCheckOut(Long id, CheckOutEntity checkOut);
+    CheckOutResponseDTO updateCheckOut(Long id, CheckOutRequestDTO checkOutRequestDTO);
 
     void deleteCheckOut(Long id);
 
-    List<CheckOutEntity> getCheckOutsByEmail(String email);
+    List<CheckOutResponseDTO> getCheckOutsByEmail(String email);
 
-    List<CheckOutEntity> getCheckOutsByPhoneNumber(String phoneNumber);
+    List<CheckOutResponseDTO> getCheckOutsByPhoneNumber(String phoneNumber);
 
-    List<CheckOutEntity> getCheckOutsByCity(String city);
+    List<CheckOutResponseDTO> getCheckOutsByCity(String city);
 
-    List<CheckOutEntity> getCheckOutsByCountry(String country);
+    List<CheckOutResponseDTO> getCheckOutsByCountry(String country);
 }

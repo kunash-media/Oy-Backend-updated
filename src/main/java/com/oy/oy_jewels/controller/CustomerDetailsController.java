@@ -1,10 +1,14 @@
 package com.oy.oy_jewels.controller;
 
+import com.oy.oy_jewels.dto.request.CustomerRequestDTO;
+import com.oy.oy_jewels.dto.response.CustomerResponseDTO;
 import com.oy.oy_jewels.entity.CustomerDetailsEntity;
+import com.oy.oy_jewels.mapper.CustomerMapper;
 import com.oy.oy_jewels.service.CustomerDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.List;
 
 @RestController
@@ -14,33 +18,42 @@ public class CustomerDetailsController {
     @Autowired
     private CustomerDetailsService customerDetailsService;
 
+    @Autowired
+    private CustomerMapper customerMapper;
+
     @PostMapping("/create-customer")
-    public ResponseEntity<CustomerDetailsEntity> createCustomer(@RequestBody CustomerDetailsEntity customer) {
+    public ResponseEntity<CustomerResponseDTO> createCustomer(@RequestBody CustomerRequestDTO customerRequest) {
+        CustomerDetailsEntity customer = customerMapper.toEntity(customerRequest);
         CustomerDetailsEntity savedCustomer = customerDetailsService.saveCustomer(customer);
-        return ResponseEntity.ok(savedCustomer);
+        CustomerResponseDTO responseDTO = customerMapper.toResponseDTO(savedCustomer);
+        return ResponseEntity.ok(responseDTO);
     }
 
     @GetMapping("/get-All-Customers")
-    public ResponseEntity<List<CustomerDetailsEntity>> getAllCustomers() {
+    public ResponseEntity<List<CustomerResponseDTO>> getAllCustomers() {
         List<CustomerDetailsEntity> customers = customerDetailsService.getAllCustomers();
-        return ResponseEntity.ok(customers);
+        List<CustomerResponseDTO> responseDTOs = customerMapper.toResponseDTOList(customers);
+        return ResponseEntity.ok(responseDTOs);
     }
 
     @GetMapping("/{userId}")
-    public ResponseEntity<CustomerDetailsEntity> getCustomerById(@PathVariable Long userId) {
+    public ResponseEntity<CustomerResponseDTO> getCustomerById(@PathVariable Long userId) {
         CustomerDetailsEntity customer = customerDetailsService.getCustomerById(userId);
         if (customer != null) {
-            return ResponseEntity.ok(customer);
+            CustomerResponseDTO responseDTO = customerMapper.toResponseDTO(customer);
+            return ResponseEntity.ok(responseDTO);
         }
         return ResponseEntity.notFound().build();
     }
 
     @PutMapping("/{userId}")
-    public ResponseEntity<CustomerDetailsEntity> updateCustomer(@PathVariable Long userId,
-                                                                @RequestBody CustomerDetailsEntity customer) {
+    public ResponseEntity<CustomerResponseDTO> updateCustomer(@PathVariable Long userId,
+                                                               @RequestBody CustomerRequestDTO customerRequest) {
+        CustomerDetailsEntity customer = customerMapper.toEntity(customerRequest);
         CustomerDetailsEntity updatedCustomer = customerDetailsService.updateCustomer(userId, customer);
         if (updatedCustomer != null) {
-            return ResponseEntity.ok(updatedCustomer);
+            CustomerResponseDTO responseDTO = customerMapper.toResponseDTO(updatedCustomer);
+            return ResponseEntity.ok(responseDTO);
         }
         return ResponseEntity.notFound().build();
     }
@@ -52,29 +65,33 @@ public class CustomerDetailsController {
     }
 
     @GetMapping("/status/{status}")
-    public ResponseEntity<List<CustomerDetailsEntity>> getCustomersByStatus(@PathVariable String status) {
+    public ResponseEntity<List<CustomerResponseDTO>> getCustomersByStatus(@PathVariable String status) {
         List<CustomerDetailsEntity> customers = customerDetailsService.getCustomersByStatus(status);
-        return ResponseEntity.ok(customers);
+        List<CustomerResponseDTO> responseDTOs = customerMapper.toResponseDTOList(customers);
+        return ResponseEntity.ok(responseDTOs);
     }
 
     @GetMapping("/email/{email}")
-    public ResponseEntity<CustomerDetailsEntity> getCustomerByEmail(@PathVariable String email) {
+    public ResponseEntity<CustomerResponseDTO> getCustomerByEmail(@PathVariable String email) {
         CustomerDetailsEntity customer = customerDetailsService.getCustomerByEmail(email);
         if (customer != null) {
-            return ResponseEntity.ok(customer);
+            CustomerResponseDTO responseDTO = customerMapper.toResponseDTO(customer);
+            return ResponseEntity.ok(responseDTO);
         }
         return ResponseEntity.notFound().build();
     }
 
     @GetMapping("/marital-status/{maritalStatus}")
-    public ResponseEntity<List<CustomerDetailsEntity>> getCustomersByMaritalStatus(@PathVariable String maritalStatus) {
+    public ResponseEntity<List<CustomerResponseDTO>> getCustomersByMaritalStatus(@PathVariable String maritalStatus) {
         List<CustomerDetailsEntity> customers = customerDetailsService.getCustomersByMaritalStatus(maritalStatus);
-        return ResponseEntity.ok(customers);
+        List<CustomerResponseDTO> responseDTOs = customerMapper.toResponseDTOList(customers);
+        return ResponseEntity.ok(responseDTOs);
     }
 
     @GetMapping("/search/{customerName}")
-    public ResponseEntity<List<CustomerDetailsEntity>> searchCustomersByName(@PathVariable String customerName) {
+    public ResponseEntity<List<CustomerResponseDTO>> searchCustomersByName(@PathVariable String customerName) {
         List<CustomerDetailsEntity> customers = customerDetailsService.searchCustomersByName(customerName);
-        return ResponseEntity.ok(customers);
+        List<CustomerResponseDTO> responseDTOs = customerMapper.toResponseDTOList(customers);
+        return ResponseEntity.ok(responseDTOs);
     }
 }

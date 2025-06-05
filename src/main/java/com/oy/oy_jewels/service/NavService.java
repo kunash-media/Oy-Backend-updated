@@ -1,19 +1,20 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.NavEntity;
+import com.oy.oy_jewels.dto.request.NavbarRequestDto;
+import com.oy.oy_jewels.dto.response.NavbarResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface NavService {
 
-    NavEntity createNavbar(MultipartFile logo, String headerText, String sectionsJson);
+    NavbarResponseDto createNavbar(MultipartFile logo, NavbarRequestDto requestDto);
 
-    NavEntity updateNavbar(Long id, MultipartFile logo, String headerText, String sectionsJson);
+    NavbarResponseDto updateNavbar(Long id, MultipartFile logo, NavbarRequestDto requestDto);
 
-    NavEntity getNavbarById(Long id);
+    NavbarResponseDto getNavbarById(Long id);
 
-    List<NavEntity> getAllNavbars();
+    List<NavbarResponseDto> getAllNavbars();
 
     void deleteNavbar(Long id);
 

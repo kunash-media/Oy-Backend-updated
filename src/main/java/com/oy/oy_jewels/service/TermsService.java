@@ -1,26 +1,28 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.TermsEntity;
+
+import com.oy.oy_jewels.dto.request.TermsRequestDTO;
+import com.oy.oy_jewels.dto.response.TermsResponseDTO;
 
 import java.util.List;
 
 public interface TermsService {
 
     // Create new terms policy
-    TermsEntity createTermsPolicy(TermsEntity termsEntity);
+    TermsResponseDTO createTermsPolicy(TermsRequestDTO termsRequestDTO);
 
     // Get all terms policies
-    List<TermsEntity> getAllTermsPolicies();
+    List<TermsResponseDTO> getAllTermsPolicies();
 
     // Get terms policy by ID
-    TermsEntity getTermsPolicyById(Long id);
+    TermsResponseDTO getTermsPolicyById(Long id);
 
     // Update terms policy
-    TermsEntity updateTermsPolicy(Long id, TermsEntity termsEntity);
+    TermsResponseDTO updateTermsPolicy(Long id, TermsRequestDTO termsRequestDTO);
 
     // Delete terms policy
     void deleteTermsPolicy(Long id);
 
     // Search by title
-    List<TermsEntity> searchByTitle(String title);
+    List<TermsResponseDTO> searchByTitle(String title);
 }

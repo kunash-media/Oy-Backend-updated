@@ -1,19 +1,22 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.OffersEntity;
+import com.oy.oy_jewels.dto.request.OffersRequestDto;
+import com.oy.oy_jewels.dto.response.OffersResponseDto;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface OffersService {
 
-    OffersEntity createOffers(MultipartFile pageHeaderBackground, String pageTitle, String superDiscountActiveCoupons);
+    OffersResponseDto createOffers(MultipartFile pageHeaderBackground, OffersRequestDto requestDto);
 
-    OffersEntity getOffersById(Long id);
+    OffersResponseDto getOffersById(Long id);
 
-    List<OffersEntity> getAllOffers();
+    List<OffersResponseDto> getAllOffers();
 
-    OffersEntity updateOffers(Long id, MultipartFile pageHeaderBackground, String pageTitle, String superDiscountActiveCoupons);
+    OffersResponseDto updateOffers(Long id, MultipartFile pageHeaderBackground, OffersRequestDto requestDto);
 
     void deleteOffers(Long id);
+
+    byte[] getPageHeaderBackground(Long id);
 }

@@ -1,21 +1,23 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.SEOEntity;
+
+import com.oy.oy_jewels.dto.response.SEOResponseDTO;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
 public interface SEOService {
 
-    SEOEntity createSEO(MultipartFile faviconImg, String metaTitle, String metaDescription,
-                        String canonicalUrl, String metaKeywords, MultipartFile socialMediaImage);
+    SEOResponseDTO createSEO(MultipartFile faviconImg, String metaTitle, String metaDescription,
+                             String canonicalUrl, String metaKeywords, MultipartFile socialMediaImage);
 
-    SEOEntity getSEOById(Long id);
+    SEOResponseDTO getSEOById(Long id);
 
-    List<SEOEntity> getAllSEOs();
+    List<SEOResponseDTO> getAllSEOs();
 
-    SEOEntity updateSEO(Long id, MultipartFile faviconImg, String metaTitle, String metaDescription,
-                        String canonicalUrl, String metaKeywords, MultipartFile socialMediaImage);
+    SEOResponseDTO updateSEO(Long id, MultipartFile faviconImg, String metaTitle, String metaDescription,
+                             String canonicalUrl, String metaKeywords, MultipartFile socialMediaImage);
 
     void deleteSEO(Long id);
 }
+

@@ -1,18 +1,20 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.FAQEntity;
+
+import com.oy.oy_jewels.dto.request.FAQRequestDTO;
+import com.oy.oy_jewels.dto.response.FAQResponseDTO;
 
 import java.util.List;
 
 public interface FAQService {
 
-    FAQEntity createFAQ(FAQEntity faqEntity);
+    FAQResponseDTO createFAQ(FAQRequestDTO requestDTO);
 
-    FAQEntity getFAQById(Long id);
+    FAQResponseDTO getFAQById(Long id);
 
-    List<FAQEntity> getAllFAQs();
+    List<FAQResponseDTO> getAllFAQs();
 
-    FAQEntity updateFAQ(Long id, FAQEntity faqEntity);
+    FAQResponseDTO updateFAQ(Long id, FAQRequestDTO requestDTO);
 
     void deleteFAQ(Long id);
 }

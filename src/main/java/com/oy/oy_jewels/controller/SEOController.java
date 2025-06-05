@@ -1,6 +1,7 @@
 package com.oy.oy_jewels.controller;
 
-import com.oy.oy_jewels.entity.SEOEntity;
+
+import com.oy.oy_jewels.dto.response.SEOResponseDTO;
 import com.oy.oy_jewels.service.SEOService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ public class SEOController {
     private SEOService seoService;
 
     @PostMapping("/create")
-    public ResponseEntity<SEOEntity> createSEO(
+    public ResponseEntity<SEOResponseDTO> createSEO(
             @RequestPart(value = "faviconImg", required = false) MultipartFile faviconImg,
             @RequestPart("metaTitle") String metaTitle,
             @RequestPart("metaDescription") String metaDescription,
@@ -25,14 +26,14 @@ public class SEOController {
             @RequestPart("metaKeywords") String metaKeywords,
             @RequestPart(value = "socialMediaImage", required = false) MultipartFile socialMediaImage) {
 
-        SEOEntity createdSEO = seoService.createSEO(faviconImg, metaTitle, metaDescription,
+        SEOResponseDTO createdSEO = seoService.createSEO(faviconImg, metaTitle, metaDescription,
                 canonicalUrl, metaKeywords, socialMediaImage);
         return ResponseEntity.ok(createdSEO);
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<SEOEntity> getSEOById(@PathVariable Long id) {
-        SEOEntity seo = seoService.getSEOById(id);
+    public ResponseEntity<SEOResponseDTO> getSEOById(@PathVariable Long id) {
+        SEOResponseDTO seo = seoService.getSEOById(id);
         if (seo != null) {
             return ResponseEntity.ok(seo);
         }
@@ -40,13 +41,13 @@ public class SEOController {
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<SEOEntity>> getAllSEOs() {
-        List<SEOEntity> seos = seoService.getAllSEOs();
+    public ResponseEntity<List<SEOResponseDTO>> getAllSEOs() {
+        List<SEOResponseDTO> seos = seoService.getAllSEOs();
         return ResponseEntity.ok(seos);
     }
 
     @PutMapping("/update/{id}")
-    public ResponseEntity<SEOEntity> updateSEO(
+    public ResponseEntity<SEOResponseDTO> updateSEO(
             @PathVariable Long id,
             @RequestPart(value = "faviconImg", required = false) MultipartFile faviconImg,
             @RequestPart(value = "metaTitle", required = false) String metaTitle,
@@ -55,7 +56,7 @@ public class SEOController {
             @RequestPart(value = "metaKeywords", required = false) String metaKeywords,
             @RequestPart(value = "socialMediaImage", required = false) MultipartFile socialMediaImage) {
 
-        SEOEntity updatedSEO = seoService.updateSEO(id, faviconImg, metaTitle, metaDescription,
+        SEOResponseDTO updatedSEO = seoService.updateSEO(id, faviconImg, metaTitle, metaDescription,
                 canonicalUrl, metaKeywords, socialMediaImage);
         if (updatedSEO != null) {
             return ResponseEntity.ok(updatedSEO);

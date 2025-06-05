@@ -1,6 +1,9 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+import com.oy.oy_jewels.dto.request.CancellationRequestDTO;
+import com.oy.oy_jewels.dto.response.CancellationResponseDTO;
 import com.oy.oy_jewels.entity.CancellationEntity;
+import com.oy.oy_jewels.mapper.CancellationMapper;
 import com.oy.oy_jewels.repository.CancellationRepository;
 import com.oy.oy_jewels.service.CancellationService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,28 +17,35 @@ public class CancellationServiceImpl implements CancellationService {
     @Autowired
     private CancellationRepository cancellationRepository;
 
+    @Autowired
+    private CancellationMapper cancellationMapper;
+
     @Override
-    public CancellationEntity createCancellationPolicy(CancellationEntity cancellationEntity) {
-        return cancellationRepository.save(cancellationEntity);
+    public CancellationResponseDTO createCancellationPolicy(CancellationRequestDTO cancellationRequestDTO) {
+        CancellationEntity entity = cancellationMapper.toEntity(cancellationRequestDTO);
+        CancellationEntity savedEntity = cancellationRepository.save(entity);
+        return cancellationMapper.toResponseDTO(savedEntity);
     }
 
     @Override
-    public List<CancellationEntity> getAllCancellationPolicies() {
-        return cancellationRepository.findAll();
+    public List<CancellationResponseDTO> getAllCancellationPolicies() {
+        List<CancellationEntity> entities = cancellationRepository.findAll();
+        return cancellationMapper.toResponseDTOList(entities);
     }
 
     @Override
-    public CancellationEntity getCancellationPolicyById(Long id) {
-        return cancellationRepository.findById(id).orElse(null);
+    public CancellationResponseDTO getCancellationPolicyById(Long id) {
+        CancellationEntity entity = cancellationRepository.findById(id).orElse(null);
+        return cancellationMapper.toResponseDTO(entity);
     }
 
     @Override
-    public CancellationEntity updateCancellationPolicy(Long id, CancellationEntity cancellationEntity) {
-        CancellationEntity existingPolicy = cancellationRepository.findById(id).orElse(null);
-        if (existingPolicy != null) {
-            existingPolicy.setCancellationTitle(cancellationEntity.getCancellationTitle());
-            existingPolicy.setCancellationDescription(cancellationEntity.getCancellationDescription());
-            return cancellationRepository.save(existingPolicy);
+    public CancellationResponseDTO updateCancellationPolicy(Long id, CancellationRequestDTO cancellationRequestDTO) {
+        CancellationEntity existingEntity = cancellationRepository.findById(id).orElse(null);
+        if (existingEntity != null) {
+            cancellationMapper.updateEntityFromDTO(cancellationRequestDTO, existingEntity);
+            CancellationEntity updatedEntity = cancellationRepository.save(existingEntity);
+            return cancellationMapper.toResponseDTO(updatedEntity);
         }
         return null;
     }
@@ -46,7 +56,8 @@ public class CancellationServiceImpl implements CancellationService {
     }
 
     @Override
-    public List<CancellationEntity> searchByTitle(String title) {
-        return cancellationRepository.findByCancellationTitleContainingIgnoreCase(title);
+    public List<CancellationResponseDTO> searchByTitle(String title) {
+        List<CancellationEntity> entities = cancellationRepository.findByCancellationTitleContainingIgnoreCase(title);
+        return cancellationMapper.toResponseDTOList(entities);
     }
 }

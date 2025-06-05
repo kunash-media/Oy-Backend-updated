@@ -1,6 +1,9 @@
 package com.oy.oy_jewels.controller;
 
-import com.oy.oy_jewels.entity.NavEntity;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oy.oy_jewels.dto.request.NavbarRequestDto;
+import com.oy.oy_jewels.dto.response.NavbarResponseDto;
 import com.oy.oy_jewels.service.NavService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
@@ -18,36 +21,49 @@ public class NavController {
     @Autowired
     private NavService navService;
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<NavEntity> createNavbar(
-            @RequestPart(value = "logo", required = false) MultipartFile logo,
-            @RequestPart("headerText") String headerText,
-            @RequestPart("sections") String sectionsJson) {
+    private ObjectMapper objectMapper = new ObjectMapper();
 
-        NavEntity navbar = navService.createNavbar(logo, headerText, sectionsJson);
-        return ResponseEntity.ok(navbar);
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<NavbarResponseDto> createNavbar(
+            @RequestPart(value = "logo", required = false) MultipartFile logo,
+            @RequestPart("navbarData") String navbarDataJson) {
+
+        try {
+            NavbarRequestDto requestDto = objectMapper.readValue(navbarDataJson, NavbarRequestDto.class);
+            NavbarResponseDto navbar = navService.createNavbar(logo, requestDto);
+            return ResponseEntity.ok(navbar);
+        } catch (Exception e) {
+            throw new RuntimeException("Error processing navbar data", e);
+        }
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<NavEntity> updateNavbar(
+    public ResponseEntity<NavbarResponseDto> updateNavbar(
             @PathVariable Long id,
             @RequestPart(value = "logo", required = false) MultipartFile logo,
-            @RequestPart(value = "headerText", required = false) String headerText,
-            @RequestPart(value = "sections", required = false) String sectionsJson) {
+            @RequestPart(value = "navbarData", required = false) String navbarDataJson) {
 
-        NavEntity navbar = navService.updateNavbar(id, logo, headerText, sectionsJson);
-        return ResponseEntity.ok(navbar);
+        try {
+            NavbarRequestDto requestDto = null;
+            if (navbarDataJson != null) {
+                requestDto = objectMapper.readValue(navbarDataJson, NavbarRequestDto.class);
+            }
+            NavbarResponseDto navbar = navService.updateNavbar(id, logo, requestDto);
+            return ResponseEntity.ok(navbar);
+        } catch (Exception e) {
+            throw new RuntimeException("Error updating navbar data", e);
+        }
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<NavEntity> getNavbarById(@PathVariable Long id) {
-        NavEntity navbar = navService.getNavbarById(id);
+    public ResponseEntity<NavbarResponseDto> getNavbarById(@PathVariable Long id) {
+        NavbarResponseDto navbar = navService.getNavbarById(id);
         return ResponseEntity.ok(navbar);
     }
 
     @GetMapping("/get-All-Navbars")
-    public ResponseEntity<List<NavEntity>> getAllNavbars() {
-        List<NavEntity> navbars = navService.getAllNavbars();
+    public ResponseEntity<List<NavbarResponseDto>> getAllNavbars() {
+        List<NavbarResponseDto> navbars = navService.getAllNavbars();
         return ResponseEntity.ok(navbars);
     }
 

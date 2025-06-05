@@ -1,23 +1,24 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.ShippingEntity;
+
+import com.oy.oy_jewels.dto.request.ShippingRequestDTO;
+import com.oy.oy_jewels.dto.response.ShippingResponseDTO;
 
 import java.util.List;
-import java.util.Optional;
 
 public interface ShippingService {
 
-    ShippingEntity createShipping(ShippingEntity shipping);
+    ShippingResponseDTO createShipping(ShippingRequestDTO shippingRequest);
 
-    List<ShippingEntity> getAllShippings();
+    List<ShippingResponseDTO> getAllShippings();
 
-    Optional<ShippingEntity> getShippingById(Long id);
+    ShippingResponseDTO getShippingById(Long id);
 
-    ShippingEntity updateShipping(Long id, ShippingEntity shipping);
+    ShippingResponseDTO updateShipping(Long id, ShippingRequestDTO shippingRequest);
 
     void deleteShipping(Long id);
 
-    List<ShippingEntity> searchByTitle(String title);
+    List<ShippingResponseDTO> searchByTitle(String title);
 
-    List<ShippingEntity> searchByDescription(String description);
+    List<ShippingResponseDTO> searchByDescription(String description);
 }

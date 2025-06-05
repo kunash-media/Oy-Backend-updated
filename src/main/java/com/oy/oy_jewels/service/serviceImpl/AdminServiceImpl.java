@@ -1,11 +1,16 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
 
+import com.oy.oy_jewels.dto.request.AdminRequestDTO;
+import com.oy.oy_jewels.dto.request.AdminUpdateDTO;
+import com.oy.oy_jewels.dto.response.AdminResponseDTO;
 import com.oy.oy_jewels.entity.AdminEntity;
+import com.oy.oy_jewels.mapper.AdminMapper;
 import com.oy.oy_jewels.repository.AdminRepository;
 import com.oy.oy_jewels.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+
 import java.util.List;
 import java.util.Optional;
 
@@ -15,35 +20,42 @@ public class AdminServiceImpl implements AdminService {
     @Autowired
     private AdminRepository adminRepository;
 
+    @Autowired
+    private AdminMapper adminMapper;
+
     @Override
-    public AdminEntity createAdmin(AdminEntity admin) {
-        return adminRepository.save(admin);
+    public AdminResponseDTO createAdmin(AdminRequestDTO adminRequestDTO) {
+        AdminEntity adminEntity = adminMapper.toEntity(adminRequestDTO);
+        AdminEntity savedEntity = adminRepository.save(adminEntity);
+        return adminMapper.toResponseDTO(savedEntity);
     }
 
     @Override
-    public Optional<AdminEntity> getAdminById(Long id) {
-        return adminRepository.findById(id);
+    public AdminResponseDTO getAdminById(Long id) {
+        Optional<AdminEntity> adminEntity = adminRepository.findById(id);
+        return adminEntity.map(adminMapper::toResponseDTO).orElse(null);
     }
 
     @Override
-    public Optional<AdminEntity> getAdminByEmail(String email) {
-        return adminRepository.findByEmail(email);
+    public AdminResponseDTO getAdminByEmail(String email) {
+        Optional<AdminEntity> adminEntity = adminRepository.findByEmail(email);
+        return adminEntity.map(adminMapper::toResponseDTO).orElse(null);
     }
 
     @Override
-    public List<AdminEntity> getAllAdmins() {
-        return adminRepository.findAll();
+    public List<AdminResponseDTO> getAllAdmins() {
+        List<AdminEntity> adminEntities = adminRepository.findAll();
+        return adminMapper.toResponseDTOList(adminEntities);
     }
 
     @Override
-    public AdminEntity updateAdmin(Long id, AdminEntity admin) {
+    public AdminResponseDTO updateAdmin(Long id, AdminUpdateDTO adminUpdateDTO) {
         Optional<AdminEntity> existingAdmin = adminRepository.findById(id);
         if (existingAdmin.isPresent()) {
             AdminEntity adminToUpdate = existingAdmin.get();
-            adminToUpdate.setName(admin.getName());
-            adminToUpdate.setEmail(admin.getEmail());
-            adminToUpdate.setPassword(admin.getPassword());
-            return adminRepository.save(adminToUpdate);
+            adminMapper.updateEntityFromDTO(adminUpdateDTO, adminToUpdate);
+            AdminEntity updatedEntity = adminRepository.save(adminToUpdate);
+            return adminMapper.toResponseDTO(updatedEntity);
         }
         return null;
     }

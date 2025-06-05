@@ -1,6 +1,10 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+
+import com.oy.oy_jewels.dto.request.CheckOutRequestDTO;
+import com.oy.oy_jewels.dto.response.CheckOutResponseDTO;
 import com.oy.oy_jewels.entity.CheckOutEntity;
+import com.oy.oy_jewels.mapper.CheckOutMapper;
 import com.oy.oy_jewels.repository.CheckOutRepository;
 import com.oy.oy_jewels.service.CheckOutService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,41 +19,36 @@ public class CheckOutServiceImpl implements CheckOutService {
     @Autowired
     private CheckOutRepository checkOutRepository;
 
+    @Autowired
+    private CheckOutMapper checkOutMapper;
+
     @Override
-    public CheckOutEntity createCheckOut(CheckOutEntity checkOut) {
-        return checkOutRepository.save(checkOut);
+    public CheckOutResponseDTO createCheckOut(CheckOutRequestDTO checkOutRequestDTO) {
+        CheckOutEntity entity = checkOutMapper.toEntity(checkOutRequestDTO);
+        CheckOutEntity savedEntity = checkOutRepository.save(entity);
+        return checkOutMapper.toResponseDTO(savedEntity);
     }
 
     @Override
-    public List<CheckOutEntity> getAllCheckOuts() {
-        return checkOutRepository.findAll();
+    public List<CheckOutResponseDTO> getAllCheckOuts() {
+        List<CheckOutEntity> entities = checkOutRepository.findAll();
+        return checkOutMapper.toResponseDTOList(entities);
     }
 
     @Override
-    public Optional<CheckOutEntity> getCheckOutById(Long id) {
-        return checkOutRepository.findById(id);
+    public Optional<CheckOutResponseDTO> getCheckOutById(Long id) {
+        Optional<CheckOutEntity> entity = checkOutRepository.findById(id);
+        return entity.map(checkOutMapper::toResponseDTO);
     }
 
     @Override
-    public CheckOutEntity updateCheckOut(Long id, CheckOutEntity checkOut) {
+    public CheckOutResponseDTO updateCheckOut(Long id, CheckOutRequestDTO checkOutRequestDTO) {
         Optional<CheckOutEntity> existingCheckOut = checkOutRepository.findById(id);
         if (existingCheckOut.isPresent()) {
             CheckOutEntity entity = existingCheckOut.get();
-            entity.setFullName(checkOut.getFullName());
-            entity.setEmail(checkOut.getEmail());
-            entity.setPhoneNumber(checkOut.getPhoneNumber());
-            entity.setAlternatePhoneNumber(checkOut.getAlternatePhoneNumber());
-            entity.setStreetAddress(checkOut.getStreetAddress());
-            entity.setCity(checkOut.getCity());
-            entity.setCountry(checkOut.getCountry());
-            entity.setZipPostalCode(checkOut.getZipPostalCode());
-            entity.setOrderSummaryTitle(checkOut.getOrderSummaryTitle());
-            entity.setCouponCode(checkOut.getCouponCode());
-            entity.setSubtotalLabel(checkOut.getSubtotalLabel());
-            entity.setShippingLabel(checkOut.getShippingLabel());
-            entity.setTaxLabel(checkOut.getTaxLabel());
-            entity.setTotalCostLabel(checkOut.getTotalCostLabel());
-            return checkOutRepository.save(entity);
+            checkOutMapper.updateEntityFromRequestDTO(entity, checkOutRequestDTO);
+            CheckOutEntity updatedEntity = checkOutRepository.save(entity);
+            return checkOutMapper.toResponseDTO(updatedEntity);
         }
         return null;
     }
@@ -60,22 +59,26 @@ public class CheckOutServiceImpl implements CheckOutService {
     }
 
     @Override
-    public List<CheckOutEntity> getCheckOutsByEmail(String email) {
-        return checkOutRepository.findByEmail(email);
+    public List<CheckOutResponseDTO> getCheckOutsByEmail(String email) {
+        List<CheckOutEntity> entities = checkOutRepository.findByEmail(email);
+        return checkOutMapper.toResponseDTOList(entities);
     }
 
     @Override
-    public List<CheckOutEntity> getCheckOutsByPhoneNumber(String phoneNumber) {
-        return checkOutRepository.findByPhoneNumber(phoneNumber);
+    public List<CheckOutResponseDTO> getCheckOutsByPhoneNumber(String phoneNumber) {
+        List<CheckOutEntity> entities = checkOutRepository.findByPhoneNumber(phoneNumber);
+        return checkOutMapper.toResponseDTOList(entities);
     }
 
     @Override
-    public List<CheckOutEntity> getCheckOutsByCity(String city) {
-        return checkOutRepository.findByCity(city);
+    public List<CheckOutResponseDTO> getCheckOutsByCity(String city) {
+        List<CheckOutEntity> entities = checkOutRepository.findByCity(city);
+        return checkOutMapper.toResponseDTOList(entities);
     }
 
     @Override
-    public List<CheckOutEntity> getCheckOutsByCountry(String country) {
-        return checkOutRepository.findByCountry(country);
+    public List<CheckOutResponseDTO> getCheckOutsByCountry(String country) {
+        List<CheckOutEntity> entities = checkOutRepository.findByCountry(country);
+        return checkOutMapper.toResponseDTOList(entities);
     }
 }

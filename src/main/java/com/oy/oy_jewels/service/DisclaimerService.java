@@ -1,35 +1,36 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.DisclaimerEntity;
+import com.oy.oy_jewels.dto.request.DisclaimerRequestDTO;
+import com.oy.oy_jewels.dto.response.DisclaimerResponseDTO;
 
 import java.util.List;
 
 public interface DisclaimerService {
 
     // Create new disclaimer
-    DisclaimerEntity createDisclaimer(DisclaimerEntity disclaimerEntity);
+    DisclaimerResponseDTO createDisclaimer(DisclaimerRequestDTO requestDTO);
 
     // Get all disclaimers
-    List<DisclaimerEntity> getAllDisclaimers();
+    List<DisclaimerResponseDTO> getAllDisclaimers();
 
     // Get disclaimer by ID
-    DisclaimerEntity getDisclaimerById(Long id);
+    DisclaimerResponseDTO getDisclaimerById(Long id);
 
     // Update disclaimer
-    DisclaimerEntity updateDisclaimer(Long id, DisclaimerEntity disclaimerEntity);
+    DisclaimerResponseDTO updateDisclaimer(Long id, DisclaimerRequestDTO requestDTO);
 
     // Delete disclaimer
     void deleteDisclaimer(Long id);
 
     // Search by title
-    List<DisclaimerEntity> searchByTitle(String title);
+    List<DisclaimerResponseDTO> searchByTitle(String title);
 
     // Get disclaimer by section number
-    DisclaimerEntity getDisclaimerBySectionNumber(Integer sectionNumber);
+    DisclaimerResponseDTO getDisclaimerBySectionNumber(Integer sectionNumber);
 
     // Get all disclaimers ordered by section number
-    List<DisclaimerEntity> getAllDisclaimersOrdered();
+    List<DisclaimerResponseDTO> getAllDisclaimersOrdered();
 
     // Get disclaimers without titles
-    List<DisclaimerEntity> getDisclaimersWithoutTitles();
+    List<DisclaimerResponseDTO> getDisclaimersWithoutTitles();
 }

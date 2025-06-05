@@ -2,6 +2,8 @@ package com.oy.oy_jewels.entity;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "cancellation_policies")
 public class CancellationEntity {
@@ -10,19 +12,37 @@ public class CancellationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "cancellation_title")
+    @Column(name = "cancellation_title", nullable = false, length = 100)
     private String cancellationTitle;
 
-    @Column(name = "cancellation_description", length = 1000)
+    @Column(name = "cancellation_description", nullable = false, length = 1000)
     private String cancellationDescription;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "updated_at")
+    private LocalDateTime updatedAt;
 
     // Default constructor
     public CancellationEntity() {}
 
-    // Constructor with parameters
+    // Parameterized constructor
     public CancellationEntity(String cancellationTitle, String cancellationDescription) {
         this.cancellationTitle = cancellationTitle;
         this.cancellationDescription = cancellationDescription;
+    }
+
+    // JPA lifecycle methods for automatic timestamp management
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = LocalDateTime.now();
+        this.updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = LocalDateTime.now();
     }
 
     // Getters and Setters
@@ -50,12 +70,43 @@ public class CancellationEntity {
         this.cancellationDescription = cancellationDescription;
     }
 
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getUpdatedAt() {
+        return updatedAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
+
     @Override
     public String toString() {
         return "CancellationEntity{" +
                 "id=" + id +
                 ", cancellationTitle='" + cancellationTitle + '\'' +
                 ", cancellationDescription='" + cancellationDescription + '\'' +
+                ", createdAt=" + createdAt +
+                ", updatedAt=" + updatedAt +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof CancellationEntity)) return false;
+        CancellationEntity that = (CancellationEntity) o;
+        return id != null && id.equals(that.id);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
     }
 }

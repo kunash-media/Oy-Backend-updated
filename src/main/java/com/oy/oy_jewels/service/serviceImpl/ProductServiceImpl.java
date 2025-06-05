@@ -51,6 +51,11 @@ public class ProductServiceImpl implements ProductService {
         existingProduct.setShopBy(product.getShopBy());
         existingProduct.setTotalPrice(product.getTotalPrice());
 
+        // Update image only if new image is provided
+        if (product.getProductImage() != null) {
+            existingProduct.setProductImage(product.getProductImage());
+        }
+
         return productRepository.save(existingProduct);
     }
 
@@ -69,7 +74,4 @@ public class ProductServiceImpl implements ProductService {
     public List<ProductEntity> getProductsByStock(String stock) {
         return productRepository.findByStock(stock);
     }
-
-
-
 }

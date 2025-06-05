@@ -1,6 +1,10 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+
+import com.oy.oy_jewels.dto.request.DisclaimerRequestDTO;
+import com.oy.oy_jewels.dto.response.DisclaimerResponseDTO;
 import com.oy.oy_jewels.entity.DisclaimerEntity;
+import com.oy.oy_jewels.mapper.DisclaimerMapper;
 import com.oy.oy_jewels.repository.DisclaimerRepository;
 import com.oy.oy_jewels.service.DisclaimerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,29 +18,35 @@ public class DisclaimerServiceImpl implements DisclaimerService {
     @Autowired
     private DisclaimerRepository disclaimerRepository;
 
+    @Autowired
+    private DisclaimerMapper disclaimerMapper;
+
     @Override
-    public DisclaimerEntity createDisclaimer(DisclaimerEntity disclaimerEntity) {
-        return disclaimerRepository.save(disclaimerEntity);
+    public DisclaimerResponseDTO createDisclaimer(DisclaimerRequestDTO requestDTO) {
+        DisclaimerEntity entity = disclaimerMapper.requestDtoToEntity(requestDTO);
+        DisclaimerEntity savedEntity = disclaimerRepository.save(entity);
+        return disclaimerMapper.entityToResponseDto(savedEntity);
     }
 
     @Override
-    public List<DisclaimerEntity> getAllDisclaimers() {
-        return disclaimerRepository.findAll();
+    public List<DisclaimerResponseDTO> getAllDisclaimers() {
+        List<DisclaimerEntity> entities = disclaimerRepository.findAll();
+        return disclaimerMapper.entityListToResponseDtoList(entities);
     }
 
     @Override
-    public DisclaimerEntity getDisclaimerById(Long id) {
-        return disclaimerRepository.findById(id).orElse(null);
+    public DisclaimerResponseDTO getDisclaimerById(Long id) {
+        DisclaimerEntity entity = disclaimerRepository.findById(id).orElse(null);
+        return disclaimerMapper.entityToResponseDto(entity);
     }
 
     @Override
-    public DisclaimerEntity updateDisclaimer(Long id, DisclaimerEntity disclaimerEntity) {
-        DisclaimerEntity existingDisclaimer = disclaimerRepository.findById(id).orElse(null);
-        if (existingDisclaimer != null) {
-            existingDisclaimer.setDisclaimerTitle(disclaimerEntity.getDisclaimerTitle());
-            existingDisclaimer.setDisclaimerDescription(disclaimerEntity.getDisclaimerDescription());
-            existingDisclaimer.setSectionNumber(disclaimerEntity.getSectionNumber());
-            return disclaimerRepository.save(existingDisclaimer);
+    public DisclaimerResponseDTO updateDisclaimer(Long id, DisclaimerRequestDTO requestDTO) {
+        DisclaimerEntity existingEntity = disclaimerRepository.findById(id).orElse(null);
+        if (existingEntity != null) {
+            disclaimerMapper.updateEntityFromRequestDto(existingEntity, requestDTO);
+            DisclaimerEntity updatedEntity = disclaimerRepository.save(existingEntity);
+            return disclaimerMapper.entityToResponseDto(updatedEntity);
         }
         return null;
     }
@@ -47,22 +57,26 @@ public class DisclaimerServiceImpl implements DisclaimerService {
     }
 
     @Override
-    public List<DisclaimerEntity> searchByTitle(String title) {
-        return disclaimerRepository.findByDisclaimerTitleContainingIgnoreCase(title);
+    public List<DisclaimerResponseDTO> searchByTitle(String title) {
+        List<DisclaimerEntity> entities = disclaimerRepository.findByDisclaimerTitleContainingIgnoreCase(title);
+        return disclaimerMapper.entityListToResponseDtoList(entities);
     }
 
     @Override
-    public DisclaimerEntity getDisclaimerBySectionNumber(Integer sectionNumber) {
-        return disclaimerRepository.findBySectionNumber(sectionNumber);
+    public DisclaimerResponseDTO getDisclaimerBySectionNumber(Integer sectionNumber) {
+        DisclaimerEntity entity = disclaimerRepository.findBySectionNumber(sectionNumber);
+        return disclaimerMapper.entityToResponseDto(entity);
     }
 
     @Override
-    public List<DisclaimerEntity> getAllDisclaimersOrdered() {
-        return disclaimerRepository.findAllByOrderBySectionNumberAsc();
+    public List<DisclaimerResponseDTO> getAllDisclaimersOrdered() {
+        List<DisclaimerEntity> entities = disclaimerRepository.findAllByOrderBySectionNumberAsc();
+        return disclaimerMapper.entityListToResponseDtoList(entities);
     }
 
     @Override
-    public List<DisclaimerEntity> getDisclaimersWithoutTitles() {
-        return disclaimerRepository.findByDisclaimerTitleIsNull();
+    public List<DisclaimerResponseDTO> getDisclaimersWithoutTitles() {
+        List<DisclaimerEntity> entities = disclaimerRepository.findByDisclaimerTitleIsNull();
+        return disclaimerMapper.entityListToResponseDtoList(entities);
     }
 }

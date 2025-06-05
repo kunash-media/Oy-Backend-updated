@@ -86,6 +86,15 @@ public class OurStaffServiceImpl implements OurStaffService {
             existingStaff.setJoiningDate(updatedStaff.getJoiningDate());
             existingStaff.setStaffRole(updatedStaff.getStaffRole());
 
+            // Handle image update
+            if (staffImage != null && !staffImage.isEmpty()) {
+                try {
+                    byte[] imageBytes = staffImage.getBytes();
+                    existingStaff.setStaffImage(imageBytes);
+                } catch (IOException e) {
+                    throw new RuntimeException("Error processing image file", e);
+                }
+            }
 
             return staffRepository.save(existingStaff);
         }
@@ -117,7 +126,7 @@ public class OurStaffServiceImpl implements OurStaffService {
         return staffRepository.findStaffByRoleOrderedByJoiningDate(role);
     }
 
-    // Helper method to save image
+    // Helper method to save image (kept for future use if needed)
     private String saveImage(MultipartFile image) {
         try {
             // Create upload directory if it doesn't exist

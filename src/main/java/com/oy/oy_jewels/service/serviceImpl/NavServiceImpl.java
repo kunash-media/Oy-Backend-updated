@@ -1,7 +1,9 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
-import com.fasterxml.jackson.core.type.TypeReference;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oy.oy_jewels.dto.request.NavSectionDto;
+import com.oy.oy_jewels.dto.request.NavSubOptionDto;
+import com.oy.oy_jewels.dto.request.NavbarRequestDto;
+import com.oy.oy_jewels.dto.response.NavbarResponseDto;
 import com.oy.oy_jewels.entity.NavEntity;
 import com.oy.oy_jewels.entity.NavSectionEntity;
 import com.oy.oy_jewels.entity.NavSubOptionEntity;
@@ -14,7 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class NavServiceImpl implements NavService {
@@ -22,10 +24,8 @@ public class NavServiceImpl implements NavService {
     @Autowired
     private NavRepository navRepository;
 
-    private ObjectMapper objectMapper = new ObjectMapper();
-
     @Override
-    public NavEntity createNavbar(MultipartFile logo, String headerText, String sectionsJson) {
+    public NavbarResponseDto createNavbar(MultipartFile logo, NavbarRequestDto requestDto) {
         try {
             NavEntity navbar = new NavEntity();
 
@@ -33,12 +33,13 @@ public class NavServiceImpl implements NavService {
                 navbar.setLogo(logo.getBytes());
             }
 
-            navbar.setHeaderText(headerText);
+            navbar.setHeaderText(requestDto.getHeaderText());
 
-            List<NavSectionEntity> sections = parseSections(sectionsJson, navbar);
+            List<NavSectionEntity> sections = convertToSectionEntities(requestDto.getSections(), navbar);
             navbar.setSections(sections);
 
-            return navRepository.save(navbar);
+            NavEntity savedNavbar = navRepository.save(navbar);
+            return convertToResponseDto(savedNavbar);
 
         } catch (IOException e) {
             throw new RuntimeException("Error processing navbar data", e);
@@ -46,7 +47,7 @@ public class NavServiceImpl implements NavService {
     }
 
     @Override
-    public NavEntity updateNavbar(Long id, MultipartFile logo, String headerText, String sectionsJson) {
+    public NavbarResponseDto updateNavbar(Long id, MultipartFile logo, NavbarRequestDto requestDto) {
         try {
             NavEntity navbar = navRepository.findById(id)
                     .orElseThrow(() -> new RuntimeException("Navbar not found"));
@@ -55,16 +56,19 @@ public class NavServiceImpl implements NavService {
                 navbar.setLogo(logo.getBytes());
             }
 
-            if (headerText != null) {
-                navbar.setHeaderText(headerText);
+            if (requestDto != null) {
+                if (requestDto.getHeaderText() != null) {
+                    navbar.setHeaderText(requestDto.getHeaderText());
+                }
+
+                if (requestDto.getSections() != null) {
+                    List<NavSectionEntity> sections = convertToSectionEntities(requestDto.getSections(), navbar);
+                    navbar.setSections(sections);
+                }
             }
 
-            if (sectionsJson != null) {
-                List<NavSectionEntity> sections = parseSections(sectionsJson, navbar);
-                navbar.setSections(sections);
-            }
-
-            return navRepository.save(navbar);
+            NavEntity savedNavbar = navRepository.save(navbar);
+            return convertToResponseDto(savedNavbar);
 
         } catch (IOException e) {
             throw new RuntimeException("Error updating navbar data", e);
@@ -72,14 +76,18 @@ public class NavServiceImpl implements NavService {
     }
 
     @Override
-    public NavEntity getNavbarById(Long id) {
-        return navRepository.findById(id)
+    public NavbarResponseDto getNavbarById(Long id) {
+        NavEntity navbar = navRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Navbar not found"));
+        return convertToResponseDto(navbar);
     }
 
     @Override
-    public List<NavEntity> getAllNavbars() {
-        return navRepository.findAll();
+    public List<NavbarResponseDto> getAllNavbars() {
+        List<NavEntity> navbars = navRepository.findAll();
+        return navbars.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
     }
 
     @Override
@@ -89,31 +97,32 @@ public class NavServiceImpl implements NavService {
 
     @Override
     public byte[] getNavbarLogo(Long id) {
-        NavEntity navbar = getNavbarById(id);
+        NavEntity navbar = navRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Navbar not found"));
         return navbar.getLogo();
     }
 
-    private List<NavSectionEntity> parseSections(String sectionsJson, NavEntity navbar) throws IOException {
-        List<Map<String, Object>> sectionMaps = objectMapper.readValue(
-                sectionsJson, new TypeReference<List<Map<String, Object>>>() {});
+    private List<NavSectionEntity> convertToSectionEntities(List<NavSectionDto> sectionDtos, NavEntity navbar) {
+        if (sectionDtos == null) {
+            return new ArrayList<>();
+        }
 
         List<NavSectionEntity> sections = new ArrayList<>();
 
-        for (Map<String, Object> sectionMap : sectionMaps) {
+        for (NavSectionDto sectionDto : sectionDtos) {
             NavSectionEntity section = new NavSectionEntity();
-            section.setName((String) sectionMap.get("name"));
-            section.setPath((String) sectionMap.get("path"));
-            section.setHasSubOptions((Boolean) sectionMap.get("hasSubOptions"));
+            section.setName(sectionDto.getName());
+            section.setPath(sectionDto.getPath());
+            section.setHasSubOptions(sectionDto.getHasSubOptions());
             section.setNavbar(navbar);
 
-            if (sectionMap.containsKey("subOptions") && sectionMap.get("subOptions") != null) {
-                List<Map<String, Object>> subOptionMaps = (List<Map<String, Object>>) sectionMap.get("subOptions");
+            if (sectionDto.getSubOptions() != null && !sectionDto.getSubOptions().isEmpty()) {
                 List<NavSubOptionEntity> subOptions = new ArrayList<>();
 
-                for (Map<String, Object> subOptionMap : subOptionMaps) {
+                for (NavSubOptionDto subOptionDto : sectionDto.getSubOptions()) {
                     NavSubOptionEntity subOption = new NavSubOptionEntity();
-                    subOption.setName((String) subOptionMap.get("name"));
-                    subOption.setPath((String) subOptionMap.get("path"));
+                    subOption.setName(subOptionDto.getName());
+                    subOption.setPath(subOptionDto.getPath());
                     subOption.setSection(section);
                     subOptions.add(subOption);
                 }
@@ -125,5 +134,46 @@ public class NavServiceImpl implements NavService {
         }
 
         return sections;
+    }
+
+    private NavbarResponseDto convertToResponseDto(NavEntity navbar) {
+        NavbarResponseDto responseDto = new NavbarResponseDto();
+        responseDto.setId(navbar.getId());
+        responseDto.setHeaderText(navbar.getHeaderText());
+        responseDto.setHasLogo(navbar.getLogo() != null && navbar.getLogo().length > 0);
+
+        if (navbar.getSections() != null) {
+            List<NavSectionDto> sectionDtos = navbar.getSections().stream()
+                    .map(this::convertToSectionDto)
+                    .collect(Collectors.toList());
+            responseDto.setSections(sectionDtos);
+        }
+
+        return responseDto;
+    }
+
+    private NavSectionDto convertToSectionDto(NavSectionEntity section) {
+        NavSectionDto sectionDto = new NavSectionDto();
+        sectionDto.setId(section.getId());
+        sectionDto.setName(section.getName());
+        sectionDto.setPath(section.getPath());
+        sectionDto.setHasSubOptions(section.getHasSubOptions());
+
+        if (section.getSubOptions() != null && !section.getSubOptions().isEmpty()) {
+            List<NavSubOptionDto> subOptionDtos = section.getSubOptions().stream()
+                    .map(this::convertToSubOptionDto)
+                    .collect(Collectors.toList());
+            sectionDto.setSubOptions(subOptionDtos);
+        }
+
+        return sectionDto;
+    }
+
+    private NavSubOptionDto convertToSubOptionDto(NavSubOptionEntity subOption) {
+        NavSubOptionDto subOptionDto = new NavSubOptionDto();
+        subOptionDto.setId(subOption.getId());
+        subOptionDto.setName(subOption.getName());
+        subOptionDto.setPath(subOption.getPath());
+        return subOptionDto;
     }
 }

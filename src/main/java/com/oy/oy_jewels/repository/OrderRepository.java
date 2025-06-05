@@ -10,21 +10,18 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
 
-    // Find orders by customer name
-    List<OrderEntity> findByCustomerName(String customerName);
+    // Find orders by user ID
+    List<OrderEntity> findByUser_UserId(Long userId);
 
     // Find orders by order status
     List<OrderEntity> findByOrderStatus(String orderStatus);
 
-    // Find orders by order date
-    List<OrderEntity> findByOrderDate(LocalDate orderDate);
-
-    // Find orders by payment mode
-    List<OrderEntity> findByPaymentMode(String paymentMode);
-
-    // Find orders by user id
-    List<OrderEntity> findByUser_UserId(Long userId);
-
-    // Find orders by product id
+    // Find orders by product ID
     List<OrderEntity> findByProduct_ProductId(Long productId);
+
+    // Find orders by date range
+    List<OrderEntity> findByOrderDateBetween(LocalDate startDate, LocalDate endDate);
+
+    // Find orders by user and status
+    List<OrderEntity> findByUser_UserIdAndOrderStatus(Long userId, String orderStatus);
 }

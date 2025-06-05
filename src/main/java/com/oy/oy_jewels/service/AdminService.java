@@ -1,26 +1,28 @@
 package com.oy.oy_jewels.service;
 
 
-import com.oy.oy_jewels.entity.AdminEntity;
+import com.oy.oy_jewels.dto.request.AdminRequestDTO;
+import com.oy.oy_jewels.dto.request.AdminUpdateDTO;
+import com.oy.oy_jewels.dto.response.AdminResponseDTO;
+
 import java.util.List;
-import java.util.Optional;
 
 public interface AdminService {
 
     // Create new admin
-    AdminEntity createAdmin(AdminEntity admin);
+    AdminResponseDTO createAdmin(AdminRequestDTO adminRequestDTO);
 
     // Get admin by ID
-    Optional<AdminEntity> getAdminById(Long id);
+    AdminResponseDTO getAdminById(Long id);
 
     // Get admin by email
-    Optional<AdminEntity> getAdminByEmail(String email);
+    AdminResponseDTO getAdminByEmail(String email);
 
     // Get all admins
-    List<AdminEntity> getAllAdmins();
+    List<AdminResponseDTO> getAllAdmins();
 
     // Update admin
-    AdminEntity updateAdmin(Long id, AdminEntity admin);
+    AdminResponseDTO updateAdmin(Long id, AdminUpdateDTO adminUpdateDTO);
 
     // Delete admin by ID
     void deleteAdmin(Long id);

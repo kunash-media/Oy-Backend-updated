@@ -1,33 +1,20 @@
 package com.oy.oy_jewels.service;
 
-import com.oy.oy_jewels.entity.OrderEntity;
+import com.oy.oy_jewels.dto.request.CreateOrderRequest;
+import com.oy.oy_jewels.dto.request.UpdateOrderRequest;
+import com.oy.oy_jewels.dto.response.OrderResponse;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface OrderService {
-
-    // Create new order
-    OrderEntity createOrder(OrderEntity order);
-
-    // Get all orders
-    List<OrderEntity> getAllOrders();
-
-    // Get order by ID
-    OrderEntity getOrderById(Long orderId);
-
-    // Update order
-    OrderEntity updateOrder(Long orderId, OrderEntity order);
-
-    // Delete order
+    OrderResponse createOrder(CreateOrderRequest request);
+    List<OrderResponse> getAllOrders();
+    OrderResponse getOrderById(Long orderId);
+    OrderResponse updateOrder(Long orderId, UpdateOrderRequest request);
     void deleteOrder(Long orderId);
-
-    // Get orders by customer name
-    List<OrderEntity> getOrdersByCustomerName(String customerName);
-
-    // Get orders by status
-    List<OrderEntity> getOrdersByStatus(String orderStatus);
-
-    // Get orders by user ID
-    List<OrderEntity> getOrdersByUserId(Long userId);
+    List<OrderResponse> getOrdersByUserId(Long userId);
+    List<OrderResponse> getOrdersByStatus(String orderStatus);
+    List<OrderResponse> getOrdersByProductId(Long productId);
+    List<OrderResponse> getOrdersByDateRange(LocalDate startDate, LocalDate endDate);
 }
-
