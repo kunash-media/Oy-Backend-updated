@@ -17,14 +17,13 @@ public class BannerServiceImpl implements BannerService {
     @Autowired
     private BannerRepository bannerRepository;
 
-    @Override
     public BannerEntity saveBannerWithImages(String pageName, String header, String text,
                                              MultipartFile bannerFileOne, MultipartFile bannerFileTwo,
                                              MultipartFile bannerFileThree, MultipartFile bannerFileFour) {
         try {
             BannerEntity banner = new BannerEntity(pageName, header, text);
 
-            // Process and save images
+            // Process and save images with null checks
             if (bannerFileOne != null && !bannerFileOne.isEmpty()) {
                 banner.setBannerFileOne(bannerFileOne.getBytes());
             }
@@ -39,10 +38,11 @@ public class BannerServiceImpl implements BannerService {
             }
 
             return bannerRepository.save(banner);
+
         } catch (IOException e) {
             throw new RuntimeException("Failed to process image files: " + e.getMessage(), e);
-        }
-    }
+}
+}
 
     @Override
     public List<BannerEntity> getAllBanners() {
