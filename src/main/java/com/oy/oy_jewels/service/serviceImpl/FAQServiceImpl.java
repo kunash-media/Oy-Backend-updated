@@ -1,16 +1,12 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
-import com.oy.oy_jewels.dto.request.FAQRequestDTO;
-import com.oy.oy_jewels.dto.response.FAQResponseDTO;
 import com.oy.oy_jewels.entity.FAQEntity;
-import com.oy.oy_jewels.mapper.FAQMapper;
 import com.oy.oy_jewels.repository.FAQRepository;
 import com.oy.oy_jewels.service.FAQService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
-import java.util.Optional;
 
 @Service
 public class FAQServiceImpl implements FAQService {
@@ -18,58 +14,93 @@ public class FAQServiceImpl implements FAQService {
     @Autowired
     private FAQRepository faqRepository;
 
-    @Autowired
-    private FAQMapper faqMapper;
-
     @Override
-    public FAQResponseDTO createFAQ(FAQRequestDTO requestDTO) {
-        FAQEntity entity = faqMapper.requestDtoToEntity(requestDTO);
-        FAQEntity savedEntity = faqRepository.save(entity);
-        return faqMapper.entityToResponseDto(savedEntity);
+    public FAQEntity createFAQ(FAQEntity faq) {
+        // Set display order if not provided
+        if (faq.getDisplayOrder() == null) {
+            Integer maxOrder = faqRepository.findMaxDisplayOrder();
+            faq.setDisplayOrder(maxOrder != null ? maxOrder + 1 : 1);
+        }
+
+        // Set default active status if not provided
+        if (faq.getIsActive() == null) {
+            faq.setIsActive(true);
+        }
+
+        return faqRepository.save(faq);
     }
 
     @Override
-    public FAQResponseDTO getFAQById(Long id) {
-        Optional<FAQEntity> optionalEntity = faqRepository.findById(id);
-        if (optionalEntity.isPresent()) {
-            return faqMapper.entityToResponseDto(optionalEntity.get());
+    public List<FAQEntity> getAllActiveFAQs() {
+        return faqRepository.findByIsActiveTrueOrderByDisplayOrderAsc();
+    }
+
+    @Override
+    public FAQEntity getFAQById(Long id) {
+        return faqRepository.findById(id).orElse(null);
+    }
+
+    @Override
+    public FAQEntity updateFAQ(Long id, FAQEntity faq) {
+        FAQEntity existingFAQ = faqRepository.findById(id).orElse(null);
+        if (existingFAQ != null) {
+            existingFAQ.setQuestion(faq.getQuestion());
+            existingFAQ.setAnswer(faq.getAnswer());
+            existingFAQ.setCategory(faq.getCategory());
+            existingFAQ.setDisplayOrder(faq.getDisplayOrder());
+            existingFAQ.setIsActive(faq.getIsActive());
+            return faqRepository.save(existingFAQ);
         }
         return null;
     }
 
     @Override
-    public List<FAQResponseDTO> getAllFAQs() {
-        List<FAQEntity> entities = faqRepository.findAll();
-        return faqMapper.entityListToResponseDtoList(entities);
-    }
-
-    @Override
-    public FAQResponseDTO updateFAQ(Long id, FAQRequestDTO requestDTO) {
-        Optional<FAQEntity> optionalEntity = faqRepository.findById(id);
-
-        if (!optionalEntity.isPresent()) {
-            return null;
+    public void deleteFAQ(Long id) {
+        FAQEntity existingFAQ = faqRepository.findById(id).orElse(null);
+        if (existingFAQ != null) {
+            existingFAQ.setIsActive(false);
+            faqRepository.save(existingFAQ);
         }
-
-        FAQEntity existingEntity = optionalEntity.get();
-
-        // Use the mapper's update method which maintains the existing null-check logic
-        faqMapper.updateEntityFromRequestDto(existingEntity, requestDTO);
-
-        FAQEntity updatedEntity = faqRepository.save(existingEntity);
-        return faqMapper.entityToResponseDto(updatedEntity);
     }
 
     @Override
-    public boolean deleteFAQ(Long id) {
-        try {
-            if (faqRepository.existsById(id)) {
-                faqRepository.deleteById(id);
-                return true;
+    public List<FAQEntity> getFAQsByCategory(String category) {
+        return faqRepository.findByCategoryAndIsActiveTrueOrderByDisplayOrderAsc(category);
+    }
+
+    @Override
+    public List<FAQEntity> searchFAQs(String keyword) {
+        return faqRepository.searchFAQsByKeyword(keyword);
+    }
+
+    @Override
+    public List<String> getAllActiveCategories() {
+        return faqRepository.findAllActiveCategories();
+    }
+
+    @Override
+    public List<FAQEntity> getFAQsByCategories(List<String> categories) {
+        return faqRepository.findByCategoriesAndIsActiveTrue(categories);
+    }
+
+    @Override
+    public void reorderFAQs(List<Long> faqIds) {
+        for (int i = 0; i < faqIds.size(); i++) {
+            FAQEntity faq = faqRepository.findById(faqIds.get(i)).orElse(null);
+            if (faq != null) {
+                faq.setDisplayOrder(i + 1);
+                faqRepository.save(faq);
             }
-            return false;
-        } catch (Exception e) {
-            return false;
         }
+    }
+
+    @Override
+    public FAQEntity toggleFAQStatus(Long id) {
+        FAQEntity existingFAQ = faqRepository.findById(id).orElse(null);
+        if (existingFAQ != null) {
+            existingFAQ.setIsActive(!existingFAQ.getIsActive());
+            return faqRepository.save(existingFAQ);
+        }
+        return null;
     }
 }

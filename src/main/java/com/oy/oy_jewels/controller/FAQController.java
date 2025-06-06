@@ -1,9 +1,7 @@
 package com.oy.oy_jewels.controller;
 
 
-import com.oy.oy_jewels.dto.request.FAQRequestDTO;
-import com.oy.oy_jewels.dto.response.ApiResponse;
-import com.oy.oy_jewels.dto.response.FAQResponseDTO;
+import com.oy.oy_jewels.entity.FAQEntity;
 import com.oy.oy_jewels.service.FAQService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -20,78 +18,89 @@ public class FAQController {
     @Autowired
     private FAQService faqService;
 
-    @PostMapping("/create")
-    public ResponseEntity<ApiResponse<FAQResponseDTO>> createFAQ(@RequestBody FAQRequestDTO requestDTO) {
-        try {
-            FAQResponseDTO responseDTO = faqService.createFAQ(requestDTO);
-            if (responseDTO != null) {
-                return ResponseEntity.ok(ApiResponse.success("FAQ created successfully", responseDTO));
-            } else {
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(ApiResponse.error("Failed to create FAQ", null));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Internal server error: " + e.getMessage(), null));
-        }
+    // Create new FAQ
+    @PostMapping("/create-FAQ")
+    public ResponseEntity<FAQEntity> createFAQ(@RequestBody FAQEntity faq) {
+        FAQEntity createdFAQ = faqService.createFAQ(faq);
+        return new ResponseEntity<>(createdFAQ, HttpStatus.CREATED);
     }
 
+    // Get all active FAQs
+    @GetMapping("/get-All-Active-FAQs")
+    public ResponseEntity<List<FAQEntity>> getAllActiveFAQs() {
+        List<FAQEntity> faqs = faqService.getAllActiveFAQs();
+        return new ResponseEntity<>(faqs, HttpStatus.OK);
+    }
+
+    // Get FAQ by ID
     @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<FAQResponseDTO>> getFAQById(@PathVariable Long id) {
-        try {
-            FAQResponseDTO responseDTO = faqService.getFAQById(id);
-            if (responseDTO != null) {
-                return ResponseEntity.ok(ApiResponse.success("FAQ retrieved successfully", responseDTO));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.error("FAQ not found", null));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Internal server error: " + e.getMessage(), null));
+    public ResponseEntity<FAQEntity> getFAQById(@PathVariable Long id) {
+        FAQEntity faq = faqService.getFAQById(id);
+        if (faq != null) {
+            return new ResponseEntity<>(faq, HttpStatus.OK);
         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<FAQResponseDTO>>> getAllFAQs() {
-        try {
-            List<FAQResponseDTO> responseDTOs = faqService.getAllFAQs();
-            return ResponseEntity.ok(ApiResponse.success("FAQs retrieved successfully", responseDTOs));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Internal server error: " + e.getMessage(), null));
-        }
-    }
-
+    // Update FAQ
     @PutMapping("/{id}")
-    public ResponseEntity<ApiResponse<FAQResponseDTO>> updateFAQ(@PathVariable Long id, @RequestBody FAQRequestDTO requestDTO) {
-        try {
-            FAQResponseDTO responseDTO = faqService.updateFAQ(id, requestDTO);
-            if (responseDTO != null) {
-                return ResponseEntity.ok(ApiResponse.success("FAQ updated successfully", responseDTO));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.error("FAQ not found", null));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Internal server error: " + e.getMessage(), null));
+    public ResponseEntity<FAQEntity> updateFAQ(@PathVariable Long id, @RequestBody FAQEntity faq) {
+        FAQEntity updatedFAQ = faqService.updateFAQ(id, faq);
+        if (updatedFAQ != null) {
+            return new ResponseEntity<>(updatedFAQ, HttpStatus.OK);
         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 
+    // Delete FAQ (soft delete)
     @DeleteMapping("/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteFAQ(@PathVariable Long id) {
-        try {
-            boolean deleted = faqService.deleteFAQ(id);
-            if (deleted) {
-                return ResponseEntity.ok(ApiResponse.success("FAQ deleted successfully", "FAQ with ID " + id + " has been deleted"));
-            } else {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(ApiResponse.error("FAQ not found", null));
-            }
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(ApiResponse.error("Internal server error: " + e.getMessage(), null));
+    public ResponseEntity<Void> deleteFAQ(@PathVariable Long id) {
+        faqService.deleteFAQ(id);
+        return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    }
+
+    // Get FAQs by category
+    @GetMapping("/category/{category}")
+    public ResponseEntity<List<FAQEntity>> getFAQsByCategory(@PathVariable String category) {
+        List<FAQEntity> faqs = faqService.getFAQsByCategory(category);
+        return new ResponseEntity<>(faqs, HttpStatus.OK);
+    }
+
+    // Search FAQs by keyword
+    @GetMapping("/search")
+    public ResponseEntity<List<FAQEntity>> searchFAQs(@RequestParam String keyword) {
+        List<FAQEntity> faqs = faqService.searchFAQs(keyword);
+        return new ResponseEntity<>(faqs, HttpStatus.OK);
+    }
+
+    // Get all active categories
+    @GetMapping("/categories")
+    public ResponseEntity<List<String>> getAllActiveCategories() {
+        List<String> categories = faqService.getAllActiveCategories();
+        return new ResponseEntity<>(categories, HttpStatus.OK);
+    }
+
+    // Get FAQs by multiple categories
+    @PostMapping("/categories")
+    public ResponseEntity<List<FAQEntity>> getFAQsByCategories(@RequestBody List<String> categories) {
+        List<FAQEntity> faqs = faqService.getFAQsByCategories(categories);
+        return new ResponseEntity<>(faqs, HttpStatus.OK);
+    }
+
+    // Reorder FAQs
+    @PutMapping("/reorder")
+    public ResponseEntity<Void> reorderFAQs(@RequestBody List<Long> faqIds) {
+        faqService.reorderFAQs(faqIds);
+        return new ResponseEntity<>(HttpStatus.OK);
+    }
+
+    // Toggle FAQ active status
+    @PutMapping("/{id}/toggle-status")
+    public ResponseEntity<FAQEntity> toggleFAQStatus(@PathVariable Long id) {
+        FAQEntity faq = faqService.toggleFAQStatus(id);
+        if (faq != null) {
+            return new ResponseEntity<>(faq, HttpStatus.OK);
         }
+        return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
 }

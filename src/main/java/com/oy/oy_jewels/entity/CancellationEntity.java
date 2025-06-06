@@ -1,7 +1,6 @@
 package com.oy.oy_jewels.entity;
 
 import jakarta.persistence.*;
-
 import java.time.LocalDateTime;
 
 @Entity
@@ -12,13 +11,13 @@ public class CancellationEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "cancellation_title", nullable = false, length = 100)
+    @Column(name = "cancellation_title", length = 100)
     private String cancellationTitle;
 
-    @Column(name = "cancellation_description", nullable = false, length = 1000)
+    @Column(name = "cancellation_description", length = 1000)
     private String cancellationDescription;
 
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at")
@@ -31,18 +30,6 @@ public class CancellationEntity {
     public CancellationEntity(String cancellationTitle, String cancellationDescription) {
         this.cancellationTitle = cancellationTitle;
         this.cancellationDescription = cancellationDescription;
-    }
-
-    // JPA lifecycle methods for automatic timestamp management
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
     }
 
     // Getters and Setters
