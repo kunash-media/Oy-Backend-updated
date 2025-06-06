@@ -1,6 +1,5 @@
 package com.oy.oy_jewels.service;
 
-
 import com.oy.oy_jewels.dto.request.FAQRequestDTO;
 import com.oy.oy_jewels.dto.response.FAQResponseDTO;
 
@@ -16,5 +15,5 @@ public interface FAQService {
 
     FAQResponseDTO updateFAQ(Long id, FAQRequestDTO requestDTO);
 
-    void deleteFAQ(Long id);
+    boolean deleteFAQ(Long id);
 }

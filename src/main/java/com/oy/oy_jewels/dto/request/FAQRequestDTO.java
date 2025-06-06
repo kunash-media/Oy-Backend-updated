@@ -1,6 +1,5 @@
 package com.oy.oy_jewels.dto.request;
 
-
 public class FAQRequestDTO {
     private String faq1Title;
     private String faq1Description;

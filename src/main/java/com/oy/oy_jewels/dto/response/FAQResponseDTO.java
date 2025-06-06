@@ -1,7 +1,5 @@
 package com.oy.oy_jewels.dto.response;
 
-
-
 public class FAQResponseDTO {
     private Long id;
     private String faq1Title;

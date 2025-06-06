@@ -1,6 +1,5 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
-
 import com.oy.oy_jewels.dto.request.FAQRequestDTO;
 import com.oy.oy_jewels.dto.response.FAQResponseDTO;
 import com.oy.oy_jewels.entity.FAQEntity;
@@ -11,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class FAQServiceImpl implements FAQService {
@@ -30,8 +30,11 @@ public class FAQServiceImpl implements FAQService {
 
     @Override
     public FAQResponseDTO getFAQById(Long id) {
-        FAQEntity entity = faqRepository.findById(id).orElse(null);
-        return faqMapper.entityToResponseDto(entity);
+        Optional<FAQEntity> optionalEntity = faqRepository.findById(id);
+        if (optionalEntity.isPresent()) {
+            return faqMapper.entityToResponseDto(optionalEntity.get());
+        }
+        return null;
     }
 
     @Override
@@ -42,11 +45,13 @@ public class FAQServiceImpl implements FAQService {
 
     @Override
     public FAQResponseDTO updateFAQ(Long id, FAQRequestDTO requestDTO) {
-        FAQEntity existingEntity = faqRepository.findById(id).orElse(null);
+        Optional<FAQEntity> optionalEntity = faqRepository.findById(id);
 
-        if (existingEntity == null) {
+        if (!optionalEntity.isPresent()) {
             return null;
         }
+
+        FAQEntity existingEntity = optionalEntity.get();
 
         // Use the mapper's update method which maintains the existing null-check logic
         faqMapper.updateEntityFromRequestDto(existingEntity, requestDTO);
@@ -56,7 +61,15 @@ public class FAQServiceImpl implements FAQService {
     }
 
     @Override
-    public void deleteFAQ(Long id) {
-        faqRepository.deleteById(id);
+    public boolean deleteFAQ(Long id) {
+        try {
+            if (faqRepository.existsById(id)) {
+                faqRepository.deleteById(id);
+                return true;
+            }
+            return false;
+        } catch (Exception e) {
+            return false;
+        }
     }
 }
