@@ -25,21 +25,26 @@ public class BannerController {
     // Create banner with images
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BannerEntity> createBanner(
-            @RequestParam("pageName") String pageName,
-            @RequestParam("header") String header,
-            @RequestParam("text") String text,
-            @RequestParam(value = "bannerFileOne", required = false) MultipartFile bannerFileOne,
-            @RequestParam(value = "bannerFileTwo", required = false) MultipartFile bannerFileTwo,
-            @RequestParam(value = "bannerFileThree", required = false) MultipartFile bannerFileThree,
-            @RequestParam(value = "bannerFileFour", required = false) MultipartFile bannerFileFour) {
+            @RequestPart("pageName") String pageName,
+            @RequestPart("header") String header,
+            @RequestPart("text") String text,
+            @RequestPart(value = "bannerFileOne", required = false) MultipartFile bannerFileOne,
+            @RequestPart(value = "bannerFileTwo", required = false) MultipartFile bannerFileTwo,
+            @RequestPart(value = "bannerFileThree", required = false) MultipartFile bannerFileThree,
+            @RequestPart(value = "bannerFileFour", required = false) MultipartFile bannerFileFour) {
+
         try {
-            BannerEntity banner = bannerService.saveBannerWithImages(pageName, header, text,
-                    bannerFileOne, bannerFileTwo, bannerFileThree, bannerFileFour);
-            return new ResponseEntity<>(banner, HttpStatus.CREATED);
+            BannerEntity banner = bannerService.saveBannerWithImages(
+                    pageName, header, text,
+                    bannerFileOne, bannerFileTwo, bannerFileThree, bannerFileFour
+            );
+            return ResponseEntity.status(HttpStatus.CREATED).body(banner);
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
 
     // Get all banners
     @GetMapping
