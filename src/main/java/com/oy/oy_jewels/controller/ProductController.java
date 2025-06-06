@@ -13,6 +13,9 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.List;
 
+//@CrossOrigin(origins = "*"
+
+@CrossOrigin(origins ="*")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
