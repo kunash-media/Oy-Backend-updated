@@ -8,16 +8,8 @@ import java.util.List;
 
 @Repository
 public interface ProductRepository extends JpaRepository<ProductEntity, Long> {
-
-    // Find products by category
-    List<ProductEntity> findByCategory(String category);
-
-    // Find products by stock status
-    List<ProductEntity> findByStock(String stock);
-
-    // Find products by product name containing
-    List<ProductEntity> findByProductNameContainingIgnoreCase(String productName);
-
-    // Find products by shop by
+    List<ProductEntity> findByProductCategory(String productCategory);
+    List<ProductEntity> findByProductStock(String productStock);
+    List<ProductEntity> findByProductTitleContainingIgnoreCase(String productTitle);
     List<ProductEntity> findByShopBy(String shopBy);
 }

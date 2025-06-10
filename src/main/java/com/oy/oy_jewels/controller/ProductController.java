@@ -1,6 +1,9 @@
 package com.oy.oy_jewels.controller;
 
-import com.oy.oy_jewels.entity.ProductEntity;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
+import com.oy.oy_jewels.dto.request.ProductDTO;
 import com.oy.oy_jewels.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -9,13 +12,11 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
-//@CrossOrigin(origins = "*"
-
-@CrossOrigin(origins ="*")
+//@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -23,125 +24,236 @@ public class ProductController {
     @Autowired
     private ProductService productService;
 
-    // Create new product with image
+    @Autowired
+    private ObjectMapper objectMapper;
+
+    // Create new product
     @PostMapping(value = "/create-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductEntity> createProduct(
-            @RequestPart("productName") String productName,
-            @RequestPart("category") String category,
-            @RequestPart(value = "couponCode", required = false) String couponCode,
-            @RequestPart("quantity") String quantity,
-            @RequestPart(value = "offer", required = false) String offer,
-            @RequestPart("gst") String gst,
-            @RequestPart("discount") String discount,
+    public ResponseEntity<ProductDTO> createProduct(
+            @RequestPart("productTitle") String productTitle,
             @RequestPart("productPrice") String productPrice,
-            @RequestPart(value = "stock", required = false) String stock,
+            @RequestPart("productOldPrice") String productOldPrice,
+            @RequestPart("productImage") MultipartFile productImage,
+            @RequestPart("productSubImages") MultipartFile[] productSubImages,
+            @RequestPart("productDescription") String productDescription,
+            @RequestPart("productFeatures") String productFeatures,
+            @RequestPart("productSizes") String productSizes,
+            @RequestPart("productUnavailableSizes") String productUnavailableSizes,
+            @RequestPart("productCategory") String productCategory,
+            @RequestPart("productStock") String productStock,
+            @RequestPart("productQuantity") String productQuantity,
             @RequestPart("shopBy") String shopBy,
-            @RequestPart("totalPrice") String totalPrice,
-            @RequestPart(value = "productImage", required = false) MultipartFile productImage) throws IOException {
+            @RequestPart("productDiscount") String productDiscount,
+            @RequestPart("productCouponCode") String productCouponCode) {
 
-        ProductEntity product = new ProductEntity();
-        product.setProductName(productName);
-        product.setCategory(category);
-        product.setCouponCode(couponCode);
-        product.setQuantity(Integer.parseInt(quantity));
-        product.setOffer(offer);
-        product.setGst(new BigDecimal(gst));
-        product.setDiscount(new BigDecimal(discount));
-        product.setProductPrice(new BigDecimal(productPrice));
-        product.setStock(stock);
-        product.setShopBy(shopBy);
-        product.setTotalPrice(new BigDecimal(totalPrice));
+        try {
+            ProductCreateRequestDTO requestDTO = new ProductCreateRequestDTO();
+            requestDTO.setProductTitle(productTitle);
+            requestDTO.setProductPrice(new BigDecimal(productPrice));
+            requestDTO.setProductOldPrice(new BigDecimal(productOldPrice));
+            requestDTO.setProductImage(productImage.getBytes());
 
-        if (productImage != null && !productImage.isEmpty()) {
-            product.setProductImage(productImage.getBytes());
+            List<byte[]> subImages = new ArrayList<>();
+            for (MultipartFile file : productSubImages) {
+                subImages.add(file.getBytes());
+            }
+            requestDTO.setProductSubImages(subImages);
+
+            requestDTO.setProductDescription(productDescription);
+            requestDTO.setProductCategory(productCategory);
+            requestDTO.setProductStock(productStock);
+            requestDTO.setProductQuantity(Integer.parseInt(productQuantity));
+            requestDTO.setShopBy(shopBy);
+            requestDTO.setProductDiscount(productDiscount);
+            requestDTO.setProductCouponCode(productCouponCode);
+
+            // Parse JSON arrays
+            List<String> features = objectMapper.readValue(productFeatures, new TypeReference<List<String>>() {});
+            List<String> sizes = objectMapper.readValue(productSizes, new TypeReference<List<String>>() {});
+            List<String> unavailableSizes = objectMapper.readValue(productUnavailableSizes, new TypeReference<List<String>>() {});
+
+            requestDTO.setProductFeatures(features);
+            requestDTO.setProductSizes(sizes);
+            requestDTO.setProductUnavailableSizes(unavailableSizes);
+
+            ProductDTO createdProduct = productService.createProduct(requestDTO);
+            return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
+
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        ProductEntity createdProduct = productService.createProduct(product);
-        return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
     }
 
     // Get all products
-    @GetMapping("get-all-product")
-    public ResponseEntity<List<ProductEntity>> getAllProducts() {
-        List<ProductEntity> products = productService.getAllProducts();
-        return new ResponseEntity<>(products, HttpStatus.OK);
+    @GetMapping("/get-all-product")
+    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+        try {
+            List<ProductDTO> products = productService.getAllProducts();
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // Get product by ID
     @GetMapping("/{productId}")
-    public ResponseEntity<ProductEntity> getProductById(@PathVariable Long productId) {
-        ProductEntity product = productService.getProductById(productId);
-        return new ResponseEntity<>(product, HttpStatus.OK);
-    }
-
-    // Get product image by ID
-    @GetMapping("/{productId}/image")
-    public ResponseEntity<byte[]> getProductImage(@PathVariable Long productId) {
-        ProductEntity product = productService.getProductById(productId);
-        if (product.getProductImage() != null) {
-            return ResponseEntity.ok()
-                    .contentType(MediaType.IMAGE_JPEG)
-                    .body(product.getProductImage());
+    public ResponseEntity<ProductDTO> getProductById(@PathVariable Long productId) {
+        try {
+            ProductDTO product = productService.getProductById(productId);
+            return new ResponseEntity<>(product, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return ResponseEntity.notFound().build();
     }
 
-    // Update product with image
+    // Update product
     @PutMapping(value = "/update-product/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductEntity> updateProduct(
+    public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable Long productId,
-            @RequestPart("productName") String productName,
-            @RequestPart("category") String category,
-            @RequestPart(value = "couponCode", required = false) String couponCode,
-            @RequestPart("quantity") String quantity,
-            @RequestPart(value = "offer", required = false) String offer,
-            @RequestPart("gst") String gst,
-            @RequestPart("discount") String discount,
+            @RequestPart("productTitle") String productTitle,
             @RequestPart("productPrice") String productPrice,
-            @RequestPart(value = "stock", required = false) String stock,
+            @RequestPart("productOldPrice") String productOldPrice,
+            @RequestPart(value = "productImage", required = false) MultipartFile productImage,
+            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages,
+            @RequestPart("productDescription") String productDescription,
+            @RequestPart("productFeatures") String productFeatures,
+            @RequestPart("productSizes") String productSizes,
+            @RequestPart("productUnavailableSizes") String productUnavailableSizes,
+            @RequestPart("productCategory") String productCategory,
+            @RequestPart("productStock") String productStock,
+            @RequestPart("productQuantity") String productQuantity,
             @RequestPart("shopBy") String shopBy,
-            @RequestPart("totalPrice") String totalPrice,
-            @RequestPart(value = "productImage", required = false) MultipartFile productImage) throws IOException {
+            @RequestPart("productDiscount") String productDiscount,
+            @RequestPart("productCouponCode") String productCouponCode) {
 
-        ProductEntity product = new ProductEntity();
-        product.setProductName(productName);
-        product.setCategory(category);
-        product.setCouponCode(couponCode);
-        product.setQuantity(Integer.parseInt(quantity));
-        product.setOffer(offer);
-        product.setGst(new BigDecimal(gst));
-        product.setDiscount(new BigDecimal(discount));
-        product.setProductPrice(new BigDecimal(productPrice));
-        product.setStock(stock);
-        product.setShopBy(shopBy);
-        product.setTotalPrice(new BigDecimal(totalPrice));
+        try {
+            ProductCreateRequestDTO requestDTO = new ProductCreateRequestDTO();
+            requestDTO.setProductTitle(productTitle);
+            requestDTO.setProductPrice(new BigDecimal(productPrice));
+            requestDTO.setProductOldPrice(new BigDecimal(productOldPrice));
 
-        if (productImage != null && !productImage.isEmpty()) {
-            product.setProductImage(productImage.getBytes());
+            if (productImage != null && !productImage.isEmpty()) {
+                requestDTO.setProductImage(productImage.getBytes());
+            }
+
+            if (productSubImages != null && productSubImages.length > 0) {
+                List<byte[]> subImages = new ArrayList<>();
+                for (MultipartFile file : productSubImages) {
+                    subImages.add(file.getBytes());
+                }
+                requestDTO.setProductSubImages(subImages);
+            }
+
+            requestDTO.setProductDescription(productDescription);
+            requestDTO.setProductCategory(productCategory);
+            requestDTO.setProductStock(productStock);
+            requestDTO.setProductQuantity(Integer.parseInt(productQuantity));
+            requestDTO.setShopBy(shopBy);
+            requestDTO.setProductDiscount(productDiscount);
+            requestDTO.setProductCouponCode(productCouponCode);
+
+            // Parse JSON arrays
+            List<String> features = objectMapper.readValue(productFeatures, new TypeReference<List<String>>() {});
+            List<String> sizes = objectMapper.readValue(productSizes, new TypeReference<List<String>>() {});
+            List<String> unavailableSizes = objectMapper.readValue(productUnavailableSizes, new TypeReference<List<String>>() {});
+
+            requestDTO.setProductFeatures(features);
+            requestDTO.setProductSizes(sizes);
+            requestDTO.setProductUnavailableSizes(unavailableSizes);
+
+            ProductDTO updatedProduct = productService.updateProduct(productId, requestDTO);
+            return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
+
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        ProductEntity updatedProduct = productService.updateProduct(productId, product);
-        return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
     }
 
     // Delete product
     @DeleteMapping("/delete-product/{productId}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long productId) {
-        productService.deleteProduct(productId);
-        return new ResponseEntity<>("Product deleted successfully", HttpStatus.OK);
+        try {
+            productService.deleteProduct(productId);
+            return new ResponseEntity<>("Product deleted successfully", HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>("Invalid product ID", HttpStatus.BAD_REQUEST);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>("Product not found", HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>("Failed to delete product", HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Search products by title
+    @GetMapping("/search/{title}")
+    public ResponseEntity<List<ProductDTO>> getProductsByTitle(@PathVariable String title) {
+        try {
+            List<ProductDTO> products = productService.getProductsByTitle(title);
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Check if product exists
+    @GetMapping("/exists/{productId}")
+    public ResponseEntity<Boolean> checkProductExists(@PathVariable Long productId) {
+        try {
+            boolean exists = productService.existsById(productId);
+            return new ResponseEntity<>(exists, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(false, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(false, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    // Get product count
+    @GetMapping("/count")
+    public ResponseEntity<Long> getProductCount() {
+        try {
+            long count = productService.getProductCount();
+            return new ResponseEntity<>(count, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(0L, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
     // Get products by category
     @GetMapping("/category/{category}")
-    public ResponseEntity<List<ProductEntity>> getProductsByCategory(@PathVariable String category) {
-        List<ProductEntity> products = productService.getProductsByCategory(category);
-        return new ResponseEntity<>(products, HttpStatus.OK);
+    public ResponseEntity<List<ProductDTO>> getProductsByCategory(@PathVariable String category) {
+        try {
+            List<ProductDTO> products = productService.getProductsByCategory(category);
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 
-    // Get products by stock status
-    @GetMapping("/stock/{stock}")
-    public ResponseEntity<List<ProductEntity>> getProductsByStock(@PathVariable String stock) {
-        List<ProductEntity> products = productService.getProductsByStock(stock);
-        return new ResponseEntity<>(products, HttpStatus.OK);
+    // Get products by shopBy
+    @GetMapping("/shop-by/{shopBy}")
+    public ResponseEntity<List<ProductDTO>> getProductsByShopBy(@PathVariable String shopBy) {
+        try {
+            List<ProductDTO> products = productService.getProductsByShopBy(shopBy);
+            return new ResponseEntity<>(products, HttpStatus.OK);
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
     }
 }

@@ -46,8 +46,8 @@ public class OrderResponse {
 
         if (order.getProduct() != null) {
             this.productId = order.getProduct().getProductId();
-            this.productName = order.getProduct().getProductName();
-            this.productCategory = order.getProduct().getCategory();
+            this.productName = order.getProduct().getProductTitle();
+            this.productCategory = order.getProduct().getProductCategory();
         }
     }
 

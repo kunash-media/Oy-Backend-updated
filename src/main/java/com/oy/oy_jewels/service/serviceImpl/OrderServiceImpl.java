@@ -53,12 +53,12 @@ public class OrderServiceImpl implements OrderService {
                 .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
 
         // Check product stock
-        if (!"instock".equalsIgnoreCase(product.getStock())) {
+        if (!"instock".equalsIgnoreCase(product.getProductStock())) {
             throw new RuntimeException("Product is out of stock");
         }
 
         // Check if requested quantity is available
-        if (request.getQuantity() > product.getQuantity()) {
+        if (request.getQuantity() > product.getProductQuantity()) {
             throw new RuntimeException("Requested quantity exceeds available stock");
         }
 
@@ -96,7 +96,7 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity savedOrder = orderRepository.save(order);
 
         // Update product quantity
-        product.setQuantity(product.getQuantity() - request.getQuantity());
+        product.setProductQuantity(product.getProductQuantity() - request.getQuantity());
         productRepository.save(product);
 
         return new OrderResponse(savedOrder);
@@ -132,12 +132,12 @@ public class OrderServiceImpl implements OrderService {
             ProductEntity product = existingOrder.getProduct();
             int quantityDifference = request.getQuantity() - existingOrder.getQuantity();
 
-            if (quantityDifference > 0 && quantityDifference > product.getQuantity()) {
+            if (quantityDifference > 0 && quantityDifference > product.getProductQuantity()) {
                 throw new RuntimeException("Requested quantity exceeds available stock");
             }
 
             // Update product quantity
-            product.setQuantity(product.getQuantity() - quantityDifference);
+            product.setProductQuantity(product.getProductQuantity() - quantityDifference);
             productRepository.save(product);
 
             existingOrder.setQuantity(request.getQuantity());
@@ -180,7 +180,7 @@ public class OrderServiceImpl implements OrderService {
 
         // Restore product quantity
         ProductEntity product = order.getProduct();
-        product.setQuantity(product.getQuantity() + order.getQuantity());
+        product.setProductQuantity(product.getProductQuantity() + order.getQuantity());
         productRepository.save(product);
 
         orderRepository.delete(order);

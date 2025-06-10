@@ -1,115 +1,29 @@
-package com.oy.oy_jewels.entity;
-
-import jakarta.persistence.*;
+package com.oy.oy_jewels.dto.request;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+public class ProductCreateRequestDTO {
 
-@Entity
-@Table(name = "products")
-public class ProductEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long productId;
-
-    @Column(name = "product_title")
     private String productTitle;
-
-    @Column(name = "product_price")
     private BigDecimal productPrice;
-
-    @Column(name = "product_old_price")
     private BigDecimal productOldPrice;
-
-    @Column(name = "product_image", columnDefinition = "LONGBLOB")
     private byte[] productImage;
-
-    @ElementCollection
-    @CollectionTable(name = "product_sub_images", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "sub_image", columnDefinition = "LONGBLOB")
     private List<byte[]> productSubImages = new ArrayList<>();
-
-    @Column(name = "product_description", columnDefinition = "TEXT")
     private String productDescription;
-
-    @ElementCollection
-    @CollectionTable(name = "product_features", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "feature")
     private List<String> productFeatures = new ArrayList<>();
-
-    @ElementCollection
-    @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "size")
     private List<String> productSizes = new ArrayList<>();
-
-    @ElementCollection
-    @CollectionTable(name = "product_unavailable_sizes", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "unavailable_size")
     private List<String> productUnavailableSizes = new ArrayList<>();
-
-    @Column(name = "category")
     private String productCategory;
-
-    @Column(name = "stock")
     private String productStock;
-
-    @Column(name = "quantity")
     private Integer productQuantity;
-
-    @Column(name = "shop_by")
     private String shopBy;
-
-    @Column(name = "discount")
     private String productDiscount;
-
-    @Column(name = "coupon_code")
     private String productCouponCode;
 
-    // Constructors
-    public ProductEntity() {}
+    // Constructors, Getters and Setters
 
-    // Getters and Setters
-
-
-    public ProductEntity(Long productId, String productTitle, BigDecimal productPrice, BigDecimal productOldPrice,
-                         byte[] productImage, List<byte[]> productSubImages, String productDescription,
-                         List<String> productFeatures, List<String> productSizes,
-                         List<String> productUnavailableSizes, String productCategory,
-                         String productStock, Integer productQuantity, String shopBy,
-                         String productDiscount, String productCouponCode) {
-        this.productId = productId;
-        this.productTitle = productTitle;
-        this.productPrice = productPrice;
-        this.productOldPrice = productOldPrice;
-        this.productImage = productImage;
-        this.productSubImages = productSubImages;
-        this.productDescription = productDescription;
-        this.productFeatures = productFeatures;
-        this.productSizes = productSizes;
-        this.productUnavailableSizes = productUnavailableSizes;
-        this.productCategory = productCategory;
-        this.productStock = productStock;
-        this.productQuantity = productQuantity;
-        this.shopBy = shopBy;
-        this.productDiscount = productDiscount;
-        this.productCouponCode = productCouponCode;
-    }
-
-//    public ProductEntity(String productTitle, BigDecimal productPrice, BigDecimal productOldPrice, byte[] productImage, List<byte[]> productSubImages, String productDescription, List<String> productFeatures, List<String> productSizes, List<String> productUnavailableSizes, String productCategory, String productStock) {
-//    }
-
-    // Getters and Setters
-
-    public Long getProductId() {
-        return productId;
-    }
-
-    public void setProductId(Long productId) {
-        this.productId = productId;
-    }
 
     public String getProductTitle() {
         return productTitle;

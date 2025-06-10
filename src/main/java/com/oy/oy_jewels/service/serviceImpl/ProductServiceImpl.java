@@ -1,77 +1,217 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
+import com.oy.oy_jewels.dto.request.ProductDTO;
 import com.oy.oy_jewels.entity.ProductEntity;
+import com.oy.oy_jewels.mapper.ProductMapper;
 import com.oy.oy_jewels.repository.ProductRepository;
 import com.oy.oy_jewels.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.util.List;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
+import java.util.List;
+import java.util.Optional;
+
 @Service
+@Transactional
 public class ProductServiceImpl implements ProductService {
 
     @Autowired
     private ProductRepository productRepository;
 
+    @Autowired
+    private ProductMapper productMapper;
+
     @Override
-    public ProductEntity createProduct(ProductEntity product) {
-        // Set default stock status if not provided
-        if (product.getStock() == null || product.getStock().isEmpty()) {
-            product.setStock("instock");
+    public ProductDTO createProduct(ProductCreateRequestDTO requestDTO) {
+        try {
+            validateProductRequest(requestDTO);
+            ProductEntity productEntity = productMapper.toEntity(requestDTO);
+            ProductEntity savedEntity = productRepository.save(productEntity);
+            return productMapper.toDTO(savedEntity);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to create product: " + e.getMessage(), e);
         }
-        return productRepository.save(product);
     }
 
     @Override
-    public List<ProductEntity> getAllProducts() {
-        return productRepository.findAll();
-    }
-
-    @Override
-    public ProductEntity getProductById(Long productId) {
-        return productRepository.findById(productId)
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
-    }
-
-    @Override
-    public ProductEntity updateProduct(Long productId, ProductEntity product) {
-        ProductEntity existingProduct = getProductById(productId);
-
-        // Update fields
-        existingProduct.setProductName(product.getProductName());
-        existingProduct.setCategory(product.getCategory());
-        existingProduct.setCouponCode(product.getCouponCode());
-        existingProduct.setQuantity(product.getQuantity());
-        existingProduct.setOffer(product.getOffer());
-        existingProduct.setGst(product.getGst());
-        existingProduct.setDiscount(product.getDiscount());
-        existingProduct.setProductPrice(product.getProductPrice());
-        existingProduct.setStock(product.getStock());
-        existingProduct.setShopBy(product.getShopBy());
-        existingProduct.setTotalPrice(product.getTotalPrice());
-
-        // Update image only if new image is provided
-        if (product.getProductImage() != null) {
-            existingProduct.setProductImage(product.getProductImage());
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getAllProducts() {
+        try {
+            List<ProductEntity> entities = productRepository.findAll();
+            return productMapper.toDTOList(entities);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to retrieve products: " + e.getMessage(), e);
         }
+    }
 
-        return productRepository.save(existingProduct);
+    @Override
+    @Transactional(readOnly = true)
+    public ProductDTO getProductById(Long productId) {
+        try {
+            validateProductId(productId);
+            ProductEntity entity = findProductEntityById(productId);
+            return productMapper.toDTO(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to retrieve product with id " + productId + ": " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    public ProductDTO updateProduct(Long productId, ProductCreateRequestDTO requestDTO) {
+        try {
+            validateProductId(productId);
+            validateProductRequest(requestDTO);
+
+            ProductEntity existingEntity = findProductEntityById(productId);
+            productMapper.updateEntityFromDTO(existingEntity, requestDTO);
+
+            ProductEntity updatedEntity = productRepository.save(existingEntity);
+            return productMapper.toDTO(updatedEntity);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update product with id " + productId + ": " + e.getMessage(), e);
+        }
     }
 
     @Override
     public void deleteProduct(Long productId) {
-        ProductEntity product = getProductById(productId);
-        productRepository.delete(product);
+        try {
+            validateProductId(productId);
+            ProductEntity entity = findProductEntityById(productId);
+            productRepository.delete(entity);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to delete product with id " + productId + ": " + e.getMessage(), e);
+        }
     }
 
     @Override
-    public List<ProductEntity> getProductsByCategory(String category) {
-        return productRepository.findByCategory(category);
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getProductsByTitle(String title) {
+        try {
+            if (!StringUtils.hasText(title)) {
+                throw new IllegalArgumentException("Product title cannot be null or empty");
+            }
+            List<ProductEntity> entities = productRepository.findByProductTitleContainingIgnoreCase(title.trim());
+            return productMapper.toDTOList(entities);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to search products by title '" + title + "': " + e.getMessage(), e);
+        }
     }
 
     @Override
-    public List<ProductEntity> getProductsByStock(String stock) {
-        return productRepository.findByStock(stock);
+    @Transactional(readOnly = true)
+    public boolean existsById(Long productId) {
+        try {
+            validateProductId(productId);
+            return productRepository.existsById(productId);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to check product existence with id " + productId + ": " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public long getProductCount() {
+        try {
+            return productRepository.count();
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get product count: " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getProductsByCategory(String category) {
+        try {
+            if (!StringUtils.hasText(category)) {
+                throw new IllegalArgumentException("Category cannot be null or empty");
+            }
+            List<ProductEntity> entities = productRepository.findByProductCategory(category.trim());
+            return productMapper.toDTOList(entities);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get products by category '" + category + "': " + e.getMessage(), e);
+        }
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public List<ProductDTO> getProductsByShopBy(String shopBy) {
+        try {
+            if (!StringUtils.hasText(shopBy)) {
+                throw new IllegalArgumentException("ShopBy cannot be null or empty");
+            }
+            List<ProductEntity> entities = productRepository.findByShopBy(shopBy.trim());
+            return productMapper.toDTOList(entities);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to get products by shopBy '" + shopBy + "': " + e.getMessage(), e);
+        }
+    }
+
+    // Private helper methods
+    private ProductEntity findProductEntityById(Long productId) {
+        return productRepository.findById(productId)
+                .orElseThrow(() -> new RuntimeException("Product not found with id: " + productId));
+    }
+
+    private void validateProductId(Long productId) {
+        if (productId == null || productId <= 0) {
+            throw new IllegalArgumentException("Product ID must be a positive number");
+        }
+    }
+
+    private void validateProductRequest(ProductCreateRequestDTO requestDTO) {
+        if (requestDTO == null) {
+            throw new IllegalArgumentException("Product request cannot be null");
+        }
+
+        if (!StringUtils.hasText(requestDTO.getProductTitle())) {
+            throw new IllegalArgumentException("Product title is required");
+        }
+
+        if (requestDTO.getProductPrice() == null || requestDTO.getProductPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Product price must be a non-negative value");
+        }
+
+        if (requestDTO.getProductOldPrice() != null && requestDTO.getProductOldPrice().compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Product old price must be a non-negative value");
+        }
+
+        if (!StringUtils.hasText(requestDTO.getProductCategory())) {
+            throw new IllegalArgumentException("Product category is required");
+        }
+
+        if (!StringUtils.hasText(requestDTO.getProductStock())) {
+            throw new IllegalArgumentException("Product stock information is required");
+        }
+
+        if (requestDTO.getProductQuantity() == null || requestDTO.getProductQuantity() < 0) {
+            throw new IllegalArgumentException("Product quantity must be a non-negative value");
+        }
+
+        // Trim string fields
+        requestDTO.setProductTitle(requestDTO.getProductTitle().trim());
+        requestDTO.setProductCategory(requestDTO.getProductCategory().trim());
+        requestDTO.setProductStock(requestDTO.getProductStock().trim());
+
+        if (StringUtils.hasText(requestDTO.getProductDescription())) {
+            requestDTO.setProductDescription(requestDTO.getProductDescription().trim());
+        }
+        if (StringUtils.hasText(requestDTO.getShopBy())) {
+            requestDTO.setShopBy(requestDTO.getShopBy().trim());
+        }
+        if (StringUtils.hasText(requestDTO.getProductDiscount())) {
+            requestDTO.setProductDiscount(requestDTO.getProductDiscount().trim());
+        }
+        if (StringUtils.hasText(requestDTO.getProductCouponCode())) {
+            requestDTO.setProductCouponCode(requestDTO.getProductCouponCode().trim());
+        }
     }
 }

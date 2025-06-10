@@ -1,85 +1,67 @@
-package com.oy.oy_jewels.entity;
+package com.oy.oy_jewels.dto.request;
 
-import jakarta.persistence.*;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
+public class ProductDTO {
 
-@Entity
-@Table(name = "products")
-public class ProductEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @JsonProperty("productId")
     private Long productId;
 
-    @Column(name = "product_title")
+    @JsonProperty("ProductTitle")
     private String productTitle;
 
-    @Column(name = "product_price")
+    @JsonProperty("ProductPrice")
     private BigDecimal productPrice;
 
-    @Column(name = "product_old_price")
+    @JsonProperty("ProductOldPrice")
     private BigDecimal productOldPrice;
 
-    @Column(name = "product_image", columnDefinition = "LONGBLOB")
+    @JsonProperty("ProductImage")
     private byte[] productImage;
 
-    @ElementCollection
-    @CollectionTable(name = "product_sub_images", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "sub_image", columnDefinition = "LONGBLOB")
+    @JsonProperty("ProductSubImages")
     private List<byte[]> productSubImages = new ArrayList<>();
 
-    @Column(name = "product_description", columnDefinition = "TEXT")
+    @JsonProperty("ProductDescription")
     private String productDescription;
 
-    @ElementCollection
-    @CollectionTable(name = "product_features", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "feature")
+    @JsonProperty("ProductFeatures")
     private List<String> productFeatures = new ArrayList<>();
 
-    @ElementCollection
-    @CollectionTable(name = "product_sizes", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "size")
+    @JsonProperty("ProductSizes")
     private List<String> productSizes = new ArrayList<>();
 
-    @ElementCollection
-    @CollectionTable(name = "product_unavailable_sizes", joinColumns = @JoinColumn(name = "product_id"))
-    @Column(name = "unavailable_size")
+    @JsonProperty("ProductUnavailableSizes")
     private List<String> productUnavailableSizes = new ArrayList<>();
 
-    @Column(name = "category")
+    @JsonProperty("ProductCategory")
     private String productCategory;
 
-    @Column(name = "stock")
+    @JsonProperty("ProductStock")
     private String productStock;
 
-    @Column(name = "quantity")
+    @JsonProperty("productQuantity")
     private Integer productQuantity;
 
-    @Column(name = "shop_by")
+    @JsonProperty("shopBy")
     private String shopBy;
 
-    @Column(name = "discount")
+    @JsonProperty("productDiscount")
     private String productDiscount;
 
-    @Column(name = "coupon_code")
+    @JsonProperty("productCouponCode")
     private String productCouponCode;
 
-    // Constructors
-    public ProductEntity() {}
+    // Constructors, Getters and Setters
 
-    // Getters and Setters
-
-
-    public ProductEntity(Long productId, String productTitle, BigDecimal productPrice, BigDecimal productOldPrice,
-                         byte[] productImage, List<byte[]> productSubImages, String productDescription,
-                         List<String> productFeatures, List<String> productSizes,
-                         List<String> productUnavailableSizes, String productCategory,
-                         String productStock, Integer productQuantity, String shopBy,
-                         String productDiscount, String productCouponCode) {
+    public ProductDTO(Long productId, String productTitle, BigDecimal productPrice, BigDecimal productOldPrice,
+                      byte[] productImage, List<byte[]> productSubImages, String productDescription,
+                      List<String> productFeatures, List<String> productSizes, List<String> productUnavailableSizes, String productCategory, String productStock,
+                      Integer productQuantity, String shopBy, String productDiscount, String productCouponCode) {
         this.productId = productId;
         this.productTitle = productTitle;
         this.productPrice = productPrice;
@@ -97,11 +79,6 @@ public class ProductEntity {
         this.productDiscount = productDiscount;
         this.productCouponCode = productCouponCode;
     }
-
-//    public ProductEntity(String productTitle, BigDecimal productPrice, BigDecimal productOldPrice, byte[] productImage, List<byte[]> productSubImages, String productDescription, List<String> productFeatures, List<String> productSizes, List<String> productUnavailableSizes, String productCategory, String productStock) {
-//    }
-
-    // Getters and Setters
 
     public Long getProductId() {
         return productId;

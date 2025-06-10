@@ -1,29 +1,22 @@
 package com.oy.oy_jewels.service;
 
+import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
+import com.oy.oy_jewels.dto.request.ProductDTO;
 import com.oy.oy_jewels.entity.ProductEntity;
 
 import java.util.List;
 
+import java.util.List;
+
 public interface ProductService {
-
-    // Create new product
-    ProductEntity createProduct(ProductEntity product);
-
-    // Get all products
-    List<ProductEntity> getAllProducts();
-
-    // Get product by ID
-    ProductEntity getProductById(Long productId);
-
-    // Update product
-    ProductEntity updateProduct(Long productId, ProductEntity product);
-
-    // Delete product
+    ProductDTO createProduct(ProductCreateRequestDTO requestDTO);
+    List<ProductDTO> getAllProducts();
+    ProductDTO getProductById(Long productId);
+    ProductDTO updateProduct(Long productId, ProductCreateRequestDTO requestDTO);
     void deleteProduct(Long productId);
-
-    // Get products by category
-    List<ProductEntity> getProductsByCategory(String category);
-
-    // Get products by stock status
-    List<ProductEntity> getProductsByStock(String stock);
+    List<ProductDTO> getProductsByTitle(String title);
+    boolean existsById(Long productId);
+    long getProductCount();
+    List<ProductDTO> getProductsByCategory(String category);
+    List<ProductDTO> getProductsByShopBy(String shopBy);
 }
