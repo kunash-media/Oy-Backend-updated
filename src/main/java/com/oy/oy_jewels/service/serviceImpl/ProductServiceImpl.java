@@ -2,6 +2,7 @@ package com.oy.oy_jewels.service.serviceImpl;
 
 import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
 import com.oy.oy_jewels.dto.request.ProductDTO;
+import com.oy.oy_jewels.dto.request.ProductPatchRequestDTO;
 import com.oy.oy_jewels.entity.ProductEntity;
 import com.oy.oy_jewels.mapper.ProductMapper;
 import com.oy.oy_jewels.repository.ProductRepository;
@@ -62,6 +63,68 @@ public class ProductServiceImpl implements ProductService {
             return productMapper.toDTO(entity);
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve product with id " + productId + ": " + e.getMessage(), e);
+        }
+    }
+
+
+    @Override
+    public ProductDTO patchProduct(Long productId, ProductPatchRequestDTO patchRequest) {
+        try {
+            validateProductId(productId);
+
+            ProductEntity existingEntity = findProductEntityById(productId);
+
+            // Update only the fields that are present in the patch request
+            if (patchRequest.getProductTitle() != null) {
+                existingEntity.setProductTitle(patchRequest.getProductTitle());
+            }
+            if (patchRequest.getProductPrice() != null) {
+                existingEntity.setProductPrice(patchRequest.getProductPrice());
+            }
+            if (patchRequest.getProductOldPrice() != null) {
+                existingEntity.setProductOldPrice(patchRequest.getProductOldPrice());
+            }
+            if (patchRequest.isProductImagePresent()) {
+                existingEntity.setProductImage(patchRequest.getProductImage());
+            }
+            if (patchRequest.isProductSubImagesPresent()) {
+                existingEntity.setProductSubImages(patchRequest.getProductSubImages());
+            }
+            if (patchRequest.getProductDescription() != null) {
+                existingEntity.setProductDescription(patchRequest.getProductDescription());
+            }
+            if (patchRequest.getProductFeatures() != null) {
+                existingEntity.setProductFeatures(patchRequest.getProductFeatures());
+            }
+            if (patchRequest.getProductSizes() != null) {
+                existingEntity.setProductSizes(patchRequest.getProductSizes());
+            }
+            if (patchRequest.getProductUnavailableSizes() != null) {
+                existingEntity.setProductUnavailableSizes(patchRequest.getProductUnavailableSizes());
+            }
+            if (patchRequest.getProductCategory() != null) {
+                existingEntity.setProductCategory(patchRequest.getProductCategory());
+            }
+            if (patchRequest.getProductStock() != null) {
+                existingEntity.setProductStock(patchRequest.getProductStock());
+            }
+            if (patchRequest.getProductQuantity() != null) {
+                existingEntity.setProductQuantity(patchRequest.getProductQuantity());
+            }
+            if (patchRequest.getShopBy() != null) {
+                existingEntity.setShopBy(patchRequest.getShopBy());
+            }
+            if (patchRequest.getProductDiscount() != null) {
+                existingEntity.setProductDiscount(patchRequest.getProductDiscount());
+            }
+            if (patchRequest.getProductCouponCode() != null) {
+                existingEntity.setProductCouponCode(patchRequest.getProductCouponCode());
+            }
+
+            ProductEntity updatedEntity = productRepository.save(existingEntity);
+            return productMapper.toDTO(updatedEntity);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to patch product with id " + productId + ": " + e.getMessage(), e);
         }
     }
 

@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
 import com.oy.oy_jewels.dto.request.ProductDTO;
+import com.oy.oy_jewels.dto.request.ProductPatchRequestDTO;
 import com.oy.oy_jewels.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
@@ -111,6 +112,85 @@ public class ProductController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+
+    //patch api
+    @PatchMapping(value = "/update-product/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ProductDTO> patchProduct(
+            @PathVariable Long productId,
+            @RequestPart(value = "productTitle", required = false) String productTitle,
+            @RequestPart(value = "productPrice", required = false) String productPrice,
+            @RequestPart(value = "productOldPrice", required = false) String productOldPrice,
+            @RequestPart(value = "productImage", required = false) MultipartFile productImage,
+            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages,
+            @RequestPart(value = "productDescription", required = false) String productDescription,
+            @RequestPart(value = "productFeatures", required = false) String productFeatures,
+            @RequestPart(value = "productSizes", required = false) String productSizes,
+            @RequestPart(value = "productUnavailableSizes", required = false) String productUnavailableSizes,
+            @RequestPart(value = "productCategory", required = false) String productCategory,
+            @RequestPart(value = "productStock", required = false) String productStock,
+            @RequestPart(value = "productQuantity", required = false) String productQuantity,
+            @RequestPart(value = "shopBy", required = false) String shopBy,
+            @RequestPart(value = "productDiscount", required = false) String productDiscount,
+            @RequestPart(value = "productCouponCode", required = false) String productCouponCode) {
+
+        try {
+            ProductPatchRequestDTO patchRequest = new ProductPatchRequestDTO();
+
+            if (productTitle != null) patchRequest.setProductTitle(productTitle);
+            if (productPrice != null) patchRequest.setProductPrice(new BigDecimal(productPrice));
+            if (productOldPrice != null) patchRequest.setProductOldPrice(new BigDecimal(productOldPrice));
+
+            if (productImage != null && !productImage.isEmpty()) {
+                patchRequest.setProductImage(productImage.getBytes());
+                patchRequest.setProductImagePresent(true);
+            }
+
+            if (productSubImages != null && productSubImages.length > 0) {
+                List<byte[]> subImages = new ArrayList<>();
+                for (MultipartFile file : productSubImages) {
+                    subImages.add(file.getBytes());
+                }
+                patchRequest.setProductSubImages(subImages);
+                patchRequest.setProductSubImagesPresent(true);
+            }
+
+            if (productDescription != null) patchRequest.setProductDescription(productDescription);
+            if (productCategory != null) patchRequest.setProductCategory(productCategory);
+            if (productStock != null) patchRequest.setProductStock(productStock);
+            if (productQuantity != null) patchRequest.setProductQuantity(Integer.parseInt(productQuantity));
+            if (shopBy != null) patchRequest.setShopBy(shopBy);
+            if (productDiscount != null) patchRequest.setProductDiscount(productDiscount);
+            if (productCouponCode != null) patchRequest.setProductCouponCode(productCouponCode);
+
+            // Parse JSON arrays if present
+            if (productFeatures != null) {
+                List<String> features = objectMapper.readValue(productFeatures, new TypeReference<List<String>>() {});
+                patchRequest.setProductFeatures(features);
+            }
+            if (productSizes != null) {
+                List<String> sizes = objectMapper.readValue(productSizes, new TypeReference<List<String>>() {});
+                patchRequest.setProductSizes(sizes);
+            }
+            if (productUnavailableSizes != null) {
+                List<String> unavailableSizes = objectMapper.readValue(productUnavailableSizes, new TypeReference<List<String>>() {});
+                patchRequest.setProductUnavailableSizes(unavailableSizes);
+            }
+
+            ProductDTO updatedProduct = productService.patchProduct(productId, patchRequest);
+            return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
+
+        } catch (IllegalArgumentException e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+
+
 
     // Update product
     @PutMapping(value = "/update-product/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)

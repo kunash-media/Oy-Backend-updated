@@ -2,6 +2,7 @@ package com.oy.oy_jewels.service;
 
 import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
 import com.oy.oy_jewels.dto.request.ProductDTO;
+import com.oy.oy_jewels.dto.request.ProductPatchRequestDTO;
 import com.oy.oy_jewels.entity.ProductEntity;
 
 import java.util.List;
@@ -19,4 +20,7 @@ public interface ProductService {
     long getProductCount();
     List<ProductDTO> getProductsByCategory(String category);
     List<ProductDTO> getProductsByShopBy(String shopBy);
+
+    //pacth api
+    public ProductDTO patchProduct(Long productId, ProductPatchRequestDTO patchRequest);
 }
