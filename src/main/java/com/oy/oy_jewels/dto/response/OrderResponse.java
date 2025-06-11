@@ -12,6 +12,9 @@ public class OrderResponse {
     private Long orderId;
     private BigDecimal total;
     private String status;
+    private LocalDate orderDate;
+    private LocalDate deliveryDate;
+
     private List<OrderItemResponse> items;
     private String message;
     private String error;
@@ -23,6 +26,8 @@ public class OrderResponse {
         this.orderId = order.getOrderId();
         this.total = order.getTotalAmount();
         this.status = order.getOrderStatus();
+        this.orderDate = order.getOrderDate();
+        this.deliveryDate = order.getDeliveryDate();
         this.items = order.getOrderItems().stream()
                 .map(OrderItemResponse::new)
                 .collect(Collectors.toList());
@@ -52,6 +57,22 @@ public class OrderResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public LocalDate getOrderDate() {
+        return orderDate;
+    }
+
+    public void setOrderDate(LocalDate orderDate) {
+        this.orderDate = orderDate;
+    }
+
+    public LocalDate getDeliveryDate() {
+        return deliveryDate;
+    }
+
+    public void setDeliveryDate(LocalDate deliveryDate) {
+        this.deliveryDate = deliveryDate;
+    }
 
     public List<OrderItemResponse> getItems() { return items; }
     public void setItems(List<OrderItemResponse> items) { this.items = items; }

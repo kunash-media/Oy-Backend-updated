@@ -68,11 +68,11 @@ public class OrderServiceImpl implements OrderService {
                     .orElseThrow(() -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
 
             // Check stock availability
-//            if (!"instock".equalsIgnoreCase(product.getProductStock())) {
-//                return new OrderResponse("out_of_stock",
-//                        "Product '" + product.getProductTitle() + "' is out of stock",
-//                        product.getProductId());
-//            }
+            //if (!"instock".equalsIgnoreCase(product.getProductStock())) {
+            //   return new OrderResponse("out_of_stock",
+            //    "Product '" + product.getProductTitle() + "' is out of stock",
+            //  product.getProductId());
+            //  }
 
             if (itemRequest.getProductQuantity() > product.getProductQuantity()) {
                 return new OrderResponse("insufficient_stock",
