@@ -35,15 +35,16 @@ public class UserEntity {
     @Column(name = "status")
     private String status; // active/inactive
 
-    // One user can have many orders
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    private List<OrderEntity> orders = new ArrayList<>();
+    // REMOVED: Direct order relationship - orders will be fetched via OrderRepository when needed
+    // This improves performance and simplifies the entity structure
 
     // Constructors
     public UserEntity() {}
 
-    public UserEntity(String customerName, String email, String mobile, String maritalStatus,
-                      LocalDate customerDOB, LocalDate anniversary, String status) {
+    public UserEntity(Long userId, String customerName, String email,
+                      String mobile, String maritalStatus, LocalDate customerDOB,
+                      LocalDate anniversary, String status) {
+        this.userId = userId;
         this.customerName = customerName;
         this.email = email;
         this.mobile = mobile;
@@ -78,6 +79,4 @@ public class UserEntity {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
-    public List<OrderEntity> getOrders() { return orders; }
-    public void setOrders(List<OrderEntity> orders) { this.orders = orders; }
 }

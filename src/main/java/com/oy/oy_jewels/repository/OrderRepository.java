@@ -16,12 +16,11 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     // Find orders by order status
     List<OrderEntity> findByOrderStatus(String orderStatus);
 
-    // Find orders by product ID
-    List<OrderEntity> findByProduct_ProductId(Long productId);
-
     // Find orders by date range
     List<OrderEntity> findByOrderDateBetween(LocalDate startDate, LocalDate endDate);
 
     // Find orders by user and status
     List<OrderEntity> findByUser_UserIdAndOrderStatus(Long userId, String orderStatus);
+
+
 }

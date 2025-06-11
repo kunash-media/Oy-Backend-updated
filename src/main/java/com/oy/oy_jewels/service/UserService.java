@@ -4,6 +4,7 @@ package com.oy.oy_jewels.service;
 import com.oy.oy_jewels.entity.UserEntity;
 
 import java.util.List;
+import java.util.Map;
 
 public interface UserService {
 
@@ -27,4 +28,8 @@ public interface UserService {
 
     // Get user by email
     UserEntity getUserByEmail(String email);
+
+    UserEntity patchUser(Long userId, Map<String, Object> updates);
+
+
 }

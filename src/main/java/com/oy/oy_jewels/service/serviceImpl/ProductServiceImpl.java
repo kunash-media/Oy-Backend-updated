@@ -7,7 +7,10 @@ import com.oy.oy_jewels.entity.ProductEntity;
 import com.oy.oy_jewels.mapper.ProductMapper;
 import com.oy.oy_jewels.repository.ProductRepository;
 import com.oy.oy_jewels.service.ProductService;
+import com.sun.jdi.request.DuplicateRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -17,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
@@ -33,13 +37,22 @@ public class ProductServiceImpl implements ProductService {
 
     @Override
     public ProductDTO createProduct(ProductCreateRequestDTO requestDTO) {
+        // Check if product already exists
+        Optional<ProductEntity> existProduct = productRepository.findByProductTitle(requestDTO.getProductTitle());
+
+        if (existProduct.isPresent()) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Product with this title already exists");
+        }
+
         try {
             validateProductRequest(requestDTO);
             ProductEntity productEntity = productMapper.toEntity(requestDTO);
             ProductEntity savedEntity = productRepository.save(productEntity);
             return productMapper.toDTO(savedEntity);
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create product: " + e.getMessage(), e);
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create product: " + e.getMessage(), e);
         }
     }
 

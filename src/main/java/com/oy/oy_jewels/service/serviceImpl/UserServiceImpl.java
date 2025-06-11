@@ -6,7 +6,9 @@ import com.oy.oy_jewels.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -38,7 +40,7 @@ public class UserServiceImpl implements UserService {
     public UserEntity updateUser(Long userId, UserEntity user) {
         UserEntity existingUser = getUserById(userId);
 
-        // Update fields
+        // Update all fields
         existingUser.setCustomerName(user.getCustomerName());
         existingUser.setEmail(user.getEmail());
         existingUser.setMobile(user.getMobile());
@@ -46,6 +48,40 @@ public class UserServiceImpl implements UserService {
         existingUser.setCustomerDOB(user.getCustomerDOB());
         existingUser.setAnniversary(user.getAnniversary());
         existingUser.setStatus(user.getStatus());
+
+        return userRepository.save(existingUser);
+    }
+
+    @Override
+    public UserEntity patchUser(Long userId, Map<String, Object> updates) {
+        UserEntity existingUser = getUserById(userId);
+
+        // Apply partial updates - only update provided fields
+        updates.forEach((key, value) -> {
+            switch (key) {
+                case "customerName":
+                    existingUser.setCustomerName((String) value);
+                    break;
+                case "email":
+                    existingUser.setEmail((String) value);
+                    break;
+                case "mobile":
+                    existingUser.setMobile((String) value);
+                    break;
+                case "maritalStatus":
+                    existingUser.setMaritalStatus((String) value);
+                    break;
+                case "customerDOB":
+                    existingUser.setCustomerDOB(LocalDate.parse(value.toString()));
+                    break;
+                case "anniversary":
+                    existingUser.setAnniversary(LocalDate.parse(value.toString()));
+                    break;
+                case "status":
+                    existingUser.setStatus((String) value);
+                    break;
+            }
+        });
 
         return userRepository.save(existingUser);
     }

@@ -20,6 +20,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
     // Find users by customer name containing
     List<UserEntity> findByCustomerNameContainingIgnoreCase(String customerName);
+
+
 }
 
 

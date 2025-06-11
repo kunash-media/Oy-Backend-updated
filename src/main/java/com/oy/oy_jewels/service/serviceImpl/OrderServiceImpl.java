@@ -1,11 +1,14 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
 import com.oy.oy_jewels.dto.request.CreateOrderRequest;
+import com.oy.oy_jewels.dto.request.OrderItemRequest;
 import com.oy.oy_jewels.dto.request.UpdateOrderRequest;
 import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.entity.OrderEntity;
+import com.oy.oy_jewels.entity.OrderItemEntity;
 import com.oy.oy_jewels.entity.ProductEntity;
 import com.oy.oy_jewels.entity.UserEntity;
+import com.oy.oy_jewels.repository.OrderItemRepository;
 import com.oy.oy_jewels.repository.OrderRepository;
 import com.oy.oy_jewels.repository.ProductRepository;
 import com.oy.oy_jewels.repository.UserRepository;
@@ -16,7 +19,9 @@ import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -27,6 +32,9 @@ public class OrderServiceImpl implements OrderService {
     private OrderRepository orderRepository;
 
     @Autowired
+    private OrderItemRepository orderItemRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -34,77 +42,73 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public OrderResponse createOrder(CreateOrderRequest request) {
-        // Validate input
-        if (request.getUserId() == null || request.getProductId() == null) {
-            throw new IllegalArgumentException("User ID and Product ID are required");
-        }
-
-        // Fetch user from database
+        // Fetch and validate user
         UserEntity user = userRepository.findById(request.getUserId())
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
 
-        // Check if user is active
         if (!"active".equalsIgnoreCase(user.getStatus())) {
             throw new RuntimeException("User is not active. Cannot create order.");
         }
 
-        // Fetch product from database
-        ProductEntity product = productRepository.findById(request.getProductId())
-                .orElseThrow(() -> new RuntimeException("Product not found with id: " + request.getProductId()));
-
-        // Check product stock
-        if (!"instock".equalsIgnoreCase(product.getProductStock())) {
-            throw new RuntimeException("Product is out of stock");
-        }
-
-        // Check if requested quantity is available
-        if (request.getQuantity() > product.getProductQuantity()) {
-            throw new RuntimeException("Requested quantity exceeds available stock");
-        }
-
-        // Create new order entity
+        // Create new order
         OrderEntity order = new OrderEntity();
-        order.setQuantity(request.getQuantity());
+        order.setUser(user);
+        order.setShippingAddress(request.getShippingAddress());
+        order.setPaymentMethod(request.getPaymentMethod());
+        order.setOrderDate(LocalDate.now());
+        order.setOrderStatus("processing");
 
-        // Use product price if not provided in request
-        order.setProductPrice(request.getProductPrice() != null ?
-                request.getProductPrice() : product.getProductPrice());
+        // Calculate total and create order items
+        BigDecimal totalAmount = BigDecimal.ZERO;
+        List<OrderItemEntity> orderItems = new ArrayList<>();
 
-        // Calculate total amount if not provided
-        if (request.getTotalAmount() != null) {
-            order.setTotalAmount(request.getTotalAmount());
-        } else {
-            BigDecimal totalAmount = order.getProductPrice().multiply(new BigDecimal(request.getQuantity()));
-            order.setTotalAmount(totalAmount);
+        for (OrderItemRequest itemRequest : request.getItems()) {
+            // Fetch product
+            ProductEntity product = productRepository.findById(itemRequest.getProductId())
+                    .orElseThrow(() -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
+
+            // Check stock availability
+//            if (!"instock".equalsIgnoreCase(product.getProductStock())) {
+//                return new OrderResponse("out_of_stock",
+//                        "Product '" + product.getProductTitle() + "' is out of stock",
+//                        product.getProductId());
+//            }
+
+            if (itemRequest.getProductQuantity() > product.getProductQuantity()) {
+                return new OrderResponse("insufficient_stock",
+                        "Product '" + product.getProductTitle() + "' only has " + product.getProductQuantity() +
+                                " items in stock (requested: " + itemRequest.getProductQuantity() + ")",
+                        product.getProductId());
+            }
+
+            // Create order item
+            OrderItemEntity orderItem = new OrderItemEntity();
+            orderItem.setOrder(order);
+            orderItem.setProduct(product);
+            orderItem.setQuantity(itemRequest.getProductQuantity());
+            orderItem.setProductPrice(product.getProductPrice());
+
+            BigDecimal subtotal = product.getProductPrice().multiply(new BigDecimal(itemRequest.getProductQuantity()));
+            orderItem.setSubtotal(subtotal);
+
+            orderItems.add(orderItem);
+            totalAmount = totalAmount.add(subtotal);
+
+            // Update product quantity
+            product.setProductQuantity(product.getProductQuantity() - itemRequest.getProductQuantity());
+            productRepository.save(product);
         }
 
-        order.setPaymentMode(request.getPaymentMode());
-        order.setDeliveryDate(request.getDeliveryDate());
+        order.setTotalAmount(totalAmount);
+        order.setOrderItems(orderItems);
 
-        // Set relationships
-        order.setUser(user);
-        order.setProduct(product);
-
-        // Set order date to current date if not provided
-        order.setOrderDate(request.getOrderDate() != null ? request.getOrderDate() : LocalDate.now());
-
-        // Set default order status if not provided
-        order.setOrderStatus(request.getOrderStatus() != null && !request.getOrderStatus().isEmpty() ?
-                request.getOrderStatus() : "PENDING");
-
-        // Save the order
+        // Save order
         OrderEntity savedOrder = orderRepository.save(order);
-
-        // Update product quantity
-        product.setProductQuantity(product.getProductQuantity() - request.getQuantity());
-        productRepository.save(product);
 
         return new OrderResponse(savedOrder);
     }
 
     @Override
-//    @Transactional(readOnly = true)
-    @Transactional
     public List<OrderResponse> getAllOrders() {
         List<OrderEntity> orders = orderRepository.findAll();
         return orders.stream()
@@ -113,8 +117,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-//    @Transactional(readOnly = true)
-    @Transactional
     public OrderResponse getOrderById(Long orderId) {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
@@ -126,48 +128,46 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity existingOrder = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        // Update only provided fields
-        if (request.getQuantity() != null) {
-            // Check if new quantity is available
-            ProductEntity product = existingOrder.getProduct();
-            int quantityDifference = request.getQuantity() - existingOrder.getQuantity();
-
-            if (quantityDifference > 0 && quantityDifference > product.getProductQuantity()) {
-                throw new RuntimeException("Requested quantity exceeds available stock");
-            }
-
-            // Update product quantity
-            product.setProductQuantity(product.getProductQuantity() - quantityDifference);
-            productRepository.save(product);
-
-            existingOrder.setQuantity(request.getQuantity());
-
-            // Recalculate total amount
-            if (request.getTotalAmount() == null) {
-                BigDecimal totalAmount = existingOrder.getProductPrice().multiply(new BigDecimal(request.getQuantity()));
-                existingOrder.setTotalAmount(totalAmount);
-            }
+        // Update provided fields
+        if (request.getShippingAddress() != null) {
+            existingOrder.setShippingAddress(request.getShippingAddress());
         }
-
-        if (request.getProductPrice() != null) {
-            existingOrder.setProductPrice(request.getProductPrice());
+        if (request.getPaymentMethod() != null) {
+            existingOrder.setPaymentMethod(request.getPaymentMethod());
         }
-
-        if (request.getTotalAmount() != null) {
-            existingOrder.setTotalAmount(request.getTotalAmount());
-        }
-
-        if (request.getPaymentMode() != null) {
-            existingOrder.setPaymentMode(request.getPaymentMode());
-        }
-
         if (request.getOrderStatus() != null) {
             existingOrder.setOrderStatus(request.getOrderStatus());
         }
-
         if (request.getDeliveryDate() != null) {
             existingOrder.setDeliveryDate(request.getDeliveryDate());
         }
+
+        OrderEntity updatedOrder = orderRepository.save(existingOrder);
+        return new OrderResponse(updatedOrder);
+    }
+
+    @Override
+    public OrderResponse patchOrder(Long orderId, Map<String, Object> updates) {
+        OrderEntity existingOrder = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+
+        // Apply partial updates
+        updates.forEach((key, value) -> {
+            switch (key) {
+                case "shippingAddress":
+                    existingOrder.setShippingAddress((String) value);
+                    break;
+                case "paymentMethod":
+                    existingOrder.setPaymentMethod((String) value);
+                    break;
+                case "orderStatus":
+                    existingOrder.setOrderStatus((String) value);
+                    break;
+                case "deliveryDate":
+                    existingOrder.setDeliveryDate(LocalDate.parse(value.toString()));
+                    break;
+            }
+        });
 
         OrderEntity updatedOrder = orderRepository.save(existingOrder);
         return new OrderResponse(updatedOrder);
@@ -178,17 +178,17 @@ public class OrderServiceImpl implements OrderService {
         OrderEntity order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        // Restore product quantity
-        ProductEntity product = order.getProduct();
-        product.setProductQuantity(product.getProductQuantity() + order.getQuantity());
-        productRepository.save(product);
+        // Restore product quantities
+        for (OrderItemEntity orderItem : order.getOrderItems()) {
+            ProductEntity product = orderItem.getProduct();
+            product.setProductQuantity(product.getProductQuantity() + orderItem.getQuantity());
+            productRepository.save(product);
+        }
 
         orderRepository.delete(order);
     }
 
     @Override
-//    @Transactional(readOnly = true)
-    @Transactional
     public List<OrderResponse> getOrdersByUserId(Long userId) {
         List<OrderEntity> orders = orderRepository.findByUser_UserId(userId);
         return orders.stream()
@@ -197,8 +197,6 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-//    @Transactional(readOnly = true)
-    @Transactional
     public List<OrderResponse> getOrdersByStatus(String orderStatus) {
         List<OrderEntity> orders = orderRepository.findByOrderStatus(orderStatus);
         return orders.stream()
@@ -207,22 +205,25 @@ public class OrderServiceImpl implements OrderService {
     }
 
     @Override
-//    @Transactional(readOnly = true)
-    @Transactional
     public List<OrderResponse> getOrdersByProductId(Long productId) {
-        List<OrderEntity> orders = orderRepository.findByProduct_ProductId(productId);
-        return orders.stream()
-                .map(OrderResponse::new)
-                .collect(Collectors.toList());
+        return List.of();
     }
 
     @Override
-//    @Transactional(readOnly = true)
-    @Transactional
     public List<OrderResponse> getOrdersByDateRange(LocalDate startDate, LocalDate endDate) {
         List<OrderEntity> orders = orderRepository.findByOrderDateBetween(startDate, endDate);
         return orders.stream()
                 .map(OrderResponse::new)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public List<OrderEntity> findOrdersByProductId(Long productId) {
+        List<OrderItemEntity> items = orderItemRepository.findByProduct_ProductId(productId);
+        return items.stream()
+                .map(OrderItemEntity::getOrder)
+                .distinct()
+                .collect(Collectors.toList());
+    }
+
 }

@@ -8,8 +8,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
-@CrossOrigin(origins = "*")
+
 @RestController
 @RequestMapping("/api/users")
 public class UserController {
@@ -17,49 +18,49 @@ public class UserController {
     @Autowired
     private UserService userService;
 
-    // Create new user
     @PostMapping("/register")
     public ResponseEntity<UserEntity> createUser(@RequestBody UserEntity user) {
         UserEntity createdUser = userService.createUser(user);
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
-    // Get all users
     @GetMapping("/get-all-user")
     public ResponseEntity<List<UserEntity>> getAllUsers() {
         List<UserEntity> users = userService.getAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    // Get user by ID
     @GetMapping("/{userId}")
     public ResponseEntity<UserEntity> getUserById(@PathVariable Long userId) {
         UserEntity user = userService.getUserById(userId);
         return new ResponseEntity<>(user, HttpStatus.OK);
     }
 
-    // Update user
     @PutMapping("/{userId}")
     public ResponseEntity<UserEntity> updateUser(@PathVariable Long userId, @RequestBody UserEntity user) {
         UserEntity updatedUser = userService.updateUser(userId, user);
         return new ResponseEntity<>(updatedUser, HttpStatus.OK);
     }
 
-    // Delete user
+    // NEW: PATCH endpoint for partial updates
+    @PatchMapping("/{userId}")
+    public ResponseEntity<UserEntity> patchUser(@PathVariable Long userId, @RequestBody Map<String, Object> updates) {
+        UserEntity patchedUser = userService.patchUser(userId, updates);
+        return new ResponseEntity<>(patchedUser, HttpStatus.OK);
+    }
+
     @DeleteMapping("/{userId}")
     public ResponseEntity<String> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);
         return new ResponseEntity<>("User deleted successfully", HttpStatus.OK);
     }
 
-    // Get users by status
     @GetMapping("/status/{status}")
     public ResponseEntity<List<UserEntity>> getUsersByStatus(@PathVariable String status) {
         List<UserEntity> users = userService.getUsersByStatus(status);
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
 
-    // Get user by email
     @GetMapping("/email/{email}")
     public ResponseEntity<UserEntity> getUserByEmail(@PathVariable String email) {
         UserEntity user = userService.getUserByEmail(email);

@@ -4,94 +4,64 @@ import com.oy.oy_jewels.entity.OrderEntity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class OrderResponse {
+    private boolean success;
     private Long orderId;
-    private Integer quantity;
-    private BigDecimal productPrice;
-    private BigDecimal totalAmount;
-    private String paymentMode;
-    private String orderStatus;
-    private LocalDate deliveryDate;
-    private LocalDate orderDate;
+    private BigDecimal total;
+    private String status;
+    private List<OrderItemResponse> items;
+    private String message;
+    private String error;
+    private Long productId; // For error responses
 
-    // User information
-    private Long userId;
-    private String customerName;
-    private String customerEmail;
+    // Success constructor
+    public OrderResponse(OrderEntity order) {
+        this.success = true;
+        this.orderId = order.getOrderId();
+        this.total = order.getTotalAmount();
+        this.status = order.getOrderStatus();
+        this.items = order.getOrderItems().stream()
+                .map(OrderItemResponse::new)
+                .collect(Collectors.toList());
+        this.message = "Order placed successfully!";
+    }
 
-    // Product information
-    private Long productId;
-    private String productName;
-    private String productCategory;
+    // Error constructor
+    public OrderResponse(String error, String message, Long productId) {
+        this.success = false;
+        this.error = error;
+        this.message = message;
+        this.productId = productId;
+    }
 
     // Constructors
     public OrderResponse() {}
 
-    public OrderResponse(OrderEntity order) {
-        this.orderId = order.getOrderId();
-        this.quantity = order.getQuantity();
-        this.productPrice = order.getProductPrice();
-        this.totalAmount = order.getTotalAmount();
-        this.paymentMode = order.getPaymentMode();
-        this.orderStatus = order.getOrderStatus();
-        this.deliveryDate = order.getDeliveryDate();
-        this.orderDate = order.getOrderDate();
-
-        if (order.getUser() != null) {
-            this.userId = order.getUser().getUserId();
-            this.customerName = order.getUser().getCustomerName();
-            this.customerEmail = order.getUser().getEmail();
-        }
-
-        if (order.getProduct() != null) {
-            this.productId = order.getProduct().getProductId();
-            this.productName = order.getProduct().getProductTitle();
-            this.productCategory = order.getProduct().getProductCategory();
-        }
-    }
-
     // Getters and Setters
+    public boolean isSuccess() { return success; }
+    public void setSuccess(boolean success) { this.success = success; }
+
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
 
-    public Integer getQuantity() { return quantity; }
-    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public BigDecimal getTotal() { return total; }
+    public void setTotal(BigDecimal total) { this.total = total; }
 
-    public BigDecimal getProductPrice() { return productPrice; }
-    public void setProductPrice(BigDecimal productPrice) { this.productPrice = productPrice; }
+    public String getStatus() { return status; }
+    public void setStatus(String status) { this.status = status; }
 
-    public BigDecimal getTotalAmount() { return totalAmount; }
-    public void setTotalAmount(BigDecimal totalAmount) { this.totalAmount = totalAmount; }
+    public List<OrderItemResponse> getItems() { return items; }
+    public void setItems(List<OrderItemResponse> items) { this.items = items; }
 
-    public String getPaymentMode() { return paymentMode; }
-    public void setPaymentMode(String paymentMode) { this.paymentMode = paymentMode; }
+    public String getMessage() { return message; }
+    public void setMessage(String message) { this.message = message; }
 
-    public String getOrderStatus() { return orderStatus; }
-    public void setOrderStatus(String orderStatus) { this.orderStatus = orderStatus; }
-
-    public LocalDate getDeliveryDate() { return deliveryDate; }
-    public void setDeliveryDate(LocalDate deliveryDate) { this.deliveryDate = deliveryDate; }
-
-    public LocalDate getOrderDate() { return orderDate; }
-    public void setOrderDate(LocalDate orderDate) { this.orderDate = orderDate; }
-
-    public Long getUserId() { return userId; }
-    public void setUserId(Long userId) { this.userId = userId; }
-
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
-
-    public String getCustomerEmail() { return customerEmail; }
-    public void setCustomerEmail(String customerEmail) { this.customerEmail = customerEmail; }
+    public String getError() { return error; }
+    public void setError(String error) { this.error = error; }
 
     public Long getProductId() { return productId; }
     public void setProductId(Long productId) { this.productId = productId; }
-
-    public String getProductName() { return productName; }
-    public void setProductName(String productName) { this.productName = productName; }
-
-    public String getProductCategory() { return productCategory; }
-    public void setProductCategory(String productCategory) { this.productCategory = productCategory; }
 }
-

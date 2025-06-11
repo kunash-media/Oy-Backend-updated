@@ -17,7 +17,6 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
-//@CrossOrigin("*")
 @RestController
 @RequestMapping("/api/products")
 public class ProductController {
@@ -188,8 +187,6 @@ public class ProductController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
-
 
 
     // Update product
