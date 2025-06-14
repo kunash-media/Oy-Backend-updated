@@ -9,6 +9,8 @@ import java.util.List;
 @Repository
 public interface UserRepository extends JpaRepository<UserEntity, Long> {
 
+    UserEntity findByMobile(String mobile);
+
     // Find users by status (active/inactive)
     List<UserEntity> findByStatus(String status);
 

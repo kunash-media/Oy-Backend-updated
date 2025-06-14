@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 
 @RestController
@@ -24,11 +25,23 @@ public class UserController {
         return new ResponseEntity<>(createdUser, HttpStatus.CREATED);
     }
 
+    @GetMapping("/login")
+    public ResponseEntity<UserEntity> authenticateUser(
+            @RequestParam("mobile") String mobile,
+            @RequestParam("password") String password) {
+
+        Optional<UserEntity> user = userService.authenticateUserByMobileAndPassword(mobile, password);
+
+        return user.map(ResponseEntity::ok)
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
     @GetMapping("/get-all-user")
     public ResponseEntity<List<UserEntity>> getAllUsers() {
         List<UserEntity> users = userService.getAllUsers();
         return new ResponseEntity<>(users, HttpStatus.OK);
     }
+
 
     @GetMapping("/{userId}")
     public ResponseEntity<UserEntity> getUserById(@PathVariable Long userId) {

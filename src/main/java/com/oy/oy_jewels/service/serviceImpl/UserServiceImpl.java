@@ -1,5 +1,6 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+import com.oy.oy_jewels.bcrypt.BcryptEncoderConfig;
 import com.oy.oy_jewels.entity.UserEntity;
 import com.oy.oy_jewels.repository.UserRepository;
 import com.oy.oy_jewels.service.UserService;
@@ -9,12 +10,19 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
 
+    private final UserRepository userRepository;
+    private final BcryptEncoderConfig passwordEncoder;
+
     @Autowired
-    private UserRepository userRepository;
+    public UserServiceImpl(UserRepository usersRepository, BcryptEncoderConfig passwordEncoder) {
+        this.userRepository = usersRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     @Override
     public UserEntity createUser(UserEntity user) {
@@ -22,12 +30,24 @@ public class UserServiceImpl implements UserService {
         if (user.getStatus() == null || user.getStatus().isEmpty()) {
             user.setStatus("active");
         }
+        String encodedPassword = passwordEncoder.encode(user.getPassword());
+
+        user.setPassword(encodedPassword);
         return userRepository.save(user);
     }
 
     @Override
     public List<UserEntity> getAllUsers() {
         return userRepository.findAll();
+    }
+
+    @Override
+    public Optional<UserEntity> authenticateUserByMobileAndPassword(String mobile, String password) {
+        UserEntity user = userRepository.findByMobile(mobile);
+        if (user != null && passwordEncoder.matches(password, user.getPassword())) {
+            return Optional.of(user);
+        }
+        return Optional.empty();
     }
 
     @Override

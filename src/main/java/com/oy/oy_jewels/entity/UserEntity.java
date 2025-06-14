@@ -35,15 +35,15 @@ public class UserEntity {
     @Column(name = "status")
     private String status; // active/inactive
 
-    // REMOVED: Direct order relationship - orders will be fetched via OrderRepository when needed
-    // This improves performance and simplifies the entity structure
+    @Column(name = "user_password")
+    private String password;
 
     // Constructors
     public UserEntity() {}
 
     public UserEntity(Long userId, String customerName, String email,
                       String mobile, String maritalStatus, LocalDate customerDOB,
-                      LocalDate anniversary, String status) {
+                      LocalDate anniversary, String status, String password) {
         this.userId = userId;
         this.customerName = customerName;
         this.email = email;
@@ -52,6 +52,7 @@ public class UserEntity {
         this.customerDOB = customerDOB;
         this.anniversary = anniversary;
         this.status = status;
+        this.password = password;
     }
 
     // Getters and Setters
@@ -79,4 +80,11 @@ public class UserEntity {
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
 
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
+    }
 }

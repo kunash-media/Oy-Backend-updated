@@ -5,8 +5,12 @@ import com.oy.oy_jewels.entity.UserEntity;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public interface UserService {
+
+    //login api
+    Optional<UserEntity> authenticateUserByMobileAndPassword(String mobile, String password);
 
     // Create new user
     UserEntity createUser(UserEntity user);
