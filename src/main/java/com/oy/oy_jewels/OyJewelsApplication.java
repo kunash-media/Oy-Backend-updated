@@ -13,6 +13,4 @@ public class OyJewelsApplication {
 		SpringApplication.run(OyJewelsApplication.class, args);
 	}
 
-
-
 }

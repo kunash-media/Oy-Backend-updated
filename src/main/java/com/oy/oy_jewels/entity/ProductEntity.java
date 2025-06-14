@@ -32,7 +32,7 @@ public class ProductEntity {
     @Column(name = "sub_image", columnDefinition = "LONGBLOB")
     private List<byte[]> productSubImages = new ArrayList<>();
 
-    @Column(name = "product_description", columnDefinition = "TEXT")
+    @Column(name = "product_description", columnDefinition = "LONGTEXT")
     private String productDescription;
 
     @ElementCollection
