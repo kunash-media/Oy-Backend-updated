@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
 import com.oy.oy_jewels.dto.request.ProductDTO;
+import com.oy.oy_jewels.dto.request.ProductDataDTO;
 import com.oy.oy_jewels.dto.request.ProductPatchRequestDTO;
 import com.oy.oy_jewels.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,27 +31,18 @@ public class ProductController {
     // Create new product
     @PostMapping(value = "/create-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductDTO> createProduct(
-            @RequestPart("productTitle") String productTitle,
-            @RequestPart("productPrice") String productPrice,
-            @RequestPart("productOldPrice") String productOldPrice,
+            @RequestPart("productData") String productData,
             @RequestPart("productImage") MultipartFile productImage,
-            @RequestPart("productSubImages") MultipartFile[] productSubImages,
-            @RequestPart("productDescription") String productDescription,
-            @RequestPart("productFeatures") String productFeatures,
-            @RequestPart("productSizes") String productSizes,
-            @RequestPart("productUnavailableSizes") String productUnavailableSizes,
-            @RequestPart("productCategory") String productCategory,
-            @RequestPart("productStock") String productStock,
-            @RequestPart("productQuantity") String productQuantity,
-            @RequestPart("shopBy") String shopBy,
-            @RequestPart("productDiscount") String productDiscount,
-            @RequestPart("productCouponCode") String productCouponCode) {
+            @RequestPart("productSubImages") MultipartFile[] productSubImages) {
 
         try {
+            // Parse the JSON productData
+            ProductDataDTO productDataDTO = objectMapper.readValue(productData, ProductDataDTO.class);
+
             ProductCreateRequestDTO requestDTO = new ProductCreateRequestDTO();
-            requestDTO.setProductTitle(productTitle);
-            requestDTO.setProductPrice(new BigDecimal(productPrice));
-            requestDTO.setProductOldPrice(new BigDecimal(productOldPrice));
+            requestDTO.setProductTitle(productDataDTO.getProductTitle());
+            requestDTO.setProductPrice(new BigDecimal(productDataDTO.getProductPrice()));
+            requestDTO.setProductOldPrice(new BigDecimal(productDataDTO.getProductOldPrice()));
             requestDTO.setProductImage(productImage.getBytes());
 
             List<byte[]> subImages = new ArrayList<>();
@@ -59,22 +51,17 @@ public class ProductController {
             }
             requestDTO.setProductSubImages(subImages);
 
-            requestDTO.setProductDescription(productDescription);
-            requestDTO.setProductCategory(productCategory);
-            requestDTO.setProductStock(productStock);
-            requestDTO.setProductQuantity(Integer.parseInt(productQuantity));
-            requestDTO.setShopBy(shopBy);
-            requestDTO.setProductDiscount(productDiscount);
-            requestDTO.setProductCouponCode(productCouponCode);
+            requestDTO.setProductDescription(productDataDTO.getProductDescription());
+            requestDTO.setProductCategory(productDataDTO.getProductCategory());
+            requestDTO.setProductStock(productDataDTO.getProductStock());
+            requestDTO.setProductQuantity(productDataDTO.getProductQuantity());
+            requestDTO.setShopBy(productDataDTO.getShopBy());
+            requestDTO.setProductDiscount(productDataDTO.getProductDiscount());
+            requestDTO.setProductCouponCode(productDataDTO.getProductCouponCode());
 
-            // Parse JSON arrays
-            List<String> features = objectMapper.readValue(productFeatures, new TypeReference<List<String>>() {});
-            List<String> sizes = objectMapper.readValue(productSizes, new TypeReference<List<String>>() {});
-            List<String> unavailableSizes = objectMapper.readValue(productUnavailableSizes, new TypeReference<List<String>>() {});
-
-            requestDTO.setProductFeatures(features);
-            requestDTO.setProductSizes(sizes);
-            requestDTO.setProductUnavailableSizes(unavailableSizes);
+            requestDTO.setProductFeatures(productDataDTO.getProductFeatures());
+            requestDTO.setProductSizes(productDataDTO.getProductSizes());
+            requestDTO.setProductUnavailableSizes(productDataDTO.getProductUnavailableSizes());
 
             ProductDTO createdProduct = productService.createProduct(requestDTO);
             return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);

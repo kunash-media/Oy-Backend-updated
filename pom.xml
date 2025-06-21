@@ -81,6 +81,12 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<jvmArguments>
+						-Dorg.apache.tomcat.util.http.fileupload.FileUploadBase.DEFAULT_FILE_COUNT_MAX=200
+						-Dorg.apache.tomcat.util.http.fileupload.impl.FileUploadBase.FILE_COUNT_MAX=200
+					</jvmArguments>
+				</configuration>
 			</plugin>
 		</plugins>
 	</build>

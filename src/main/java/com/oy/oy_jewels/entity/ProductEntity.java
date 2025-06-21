@@ -27,7 +27,7 @@ public class ProductEntity {
     @Column(name = "product_image", columnDefinition = "LONGBLOB")
     private byte[] productImage;
 
-    @ElementCollection
+    @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "product_sub_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "sub_image", columnDefinition = "LONGBLOB")
     private List<byte[]> productSubImages = new ArrayList<>();

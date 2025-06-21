@@ -35,6 +35,7 @@ public class ProductServiceImpl implements ProductService {
     @Autowired
     private ProductMapper productMapper;
 
+
     @Override
     public ProductDTO createProduct(ProductCreateRequestDTO requestDTO) {
         // Check if product already exists
@@ -55,6 +56,27 @@ public class ProductServiceImpl implements ProductService {
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create product: " + e.getMessage(), e);
         }
     }
+
+//    @Override
+//    public ProductDTO createProduct(ProductCreateRequestDTO requestDTO) {
+//        // Check if product already exists
+//        Optional<ProductEntity> existProduct = productRepository.findByProductTitle(requestDTO.getProductTitle());
+//
+//        if (existProduct.isPresent()) {
+//            throw new ResponseStatusException(HttpStatus.CONFLICT, "Product with this title already exists");
+//        }
+//
+//        try {
+//            validateProductRequest(requestDTO);
+//            ProductEntity productEntity = productMapper.toEntity(requestDTO);
+//            ProductEntity savedEntity = productRepository.save(productEntity);
+//            return productMapper.toDTO(savedEntity);
+//        } catch (IllegalArgumentException e) {
+//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
+//        } catch (Exception e) {
+//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create product: " + e.getMessage(), e);
+//        }
+//    }
 
     @Override
     @Transactional(readOnly = true)

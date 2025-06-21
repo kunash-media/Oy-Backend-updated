@@ -1,7 +1,5 @@
 package com.oy.oy_jewels.mapper;
 
-// PrivacyPolicyMapper.java
-
 
 import com.oy.oy_jewels.dto.request.PrivacyPolicyRequestDTO;
 import com.oy.oy_jewels.dto.response.PrivacyPolicyResponseDTO;
