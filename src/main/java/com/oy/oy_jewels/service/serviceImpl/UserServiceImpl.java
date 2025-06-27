@@ -26,6 +26,16 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEntity createUser(UserEntity user) {
+
+        if(userRepository.existsByMobileOrEmail(user.getMobile(), user.getEmail())) {
+            // Need additional checks to determine which field exists
+            if(userRepository.findByMobile(user.getMobile()) != null) {
+                throw new RuntimeException("Mobile Number Already Exists!!");
+            } else {
+                throw new RuntimeException("Email Already Exists!!");
+            }
+        }
+
         // Set default status if not provided
         if (user.getStatus() == null || user.getStatus().isEmpty()) {
             user.setStatus("active");
@@ -78,32 +88,82 @@ public class UserServiceImpl implements UserService {
 
         // Apply partial updates - only update provided fields
         updates.forEach((key, value) -> {
+            // Skip null values to avoid NullPointerException
+            if (value == null) {
+                return;
+            }
+
             switch (key) {
                 case "customerName":
-                    existingUser.setCustomerName((String) value);
+                    if (value instanceof String) {
+                        existingUser.setCustomerName((String) value);
+                    }
                     break;
                 case "email":
-                    existingUser.setEmail((String) value);
+                    if (value instanceof String) {
+                        existingUser.setEmail((String) value);
+                    }
                     break;
                 case "mobile":
-                    existingUser.setMobile((String) value);
+                    if (value instanceof String) {
+                        existingUser.setMobile((String) value);
+                    }
                     break;
                 case "maritalStatus":
-                    existingUser.setMaritalStatus((String) value);
+                    if (value instanceof String) {
+                        existingUser.setMaritalStatus((String) value);
+                    }
                     break;
                 case "customerDOB":
-                    existingUser.setCustomerDOB(LocalDate.parse(value.toString()));
+                    try {
+                        String dateStr = value.toString().trim();
+                        if (!dateStr.isEmpty()) {
+                            existingUser.setCustomerDOB(LocalDate.parse(dateStr));
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Invalid date format for customerDOB: " + value);
+                    }
                     break;
                 case "anniversary":
-                    existingUser.setAnniversary(LocalDate.parse(value.toString()));
+                    try {
+                        String dateStr = value.toString().trim();
+                        if (!dateStr.isEmpty()) {
+                            existingUser.setAnniversary(LocalDate.parse(dateStr));
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException("Invalid date format for anniversary: " + value);
+                    }
                     break;
                 case "status":
-                    existingUser.setStatus((String) value);
+                    if (value instanceof String) {
+                        existingUser.setStatus((String) value);
+                    }
+                    break;
+                default:
+                    // Optionally log unknown fields
+                    System.out.println("Unknown field in update: " + key);
                     break;
             }
         });
 
         return userRepository.save(existingUser);
+    }
+
+    @Override
+    public boolean changePassword(Long userId, String oldPassword, String newPassword) {
+        UserEntity user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+        // Verify old password matches
+        if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
+            throw new RuntimeException("Old password is incorrect");
+        }
+
+        // Encode and set new password
+        user.setPassword(passwordEncoder.encode(newPassword));
+        userRepository.save(user);
+
+        return true;
     }
 
     @Override

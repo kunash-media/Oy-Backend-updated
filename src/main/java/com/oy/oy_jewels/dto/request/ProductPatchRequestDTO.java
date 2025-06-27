@@ -21,7 +21,10 @@ public class ProductPatchRequestDTO {
     private String shopBy;
     private String productDiscount;
     private String productCouponCode;
-
+    private String stoneColor;
+    private String metalColor;
+    private String skuNo;
+    private String rating;
     // Getters and Setters for all fields
     // ...
 
@@ -160,5 +163,37 @@ public class ProductPatchRequestDTO {
 
     public void setProductSubImagesPresent(boolean productSubImagesPresent) {
         this.productSubImagesPresent = productSubImagesPresent;
+    }
+
+    public String getStoneColor() {
+        return stoneColor;
+    }
+
+    public void setStoneColor(String stoneColor) {
+        this.stoneColor = stoneColor;
+    }
+
+    public String getMetalColor() {
+        return metalColor;
+    }
+
+    public void setMetalColor(String metalColor) {
+        this.metalColor = metalColor;
+    }
+
+    public String getSkuNo() {
+        return skuNo;
+    }
+
+    public void setSkuNo(String skuNo) {
+        this.skuNo = skuNo;
+    }
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
     }
 }

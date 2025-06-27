@@ -32,7 +32,11 @@ public class ProductMapper {
                 entity.getProductQuantity(),
                 entity.getShopBy(),
                 entity.getProductDiscount(),
-                entity.getProductCouponCode()
+                entity.getProductCouponCode(),
+                entity.getStoneColor(),
+                entity.getMetalColor(),
+                entity.getSkuNo(),
+                entity.getRating()
         );
     }
 
@@ -55,6 +59,10 @@ public class ProductMapper {
         entity.setProductUnavailableSizes(dto.getProductUnavailableSizes());
         entity.setProductCategory(dto.getProductCategory());
         entity.setProductStock(dto.getProductStock());
+        entity.setProductQuantity(dto.getProductQuantity());
+        entity.setShopBy(dto.getShopBy());
+        entity.setProductCouponCode(dto.getProductCouponCode());
+
 
         return entity;
     }
@@ -81,6 +89,10 @@ public class ProductMapper {
         entity.setShopBy(requestDTO.getShopBy());
         entity.setProductDiscount(requestDTO.getProductDiscount());
         entity.setProductCouponCode(requestDTO.getProductCouponCode());
+        entity.setStoneColor(requestDTO.getStoneColor());
+        entity.setMetalColor(requestDTO.getMetalColor());
+        entity.setSkuNo(requestDTO.getSkuNo());
+        entity.setRating(requestDTO.getRating());
 
         return entity;
     }
@@ -102,7 +114,6 @@ public class ProductMapper {
         if (existingEntity == null || requestDTO == null) {
             return;
         }
-
         existingEntity.setProductTitle(requestDTO.getProductTitle());
         existingEntity.setProductPrice(requestDTO.getProductPrice());
         existingEntity.setProductOldPrice(requestDTO.getProductOldPrice());
@@ -118,5 +129,9 @@ public class ProductMapper {
         existingEntity.setShopBy(requestDTO.getShopBy());
         existingEntity.setProductDiscount(requestDTO.getProductDiscount());
         existingEntity.setProductCouponCode(requestDTO.getProductCouponCode());
+        existingEntity.setStoneColor(requestDTO.getStoneColor());
+        existingEntity.setMetalColor(requestDTO.getMetalColor());
+        existingEntity.setSkuNo(requestDTO.getSkuNo());
+        existingEntity.setRating(requestDTO.getRating());
     }
 }

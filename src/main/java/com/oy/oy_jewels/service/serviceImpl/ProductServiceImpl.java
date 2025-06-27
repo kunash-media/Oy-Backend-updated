@@ -57,27 +57,6 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
-//    @Override
-//    public ProductDTO createProduct(ProductCreateRequestDTO requestDTO) {
-//        // Check if product already exists
-//        Optional<ProductEntity> existProduct = productRepository.findByProductTitle(requestDTO.getProductTitle());
-//
-//        if (existProduct.isPresent()) {
-//            throw new ResponseStatusException(HttpStatus.CONFLICT, "Product with this title already exists");
-//        }
-//
-//        try {
-//            validateProductRequest(requestDTO);
-//            ProductEntity productEntity = productMapper.toEntity(requestDTO);
-//            ProductEntity savedEntity = productRepository.save(productEntity);
-//            return productMapper.toDTO(savedEntity);
-//        } catch (IllegalArgumentException e) {
-//            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage(), e);
-//        } catch (Exception e) {
-//            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, "Failed to create product: " + e.getMessage(), e);
-//        }
-//    }
-
     @Override
     @Transactional(readOnly = true)
     public List<ProductDTO> getAllProducts() {
@@ -154,6 +133,18 @@ public class ProductServiceImpl implements ProductService {
             }
             if (patchRequest.getProductCouponCode() != null) {
                 existingEntity.setProductCouponCode(patchRequest.getProductCouponCode());
+            }
+            if (patchRequest.getStoneColor() != null) {
+                existingEntity.setStoneColor(patchRequest.getStoneColor().trim());
+            }
+            if (patchRequest.getMetalColor() != null) {
+                existingEntity.setMetalColor(patchRequest.getMetalColor());
+            }
+            if (patchRequest.getSkuNo() != null) {
+                existingEntity.setSkuNo(patchRequest.getSkuNo());
+            }
+            if (patchRequest.getRating() != null) {
+                existingEntity.setRating(patchRequest.getRating());
             }
 
             ProductEntity updatedEntity = productRepository.save(existingEntity);
@@ -310,6 +301,20 @@ public class ProductServiceImpl implements ProductService {
         }
         if (StringUtils.hasText(requestDTO.getProductCouponCode())) {
             requestDTO.setProductCouponCode(requestDTO.getProductCouponCode().trim());
+        }
+
+        if (StringUtils.hasText(requestDTO.getStoneColor())) {
+            requestDTO.setStoneColor(requestDTO.getStoneColor().trim());
+        }
+        if (StringUtils.hasText(requestDTO.getMetalColor())) {
+            requestDTO.setMetalColor(requestDTO.getMetalColor().trim());
+        }
+        if (StringUtils.hasText(requestDTO.getSkuNo())) {
+            requestDTO.setSkuNo(requestDTO.getSkuNo().trim());
+        }
+
+        if (StringUtils.hasText(requestDTO.getRating())) {
+            requestDTO.setRating(requestDTO.getRating().trim());
         }
     }
 }

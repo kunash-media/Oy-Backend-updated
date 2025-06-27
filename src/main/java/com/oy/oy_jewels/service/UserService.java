@@ -35,5 +35,6 @@ public interface UserService {
 
     UserEntity patchUser(Long userId, Map<String, Object> updates);
 
+    boolean changePassword(Long userId, String oldPassword, String newPassword);
 
 }

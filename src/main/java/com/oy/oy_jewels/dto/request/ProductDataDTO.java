@@ -17,6 +17,10 @@ public class ProductDataDTO {
     private String shopBy;
     private String productDiscount;
     private String productCouponCode;
+    private String stoneColor;
+    private String metalColor;
+    private String skuNo;
+    private String rating;
 
     // Getters and setters
     public String getProductTitle() { return productTitle; }
@@ -57,4 +61,36 @@ public class ProductDataDTO {
 
     public String getProductCouponCode() { return productCouponCode; }
     public void setProductCouponCode(String productCouponCode) { this.productCouponCode = productCouponCode; }
+
+    public String getStoneColor() {
+        return stoneColor;
+    }
+
+    public void setStoneColor(String stoneColor) {
+        this.stoneColor = stoneColor;
+    }
+
+    public String getMetalColor() {
+        return metalColor;
+    }
+
+    public void setMetalColor(String metalColor) {
+        this.metalColor = metalColor;
+    }
+
+    public String getSkuNo() {
+        return skuNo;
+    }
+
+    public void setSkuNo(String skuNo) {
+        this.skuNo = skuNo;
+    }
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
 }

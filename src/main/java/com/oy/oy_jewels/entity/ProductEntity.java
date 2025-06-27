@@ -27,6 +27,7 @@ public class ProductEntity {
     @Column(name = "product_image", columnDefinition = "LONGBLOB")
     private byte[] productImage;
 
+
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "product_sub_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "sub_image", columnDefinition = "LONGBLOB")
@@ -68,6 +69,19 @@ public class ProductEntity {
     @Column(name = "coupon_code")
     private String productCouponCode;
 
+    @Column(name = "stone_color")
+    private String stoneColor;
+
+    @Column(name = "metal_color")
+    private String metalColor;
+
+    @Column(name = "sku_no")
+    private String skuNo;
+
+    @Column(name = "rating")
+    private String rating;
+
+
     // Constructors
     public ProductEntity() {}
 
@@ -75,7 +89,9 @@ public class ProductEntity {
                          BigDecimal productOldPrice, byte[] productImage, List<byte[]> productSubImages,
                          String productDescription, List<String> productFeatures, List<String> productSizes,
                          List<String> productUnavailableSizes, String productCategory, String productStock,
-                         Integer productQuantity, String shopBy, String productDiscount, String productCouponCode) {
+                         Integer productQuantity, String shopBy, String productDiscount,
+                         String productCouponCode, String stoneColor, String metalColor, String skuNo,
+                         String rating) {
         this.productId = productId;
         this.productTitle = productTitle;
         this.productPrice = productPrice;
@@ -92,6 +108,10 @@ public class ProductEntity {
         this.shopBy = shopBy;
         this.productDiscount = productDiscount;
         this.productCouponCode = productCouponCode;
+        this.stoneColor = stoneColor;
+        this.metalColor = metalColor;
+        this.skuNo = skuNo;
+        this.rating = rating;
     }
 
     // Getters and Setters (keeping existing structure intact)
@@ -142,4 +162,36 @@ public class ProductEntity {
 
     public String getProductCouponCode() { return productCouponCode; }
     public void setProductCouponCode(String productCouponCode) { this.productCouponCode = productCouponCode; }
+
+    public String getStoneColor() {
+        return stoneColor;
+    }
+
+    public void setStoneColor(String stoneColor) {
+        this.stoneColor = stoneColor;
+    }
+
+    public String getMetalColor() {
+        return metalColor;
+    }
+
+    public void setMetalColor(String metalColor) {
+        this.metalColor = metalColor;
+    }
+
+    public String getSkuNo() {
+        return skuNo;
+    }
+
+    public void setSkuNo(String skuNo) {
+        this.skuNo = skuNo;
+    }
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
+    }
 }

@@ -44,6 +44,12 @@ public class ProductController {
             requestDTO.setProductPrice(new BigDecimal(productDataDTO.getProductPrice()));
             requestDTO.setProductOldPrice(new BigDecimal(productDataDTO.getProductOldPrice()));
             requestDTO.setProductImage(productImage.getBytes());
+            requestDTO.setStoneColor(productDataDTO.getStoneColor());
+            requestDTO.setMetalColor(productDataDTO.getMetalColor());
+            requestDTO.setSkuNo(productDataDTO.getSkuNo());
+            requestDTO.setRating(productDataDTO.getRating());
+
+
 
             List<byte[]> subImages = new ArrayList<>();
             for (MultipartFile file : productSubImages) {
@@ -104,28 +110,36 @@ public class ProductController {
     @PatchMapping(value = "/update-product/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductDTO> patchProduct(
             @PathVariable Long productId,
-            @RequestPart(value = "productTitle", required = false) String productTitle,
-            @RequestPart(value = "productPrice", required = false) String productPrice,
-            @RequestPart(value = "productOldPrice", required = false) String productOldPrice,
+            @RequestPart(value = "productData", required = false) String productData,
             @RequestPart(value = "productImage", required = false) MultipartFile productImage,
-            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages,
-            @RequestPart(value = "productDescription", required = false) String productDescription,
-            @RequestPart(value = "productFeatures", required = false) String productFeatures,
-            @RequestPart(value = "productSizes", required = false) String productSizes,
-            @RequestPart(value = "productUnavailableSizes", required = false) String productUnavailableSizes,
-            @RequestPart(value = "productCategory", required = false) String productCategory,
-            @RequestPart(value = "productStock", required = false) String productStock,
-            @RequestPart(value = "productQuantity", required = false) String productQuantity,
-            @RequestPart(value = "shopBy", required = false) String shopBy,
-            @RequestPart(value = "productDiscount", required = false) String productDiscount,
-            @RequestPart(value = "productCouponCode", required = false) String productCouponCode) {
+            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages) {
 
         try {
             ProductPatchRequestDTO patchRequest = new ProductPatchRequestDTO();
 
-            if (productTitle != null) patchRequest.setProductTitle(productTitle);
-            if (productPrice != null) patchRequest.setProductPrice(new BigDecimal(productPrice));
-            if (productOldPrice != null) patchRequest.setProductOldPrice(new BigDecimal(productOldPrice));
+            // Parse JSON data if present
+            if (productData != null) {
+                ProductDataDTO productDataDTO = objectMapper.readValue(productData, ProductDataDTO.class);
+
+                if (productDataDTO.getProductTitle() != null) patchRequest.setProductTitle(productDataDTO.getProductTitle());
+                if (productDataDTO.getProductPrice() != null) patchRequest.setProductPrice(new BigDecimal(productDataDTO.getProductPrice()));
+                if (productDataDTO.getProductOldPrice() != null) patchRequest.setProductOldPrice(new BigDecimal(productDataDTO.getProductOldPrice()));
+                if (productDataDTO.getProductDescription() != null) patchRequest.setProductDescription(productDataDTO.getProductDescription());
+                if (productDataDTO.getProductCategory() != null) patchRequest.setProductCategory(productDataDTO.getProductCategory());
+                if (productDataDTO.getProductStock() != null) patchRequest.setProductStock(productDataDTO.getProductStock());
+                if (productDataDTO.getProductQuantity() != null) patchRequest.setProductQuantity(productDataDTO.getProductQuantity());
+                if (productDataDTO.getShopBy() != null) patchRequest.setShopBy(productDataDTO.getShopBy());
+                if (productDataDTO.getProductDiscount() != null) patchRequest.setProductDiscount(productDataDTO.getProductDiscount());
+                if (productDataDTO.getProductCouponCode() != null) patchRequest.setProductCouponCode(productDataDTO.getProductCouponCode());
+                if (productDataDTO.getStoneColor() != null) patchRequest.setStoneColor(productDataDTO.getStoneColor());
+                if (productDataDTO.getMetalColor() != null) patchRequest.setMetalColor(productDataDTO.getMetalColor());
+                if (productDataDTO.getSkuNo() != null) patchRequest.setSkuNo(productDataDTO.getSkuNo());
+                if (productDataDTO.getRating() != null) patchRequest.setRating(productDataDTO.getRating());
+
+                if (productDataDTO.getProductFeatures() != null) patchRequest.setProductFeatures(productDataDTO.getProductFeatures());
+                if (productDataDTO.getProductSizes() != null) patchRequest.setProductSizes(productDataDTO.getProductSizes());
+                if (productDataDTO.getProductUnavailableSizes() != null) patchRequest.setProductUnavailableSizes(productDataDTO.getProductUnavailableSizes());
+            }
 
             if (productImage != null && !productImage.isEmpty()) {
                 patchRequest.setProductImage(productImage.getBytes());
@@ -141,28 +155,6 @@ public class ProductController {
                 patchRequest.setProductSubImagesPresent(true);
             }
 
-            if (productDescription != null) patchRequest.setProductDescription(productDescription);
-            if (productCategory != null) patchRequest.setProductCategory(productCategory);
-            if (productStock != null) patchRequest.setProductStock(productStock);
-            if (productQuantity != null) patchRequest.setProductQuantity(Integer.parseInt(productQuantity));
-            if (shopBy != null) patchRequest.setShopBy(shopBy);
-            if (productDiscount != null) patchRequest.setProductDiscount(productDiscount);
-            if (productCouponCode != null) patchRequest.setProductCouponCode(productCouponCode);
-
-            // Parse JSON arrays if present
-            if (productFeatures != null) {
-                List<String> features = objectMapper.readValue(productFeatures, new TypeReference<List<String>>() {});
-                patchRequest.setProductFeatures(features);
-            }
-            if (productSizes != null) {
-                List<String> sizes = objectMapper.readValue(productSizes, new TypeReference<List<String>>() {});
-                patchRequest.setProductSizes(sizes);
-            }
-            if (productUnavailableSizes != null) {
-                List<String> unavailableSizes = objectMapper.readValue(productUnavailableSizes, new TypeReference<List<String>>() {});
-                patchRequest.setProductUnavailableSizes(unavailableSizes);
-            }
-
             ProductDTO updatedProduct = productService.patchProduct(productId, patchRequest);
             return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
 
@@ -175,32 +167,22 @@ public class ProductController {
         }
     }
 
-
     // Update product
     @PutMapping(value = "/update-product/{productId}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<ProductDTO> updateProduct(
             @PathVariable Long productId,
-            @RequestPart("productTitle") String productTitle,
-            @RequestPart("productPrice") String productPrice,
-            @RequestPart("productOldPrice") String productOldPrice,
+            @RequestPart("productData") String productData,
             @RequestPart(value = "productImage", required = false) MultipartFile productImage,
-            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages,
-            @RequestPart("productDescription") String productDescription,
-            @RequestPart("productFeatures") String productFeatures,
-            @RequestPart("productSizes") String productSizes,
-            @RequestPart("productUnavailableSizes") String productUnavailableSizes,
-            @RequestPart("productCategory") String productCategory,
-            @RequestPart("productStock") String productStock,
-            @RequestPart("productQuantity") String productQuantity,
-            @RequestPart("shopBy") String shopBy,
-            @RequestPart("productDiscount") String productDiscount,
-            @RequestPart("productCouponCode") String productCouponCode) {
+            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages) {
 
         try {
+            // Parse the JSON productData
+            ProductDataDTO productDataDTO = objectMapper.readValue(productData, ProductDataDTO.class);
+
             ProductCreateRequestDTO requestDTO = new ProductCreateRequestDTO();
-            requestDTO.setProductTitle(productTitle);
-            requestDTO.setProductPrice(new BigDecimal(productPrice));
-            requestDTO.setProductOldPrice(new BigDecimal(productOldPrice));
+            requestDTO.setProductTitle(productDataDTO.getProductTitle());
+            requestDTO.setProductPrice(new BigDecimal(productDataDTO.getProductPrice()));
+            requestDTO.setProductOldPrice(new BigDecimal(productDataDTO.getProductOldPrice()));
 
             if (productImage != null && !productImage.isEmpty()) {
                 requestDTO.setProductImage(productImage.getBytes());
@@ -214,22 +196,21 @@ public class ProductController {
                 requestDTO.setProductSubImages(subImages);
             }
 
-            requestDTO.setProductDescription(productDescription);
-            requestDTO.setProductCategory(productCategory);
-            requestDTO.setProductStock(productStock);
-            requestDTO.setProductQuantity(Integer.parseInt(productQuantity));
-            requestDTO.setShopBy(shopBy);
-            requestDTO.setProductDiscount(productDiscount);
-            requestDTO.setProductCouponCode(productCouponCode);
+            requestDTO.setProductDescription(productDataDTO.getProductDescription());
+            requestDTO.setProductCategory(productDataDTO.getProductCategory());
+            requestDTO.setProductStock(productDataDTO.getProductStock());
+            requestDTO.setProductQuantity(productDataDTO.getProductQuantity());
+            requestDTO.setShopBy(productDataDTO.getShopBy());
+            requestDTO.setProductDiscount(productDataDTO.getProductDiscount());
+            requestDTO.setProductCouponCode(productDataDTO.getProductCouponCode());
+            requestDTO.setStoneColor(productDataDTO.getStoneColor());
+            requestDTO.setMetalColor(productDataDTO.getMetalColor());
+            requestDTO.setSkuNo(productDataDTO.getSkuNo());
+            requestDTO.setRating(productDataDTO.getRating());
 
-            // Parse JSON arrays
-            List<String> features = objectMapper.readValue(productFeatures, new TypeReference<List<String>>() {});
-            List<String> sizes = objectMapper.readValue(productSizes, new TypeReference<List<String>>() {});
-            List<String> unavailableSizes = objectMapper.readValue(productUnavailableSizes, new TypeReference<List<String>>() {});
-
-            requestDTO.setProductFeatures(features);
-            requestDTO.setProductSizes(sizes);
-            requestDTO.setProductUnavailableSizes(unavailableSizes);
+            requestDTO.setProductFeatures(productDataDTO.getProductFeatures());
+            requestDTO.setProductSizes(productDataDTO.getProductSizes());
+            requestDTO.setProductUnavailableSizes(productDataDTO.getProductUnavailableSizes());
 
             ProductDTO updatedProduct = productService.updateProduct(productId, requestDTO);
             return new ResponseEntity<>(updatedProduct, HttpStatus.OK);
@@ -242,7 +223,6 @@ public class ProductController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
-
     // Delete product
     @DeleteMapping("/delete-product/{productId}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long productId) {

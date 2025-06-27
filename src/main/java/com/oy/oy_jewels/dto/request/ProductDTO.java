@@ -56,12 +56,25 @@ public class ProductDTO {
     @JsonProperty("productCouponCode")
     private String productCouponCode;
 
+    @JsonProperty("stoneColor")
+    private String stoneColor;
+
+    @JsonProperty("metalColor")
+    private String metalColor;
+
+    @JsonProperty("skuNo")
+    private String skuNo;
+
+    @JsonProperty("rating")
+    private String rating;
+
     // Constructors, Getters and Setters
 
     public ProductDTO(Long productId, String productTitle, BigDecimal productPrice, BigDecimal productOldPrice,
                       byte[] productImage, List<byte[]> productSubImages, String productDescription,
                       List<String> productFeatures, List<String> productSizes, List<String> productUnavailableSizes, String productCategory, String productStock,
-                      Integer productQuantity, String shopBy, String productDiscount, String productCouponCode) {
+                      Integer productQuantity, String shopBy, String productDiscount, String productCouponCode,
+                      String stoneColor, String metalColor, String skuNo, String rating) {
         this.productId = productId;
         this.productTitle = productTitle;
         this.productPrice = productPrice;
@@ -78,6 +91,10 @@ public class ProductDTO {
         this.shopBy = shopBy;
         this.productDiscount = productDiscount;
         this.productCouponCode = productCouponCode;
+        this.stoneColor = stoneColor;
+        this.metalColor = metalColor;
+        this.skuNo = skuNo;
+        this.rating = rating;
     }
 
     public Long getProductId() {
@@ -206,5 +223,37 @@ public class ProductDTO {
 
     public void setProductCouponCode(String productCouponCode) {
         this.productCouponCode = productCouponCode;
+    }
+
+    public String getStoneColor() {
+        return stoneColor;
+    }
+
+    public void setStoneColor(String stoneColor) {
+        this.stoneColor = stoneColor;
+    }
+
+    public String getMetalColor() {
+        return metalColor;
+    }
+
+    public void setMetalColor(String metalColor) {
+        this.metalColor = metalColor;
+    }
+
+    public String getSkuNo() {
+        return skuNo;
+    }
+
+    public void setSkuNo(String skuNo) {
+        this.skuNo = skuNo;
+    }
+
+    public String getRating() {
+        return rating;
+    }
+
+    public void setRating(String rating) {
+        this.rating = rating;
     }
 }

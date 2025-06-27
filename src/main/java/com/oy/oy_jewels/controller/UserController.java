@@ -56,10 +56,25 @@ public class UserController {
     }
 
     // NEW: PATCH endpoint for partial updates
-    @PatchMapping("/{userId}")
+    @PatchMapping("/update/{userId}")
     public ResponseEntity<UserEntity> patchUser(@PathVariable Long userId, @RequestBody Map<String, Object> updates) {
         UserEntity patchedUser = userService.patchUser(userId, updates);
         return new ResponseEntity<>(patchedUser, HttpStatus.OK);
+    }
+
+    // password changing api
+    @PatchMapping("/change-password/{userId}")
+    public ResponseEntity<?> changePassword(
+            @PathVariable Long userId,
+            @RequestParam("oldPassword") String oldPassword,
+            @RequestParam("newPassword") String newPassword) {
+
+        try {
+            boolean success = userService.changePassword(userId, oldPassword, newPassword);
+            return ResponseEntity.ok().body("Password changed successfully");
+        } catch (RuntimeException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @DeleteMapping("/{userId}")
