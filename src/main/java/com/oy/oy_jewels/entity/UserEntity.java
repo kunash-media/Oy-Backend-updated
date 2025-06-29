@@ -1,5 +1,6 @@
 package com.oy.oy_jewels.entity;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -26,9 +27,11 @@ public class UserEntity {
     @Column(name = "marital_status")
     private String maritalStatus;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @Column(name = "customer_dob")
     private LocalDate customerDOB;
 
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     @Column(name = "anniversary")
     private LocalDate anniversary;
 

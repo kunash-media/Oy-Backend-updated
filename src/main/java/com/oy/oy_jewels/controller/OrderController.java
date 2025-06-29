@@ -22,6 +22,23 @@ public class OrderController {
     @Autowired
     private OrderService orderService;
 
+    @GetMapping("/get-all-orders")
+    public ResponseEntity<List<OrderResponse>> getAllOrders() {
+        List<OrderResponse> orders = orderService.getAllOrders();
+        return new ResponseEntity<>(orders, HttpStatus.OK);
+    }
+
+    @GetMapping("/{orderId}")
+    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long orderId) {
+        try {
+            OrderResponse order = orderService.getOrderById(orderId);
+            return new ResponseEntity<>(order, HttpStatus.OK);
+        } catch (RuntimeException e) {
+            OrderResponse errorResponse = new OrderResponse("not_found", e.getMessage(), null);
+            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
+        }
+    }
+
     @PostMapping("/create")
     public ResponseEntity<OrderResponse> createOrder(@RequestBody CreateOrderRequest request) {
         try {
@@ -37,23 +54,6 @@ public class OrderController {
             // Handle other runtime exceptions
             OrderResponse errorResponse = new OrderResponse("error", e.getMessage(), null);
             return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
-        }
-    }
-
-    @GetMapping("/get-all-orders")
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
-        List<OrderResponse> orders = orderService.getAllOrders();
-        return new ResponseEntity<>(orders, HttpStatus.OK);
-    }
-
-    @GetMapping("/{orderId}")
-    public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long orderId) {
-        try {
-            OrderResponse order = orderService.getOrderById(orderId);
-            return new ResponseEntity<>(order, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            OrderResponse errorResponse = new OrderResponse("not_found", e.getMessage(), null);
-            return new ResponseEntity<>(errorResponse, HttpStatus.NOT_FOUND);
         }
     }
 

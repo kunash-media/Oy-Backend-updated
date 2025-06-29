@@ -1,5 +1,6 @@
 package com.oy.oy_jewels.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.oy.oy_jewels.entity.OrderEntity;
 
 import java.math.BigDecimal;
@@ -12,7 +13,11 @@ public class OrderResponse {
     private Long orderId;
     private BigDecimal total;
     private String status;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate orderDate;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate deliveryDate;
 
     private List<OrderItemResponse> items;
