@@ -30,13 +30,12 @@ public class ProductController {
 
     // Create new product
     @PostMapping(value = "/create-product", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<ProductDTO> createProduct(
+    public ResponseEntity<?> createProduct(
             @RequestPart("productData") String productData,
             @RequestPart("productImage") MultipartFile productImage,
             @RequestPart("productSubImages") MultipartFile[] productSubImages) {
 
         try {
-            // Parse the JSON productData
             ProductDataDTO productDataDTO = objectMapper.readValue(productData, ProductDataDTO.class);
 
             ProductCreateRequestDTO requestDTO = new ProductCreateRequestDTO();
@@ -48,8 +47,6 @@ public class ProductController {
             requestDTO.setMetalColor(productDataDTO.getMetalColor());
             requestDTO.setSkuNo(productDataDTO.getSkuNo());
             requestDTO.setRating(productDataDTO.getRating());
-
-
 
             List<byte[]> subImages = new ArrayList<>();
             for (MultipartFile file : productSubImages) {
@@ -72,10 +69,10 @@ public class ProductController {
             ProductDTO createdProduct = productService.createProduct(requestDTO);
             return new ResponseEntity<>(createdProduct, HttpStatus.CREATED);
 
-        } catch (IllegalArgumentException e) {
-            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+        } catch (RuntimeException e) {
+            return new ResponseEntity<>(e.getMessage(), HttpStatus.BAD_REQUEST);
+        }catch (Exception e) {
+            return new ResponseEntity<>("Failed to create product: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -223,6 +220,7 @@ public class ProductController {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
     // Delete product
     @DeleteMapping("/delete-product/{productId}")
     public ResponseEntity<String> deleteProduct(@PathVariable Long productId) {

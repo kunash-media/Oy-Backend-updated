@@ -40,9 +40,14 @@ public class ProductServiceImpl implements ProductService {
     public ProductDTO createProduct(ProductCreateRequestDTO requestDTO) {
         // Check if product already exists
         Optional<ProductEntity> existProduct = productRepository.findByProductTitle(requestDTO.getProductTitle());
+        Optional<ProductEntity> existProductWithSkuNo = productRepository.findBySkuNo(requestDTO.getSkuNo());
 
         if (existProduct.isPresent()) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "Product with this title already exists");
+            throw new RuntimeException("Product with this title already exists");
+        }
+
+        if(existProductWithSkuNo.isPresent()){
+            throw new RuntimeException("Product with this SKU number already exists");
         }
 
         try {
