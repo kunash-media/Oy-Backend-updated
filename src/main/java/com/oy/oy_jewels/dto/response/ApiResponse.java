@@ -1,7 +1,5 @@
 package com.oy.oy_jewels.dto.response;
 
-// ApiResponse.java (Generic response wrapper)
-
 
 public class ApiResponse<T> {
     private boolean success;

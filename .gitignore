@@ -1,8 +1,20 @@
+# General
 HELP.md
 target/
 .mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+# Environment files - ADDED THESE LINES
+.env
+.env.*
+!.env.example
+.env.local
+.env.development
+.env.test
+.env.production
+.env.staging
+config/application-local.properties
 
 ### STS ###
 .apt_generated

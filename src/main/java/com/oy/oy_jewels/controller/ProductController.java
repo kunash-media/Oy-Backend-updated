@@ -1,6 +1,5 @@
 package com.oy.oy_jewels.controller;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
 import com.oy.oy_jewels.dto.request.ProductDTO;
