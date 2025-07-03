@@ -1,10 +1,12 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+import com.oy.oy_jewels.dto.request.BannerUpdateRequest;
 import com.oy.oy_jewels.entity.BannerEntity;
 import com.oy.oy_jewels.repository.BannerRepository;
 import com.oy.oy_jewels.service.BannerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -41,10 +43,52 @@ public class BannerServiceImpl implements BannerService {
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to process image files: " + e.getMessage(), e);
-}
-}
+        }
+    }
 
-    @Override
+   //patch api impl
+    @Transactional
+    public BannerEntity updateBanner(Long id,
+                                     BannerUpdateRequest updateRequest,
+                                     MultipartFile bannerFileOne,
+                                     MultipartFile bannerFileTwo,
+                                     MultipartFile bannerFileThree,
+                                     MultipartFile bannerFileFour) throws IOException {
+
+        BannerEntity existingBanner = bannerRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Banner not found with id: " + id));
+
+        // Update text fields if provided in the request
+        if (updateRequest != null) {
+            if (updateRequest.getPageName() != null) {
+                existingBanner.setPageName(updateRequest.getPageName());
+            }
+            if (updateRequest.getHeader() != null) {
+                existingBanner.setHeader(updateRequest.getHeader());
+            }
+            if (updateRequest.getText() != null) {
+                existingBanner.setText(updateRequest.getText());
+            }
+        }
+
+        // Update image fields if new files are provided
+        if (bannerFileOne != null && !bannerFileOne.isEmpty()) {
+            existingBanner.setBannerFileOne(bannerFileOne.getBytes());
+        }
+        if (bannerFileTwo != null && !bannerFileTwo.isEmpty()) {
+            existingBanner.setBannerFileTwo(bannerFileTwo.getBytes());
+        }
+        if (bannerFileThree != null && !bannerFileThree.isEmpty()) {
+            existingBanner.setBannerFileThree(bannerFileThree.getBytes());
+        }
+        if (bannerFileFour != null && !bannerFileFour.isEmpty()) {
+            existingBanner.setBannerFileFour(bannerFileFour.getBytes());
+        }
+
+        return bannerRepository.save(existingBanner);
+    }
+
+
     public List<BannerEntity> getAllBanners() {
         return bannerRepository.findAll();
     }
@@ -54,13 +98,10 @@ public class BannerServiceImpl implements BannerService {
         return bannerRepository.findById(id);
     }
 
-    @Override
-    public Optional<BannerEntity> getBannerByPageName(String pageName) {
-        return bannerRepository.findFirstByPageName(pageName);
-    }
+
 
     @Override
-    public List<BannerEntity> getBannersByPageName(String pageName) {
+    public BannerEntity getBannerByPageName(String pageName) {
         return bannerRepository.findByPageName(pageName);
     }
 
@@ -150,8 +191,6 @@ public class BannerServiceImpl implements BannerService {
         return bannerRepository.countImagesById(id);
     }
 
-    @Override
-    public boolean existsByPageName(String pageName) {
-        return bannerRepository.existsByPageName(pageName);
-    }
+
+
 }

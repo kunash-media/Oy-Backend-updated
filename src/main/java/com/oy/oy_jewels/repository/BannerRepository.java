@@ -17,10 +17,13 @@ public interface BannerRepository extends JpaRepository<BannerEntity, Long> {
     Optional<BannerEntity> findFirstByPageName(String pageName);
 
     // Find all banners by page name
-    List<BannerEntity> findByPageName(String pageName);
+    BannerEntity findByPageName(String pageName);
 
     // Check if banner exists by page name
     boolean existsByPageName(String pageName);
+
+    @Query("SELECT b FROM BannerEntity b WHERE b.pageName = :pageName")
+    BannerEntity findSingleByPageName(@Param("pageName") String pageName);
 
     // Search banners by header containing keyword (case-insensitive)
     @Query("SELECT b FROM BannerEntity b WHERE LOWER(b.header) LIKE LOWER(CONCAT('%', :header, '%'))")
@@ -38,4 +41,6 @@ public interface BannerRepository extends JpaRepository<BannerEntity, Long> {
             "(CASE WHEN b.bannerFileFour IS NOT NULL THEN 1 ELSE 0 END) " +
             "FROM BannerEntity b WHERE b.id = :id")
     Integer countImagesById(@Param("id") Long id);
+
+
 }

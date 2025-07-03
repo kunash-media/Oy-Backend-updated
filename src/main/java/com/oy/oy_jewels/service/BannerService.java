@@ -1,8 +1,10 @@
 package com.oy.oy_jewels.service;
 
+import com.oy.oy_jewels.dto.request.BannerUpdateRequest;
 import com.oy.oy_jewels.entity.BannerEntity;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,10 +22,10 @@ public interface BannerService {
     Optional<BannerEntity> getBannerById(Long id);
 
     // Get banner by page name (first match)
-    Optional<BannerEntity> getBannerByPageName(String pageName);
+//    BannerEntity getBannerByPageName(String pageName);
 
     // Get all banners by page name
-    List<BannerEntity> getBannersByPageName(String pageName);
+    BannerEntity getBannerByPageName(String pageName);
 
     // Update banner with images
     BannerEntity updateBannerWithImages(Long id, String pageName, String header, String text,
@@ -46,5 +48,15 @@ public interface BannerService {
     Integer countImagesForBanner(Long id);
 
     // Check if banner exists by page name
-    boolean existsByPageName(String pageName);
+//    boolean existsByPageName(String pageName);
+
+    BannerEntity updateBanner(Long id,
+                              BannerUpdateRequest updateRequest,
+                              MultipartFile bannerFileOne,
+                              MultipartFile bannerFileTwo,
+                              MultipartFile bannerFileThree,
+                              MultipartFile bannerFileFour) throws IOException;
+
+
+
 }
