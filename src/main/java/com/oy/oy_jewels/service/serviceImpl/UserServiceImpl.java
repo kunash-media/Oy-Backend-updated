@@ -84,6 +84,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserEntity patchUser(Long userId, Map<String, Object> updates) {
+
         UserEntity existingUser = getUserById(userId);
 
         // Apply partial updates - only update provided fields

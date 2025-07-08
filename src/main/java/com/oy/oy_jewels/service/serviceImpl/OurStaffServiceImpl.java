@@ -1,11 +1,15 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
 
+import com.oy.oy_jewels.bcrypt.BcryptEncoderConfig;
+import com.oy.oy_jewels.dto.request.StaffUpdateRequest;
 import com.oy.oy_jewels.entity.OurStaffEntity;
 import com.oy.oy_jewels.repository.OurStaffRepository;
 import com.oy.oy_jewels.service.OurStaffService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -14,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +28,14 @@ public class OurStaffServiceImpl implements OurStaffService {
 
     @Autowired
     private OurStaffRepository staffRepository;
+
+    @Autowired
+    private final BcryptEncoderConfig passwordEncoder;
+
+    public OurStaffServiceImpl(OurStaffRepository staffRepository, BcryptEncoderConfig passwordEncoder){
+        this.staffRepository = staffRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
     private final String uploadDir = "uploads/staff-images/";
 
@@ -43,8 +56,12 @@ public class OurStaffServiceImpl implements OurStaffService {
             staff.setJoiningDate(LocalDate.now());
         }
 
+        String encodedPassword = passwordEncoder.encode(staff.getPassword());
+        staff.setPassword(encodedPassword);
+
         return staffRepository.save(staff);
     }
+
 
     @Override
     public List<OurStaffEntity> getAllStaff() {
@@ -52,8 +69,8 @@ public class OurStaffServiceImpl implements OurStaffService {
     }
 
     @Override
-    public Optional<OurStaffEntity> getStaffById(Long id) {
-        return staffRepository.findById(id);
+    public OurStaffEntity getStaffById(Long id) {
+        return staffRepository.findById(id).orElse(null);
     }
 
     @Override
@@ -71,36 +88,6 @@ public class OurStaffServiceImpl implements OurStaffService {
         return staffRepository.findByStaffNameContainingIgnoreCase(staffName);
     }
 
-    @Override
-    public OurStaffEntity updateStaff(Long id, OurStaffEntity updatedStaff, MultipartFile staffImage) {
-        Optional<OurStaffEntity> existingStaffOpt = staffRepository.findById(id);
-
-        if (existingStaffOpt.isPresent()) {
-            OurStaffEntity existingStaff = existingStaffOpt.get();
-
-            // Update fields
-            existingStaff.setStaffName(updatedStaff.getStaffName());
-            existingStaff.setEmailAddress(updatedStaff.getEmailAddress());
-            existingStaff.setPassword(updatedStaff.getPassword());
-            existingStaff.setContactNumber(updatedStaff.getContactNumber());
-            existingStaff.setJoiningDate(updatedStaff.getJoiningDate());
-            existingStaff.setStaffRole(updatedStaff.getStaffRole());
-
-            // Handle image update
-            if (staffImage != null && !staffImage.isEmpty()) {
-                try {
-                    byte[] imageBytes = staffImage.getBytes();
-                    existingStaff.setStaffImage(imageBytes);
-                } catch (IOException e) {
-                    throw new RuntimeException("Error processing image file", e);
-                }
-            }
-
-            return staffRepository.save(existingStaff);
-        }
-
-        return null;
-    }
 
     @Override
     public boolean deleteStaff(Long id) {
@@ -120,6 +107,53 @@ public class OurStaffServiceImpl implements OurStaffService {
     public List<OurStaffEntity> getStaffOrderedByJoiningDate() {
         return staffRepository.findAllByOrderByJoiningDateDesc();
     }
+
+    @Override
+    @Transactional
+    public OurStaffEntity updateStaff(Long id, StaffUpdateRequest request, MultipartFile staffImage) throws IOException {
+        OurStaffEntity existingStaff = staffRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Staff not found"));
+
+        // Update fields from the DTO request - only update if values are provided
+        if (request.getStaffName() != null && !request.getStaffName().trim().isEmpty()) {
+            existingStaff.setStaffName(request.getStaffName());
+        }
+
+        if (request.getEmailAddress() != null && !request.getEmailAddress().trim().isEmpty()) {
+            existingStaff.setEmailAddress(request.getEmailAddress());
+        }
+
+        if (request.getPassword() != null && !request.getPassword().trim().isEmpty()) {
+            // Consider encrypting the password before saving
+            existingStaff.setPassword(request.getPassword());
+        }
+
+        if (request.getContactNumber() != null && !request.getContactNumber().trim().isEmpty()) {
+            existingStaff.setContactNumber(request.getContactNumber());
+        }
+
+        if (request.getJoiningDate() != null && !request.getJoiningDate().trim().isEmpty()) {
+            // Parse string date to LocalDate
+            try {
+                LocalDate joiningDate = LocalDate.parse(request.getJoiningDate());
+                existingStaff.setJoiningDate(joiningDate);
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid date format. Expected format: YYYY-MM-DD");
+            }
+        }
+
+        if (request.getStaffRole() != null && !request.getStaffRole().trim().isEmpty()) {
+            existingStaff.setStaffRole(request.getStaffRole());
+        }
+
+        // Handle image update - convert MultipartFile to byte[]
+        if (staffImage != null && !staffImage.isEmpty()) {
+            existingStaff.setStaffImage(staffImage.getBytes());
+        }
+
+        return staffRepository.save(existingStaff);
+    }
+
 
     @Override
     public List<OurStaffEntity> getStaffByRoleOrderedByJoiningDate(String role) {

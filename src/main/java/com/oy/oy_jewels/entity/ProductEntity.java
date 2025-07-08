@@ -1,6 +1,9 @@
 package com.oy.oy_jewels.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.Where;
+import org.springframework.data.jpa.domain.Specification;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -9,6 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "products")
+@SQLDelete(sql = "UPDATE products SET is_deleted = true WHERE product_id = ?")
 public class ProductEntity {
 
     @Id
@@ -51,6 +55,9 @@ public class ProductEntity {
     @Column(name = "unavailable_size")
     private List<String> productUnavailableSizes = new ArrayList<>();
 
+    @Column(name = "is_deleted", nullable = false, columnDefinition = "boolean default false")
+    private boolean isDeleted = false;
+
     @Column(name = "category")
     private String productCategory;
 
@@ -81,6 +88,10 @@ public class ProductEntity {
     @Column(name = "rating")
     private String rating;
 
+    public static Specification<ProductEntity> notDeleted() {
+        return (root, query, cb) -> cb.equal(root.get("isDeleted"), false);
+    }
+
 
     // Constructors
     public ProductEntity() {}
@@ -88,7 +99,7 @@ public class ProductEntity {
     public ProductEntity(Long productId, String productTitle, BigDecimal productPrice,
                          BigDecimal productOldPrice, byte[] productImage, List<byte[]> productSubImages,
                          String productDescription, List<String> productFeatures, List<String> productSizes,
-                         List<String> productUnavailableSizes, String productCategory, String productStock,
+                         List<String> productUnavailableSizes, String productCategory, boolean isDeleted, String productStock,
                          Integer productQuantity, String shopBy, String productDiscount,
                          String productCouponCode, String stoneColor, String metalColor, String skuNo,
                          String rating) {
@@ -103,6 +114,7 @@ public class ProductEntity {
         this.productSizes = productSizes;
         this.productUnavailableSizes = productUnavailableSizes;
         this.productCategory = productCategory;
+        this.isDeleted =  isDeleted;
         this.productStock = productStock;
         this.productQuantity = productQuantity;
         this.shopBy = shopBy;
@@ -193,5 +205,13 @@ public class ProductEntity {
 
     public void setRating(String rating) {
         this.rating = rating;
+    }
+
+    public boolean isDeleted() {
+        return isDeleted;
+    }
+
+    public void setDeleted(boolean deleted) {
+        isDeleted = deleted;
     }
 }

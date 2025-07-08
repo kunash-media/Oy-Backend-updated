@@ -9,7 +9,6 @@ import org.springframework.context.annotation.Configuration;
 @SpringBootApplication
 public class OyJewelsApplication {
 
-
 	public static void main(String[] args) {
 		SpringApplication.run(OyJewelsApplication.class, args);
 	}

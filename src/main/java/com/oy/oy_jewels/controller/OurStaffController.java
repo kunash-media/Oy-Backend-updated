@@ -1,25 +1,29 @@
 package com.oy.oy_jewels.controller;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oy.oy_jewels.dto.request.StaffCreateRequest;
 import com.oy.oy_jewels.dto.request.StaffUpdateRequest;
 import com.oy.oy_jewels.dto.response.ApiResponse;
 import com.oy.oy_jewels.dto.response.StaffResponse;
 import com.oy.oy_jewels.entity.OurStaffEntity;
 import com.oy.oy_jewels.service.OurStaffService;
+import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/staff")
-@CrossOrigin(origins = "*")
 public class OurStaffController {
 
     @Autowired
@@ -28,18 +32,10 @@ public class OurStaffController {
     @PostMapping("/create")
     public ResponseEntity<ApiResponse<StaffResponse>> createStaff(
             @RequestPart(value = "staffImage", required = false) MultipartFile staffImage,
-            @RequestPart("staffName") String staffName,
-            @RequestPart("emailAddress") String emailAddress,
-            @RequestPart("password") String password,
-            @RequestPart("contactNumber") String contactNumber,
-            @RequestPart("joiningDate") String joiningDate,
-            @RequestPart("staffRole") String staffRole) {
+            @RequestPart("staffData") StaffCreateRequest staffData) {
 
         try {
-            StaffCreateRequest request = new StaffCreateRequest(staffName, emailAddress, password,
-                    contactNumber, joiningDate, staffRole);
-
-            OurStaffEntity staff = convertToEntity(request);
+            OurStaffEntity staff = convertToEntity(staffData);
             OurStaffEntity createdStaff = staffService.createStaff(staff, staffImage);
             StaffResponse response = convertToResponse(createdStaff);
 
@@ -50,31 +46,22 @@ public class OurStaffController {
         }
     }
 
-    @GetMapping("/all")
-    public ResponseEntity<ApiResponse<List<StaffResponse>>> getAllStaff() {
-        try {
+    @GetMapping("/get-all-staff")
+    public ResponseEntity<List<OurStaffEntity>> getAllStaff() {
             List<OurStaffEntity> staffList = staffService.getAllStaff();
-            List<StaffResponse> responseList = staffList.stream()
-                    .map(this::convertToResponse)
-                    .collect(Collectors.toList());
-
-            return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", responseList), HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(ApiResponse.error("Error retrieving staff: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+            return new ResponseEntity<>(staffList, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<ApiResponse<StaffResponse>> getStaffById(@PathVariable Long id) {
+    @GetMapping("/get-staff/{id}")
+    public ResponseEntity<?> getStaffById(@PathVariable Long id) {
         try {
-            Optional<OurStaffEntity> staff = staffService.getStaffById(id);
-            if (staff.isPresent()) {
-                StaffResponse response = convertToResponse(staff.get());
-                return new ResponseEntity<>(ApiResponse.success("Staff retrieved successfully", response), HttpStatus.OK);
-            }
-            return new ResponseEntity<>(ApiResponse.error("Staff not found"), HttpStatus.NOT_FOUND);
+            OurStaffEntity staff = staffService.getStaffById(id);
+            return staff != null
+                    ? ResponseEntity.ok(staff)
+                    : ResponseEntity.notFound().build();
         } catch (Exception e) {
-            return new ResponseEntity<>(ApiResponse.error("Error retrieving staff: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return ResponseEntity.internalServerError()
+                    .body("Error retrieving staff: " + e.getMessage());
         }
     }
 
@@ -120,45 +107,51 @@ public class OurStaffController {
         }
     }
 
-    @PutMapping("/update/{id}")
-    public ResponseEntity<ApiResponse<StaffResponse>> updateStaff(
+    @PatchMapping(value = "/update/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<ApiResponse<StaffResponse>> updateStaffAlternative(
             @PathVariable Long id,
-            @RequestParam(value = "staffImage", required = false) MultipartFile staffImage,
-            @RequestParam("staffName") String staffName,
-            @RequestParam("emailAddress") String emailAddress,
-            @RequestParam("password") String password,
-            @RequestParam("contactNumber") String contactNumber,
-            @RequestParam("joiningDate") String joiningDate,
-            @RequestParam("staffRole") String staffRole) {
-
+            @RequestPart(value = "staffData", required = false) String staffDataJson,
+            @RequestPart(value = "staffImage", required = false) MultipartFile staffImage) {
         try {
-            StaffUpdateRequest request = new StaffUpdateRequest(staffName, emailAddress, password,
-                    contactNumber, joiningDate, staffRole);
+            StaffUpdateRequest request = new StaffUpdateRequest();
 
-            OurStaffEntity staff = convertToEntity(request);
-            OurStaffEntity updatedStaff = staffService.updateStaff(id, staff, staffImage);
-
-            if (updatedStaff != null) {
-                StaffResponse response = convertToResponse(updatedStaff);
-                return new ResponseEntity<>(ApiResponse.success("Staff updated successfully", response), HttpStatus.OK);
+            // Parse JSON string if provided
+            if (staffDataJson != null && !staffDataJson.trim().isEmpty()) {
+                // You'll need to add Jackson ObjectMapper dependency
+                ObjectMapper mapper = new ObjectMapper();
+                request = mapper.readValue(staffDataJson, StaffUpdateRequest.class);
             }
-            return new ResponseEntity<>(ApiResponse.error("Staff not found"), HttpStatus.NOT_FOUND);
 
-        } catch (Exception e) {
-            return new ResponseEntity<>(ApiResponse.error("Error updating staff: " + e.getMessage()), HttpStatus.BAD_REQUEST);
+            // Call service with DTO and MultipartFile
+            OurStaffEntity updatedStaff = staffService.updateStaff(id, request, staffImage);
+            StaffResponse response = convertToResponse(updatedStaff);
+
+            return ResponseEntity.ok(
+                    ApiResponse.success("Staff updated successfully", response)
+            );
+        } catch (IOException e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Failed to process image"));
+        } catch (EntityNotFoundException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error(e.getMessage()));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(ApiResponse.error(e.getMessage()));
         }
     }
 
+
     @DeleteMapping("/delete/{id}")
-    public ResponseEntity<ApiResponse<String>> deleteStaff(@PathVariable Long id) {
+    public ResponseEntity<String> deleteStaff(@PathVariable Long id) {
         try {
             boolean deleted = staffService.deleteStaff(id);
             if (deleted) {
-                return new ResponseEntity<>(ApiResponse.success("Staff deleted successfully", "Deleted"), HttpStatus.OK);
+                return new ResponseEntity<>("Staff deleted successfully ", HttpStatus.OK);
             }
-            return new ResponseEntity<>(ApiResponse.error("Staff not found"), HttpStatus.NOT_FOUND);
+            return new ResponseEntity<>("Staff not found", HttpStatus.NOT_FOUND);
         } catch (Exception e) {
-            return new ResponseEntity<>(ApiResponse.error("Error deleting staff: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>("Error deleting staff: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
@@ -213,14 +206,22 @@ public class OurStaffController {
     }
 
     private OurStaffEntity convertToEntity(StaffUpdateRequest request) {
-        OurStaffEntity staff = new OurStaffEntity();
-        staff.setStaffName(request.getStaffName());
-        staff.setEmailAddress(request.getEmailAddress());
-        staff.setPassword(request.getPassword());
-        staff.setContactNumber(request.getContactNumber());
-        staff.setJoiningDate(LocalDate.parse(request.getJoiningDate()));
-        staff.setStaffRole(request.getStaffRole());
-        return staff;
+        OurStaffEntity entity = new OurStaffEntity();
+        entity.setStaffName(request.getStaffName());
+        entity.setEmailAddress(request.getEmailAddress());
+        entity.setPassword(request.getPassword());
+        entity.setContactNumber(request.getContactNumber());
+        entity.setStaffRole(request.getStaffRole());
+
+        // Handle date conversion
+        if (request.getJoiningDate() != null && !request.getJoiningDate().trim().isEmpty()) {
+            try {
+                entity.setJoiningDate(LocalDate.parse(request.getJoiningDate()));
+            } catch (DateTimeParseException e) {
+                throw new IllegalArgumentException("Invalid date format. Expected format: YYYY-MM-DD");
+            }
+        }
+        return entity;
     }
 
     private StaffResponse convertToResponse(OurStaffEntity entity) {

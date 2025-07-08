@@ -27,7 +27,7 @@ public class AdminController {
     }
 
     // Get admin by ID
-    @GetMapping("/{id}")
+    @GetMapping("get-admin/{id}")
     public ResponseEntity<AdminResponseDTO> getAdminById(@PathVariable Long id) {
         AdminResponseDTO admin = adminService.getAdminById(id);
         if (admin != null) {
@@ -65,7 +65,7 @@ public class AdminController {
     }
 
     // Delete admin
-    @DeleteMapping("/{id}")
+    @DeleteMapping("delete-admin/{id}")
     public ResponseEntity<Void> deleteAdmin(@PathVariable Long id) {
         AdminResponseDTO admin = adminService.getAdminById(id);
         if (admin != null) {

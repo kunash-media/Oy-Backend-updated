@@ -66,7 +66,7 @@ public class ProductServiceImpl implements ProductService {
     @Transactional(readOnly = true)
     public List<ProductDTO> getAllProducts() {
         try {
-            List<ProductEntity> entities = productRepository.findAll();
+            List<ProductEntity> entities = productRepository.findAllActive();
             return productMapper.toDTOList(entities);
         } catch (Exception e) {
             throw new RuntimeException("Failed to retrieve products: " + e.getMessage(), e);

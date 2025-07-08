@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public class ProductPatchRequestDTO {
+
     private String productTitle;
     private BigDecimal productPrice;
     private BigDecimal productOldPrice;
@@ -25,8 +26,7 @@ public class ProductPatchRequestDTO {
     private String metalColor;
     private String skuNo;
     private String rating;
-    // Getters and Setters for all fields
-    // ...
+
 
 
     public String getProductTitle() {

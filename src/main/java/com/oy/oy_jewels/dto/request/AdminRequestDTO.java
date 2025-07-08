@@ -4,9 +4,7 @@ package com.oy.oy_jewels.dto.request;
 public class AdminRequestDTO {
 
     private String name;
-
     private String email;
-
     private String password;
 
     // Default constructor
