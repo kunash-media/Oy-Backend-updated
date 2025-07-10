@@ -1,6 +1,7 @@
 package com.oy.oy_jewels.controller;
 
 
+import com.oy.oy_jewels.dto.request.AdminLoginDTO;
 import com.oy.oy_jewels.dto.request.AdminRequestDTO;
 import com.oy.oy_jewels.dto.request.AdminUpdateDTO;
 import com.oy.oy_jewels.dto.response.AdminResponseDTO;
@@ -21,7 +22,7 @@ public class AdminController {
 
     // Create new admin
     @PostMapping("/create-admin")
-    public ResponseEntity<AdminResponseDTO> createAdmin( @RequestBody AdminRequestDTO adminRequestDTO) {
+    public ResponseEntity<AdminResponseDTO> createAdmin(@RequestBody AdminRequestDTO adminRequestDTO) {
         AdminResponseDTO createdAdmin = adminService.createAdmin(adminRequestDTO);
         return new ResponseEntity<>(createdAdmin, HttpStatus.CREATED);
     }
@@ -54,9 +55,9 @@ public class AdminController {
     }
 
     // Update admin
-    @PutMapping("/{id}")
+    @PatchMapping("update-admin/{id}")
     public ResponseEntity<AdminResponseDTO> updateAdmin(@PathVariable Long id,
-                                                         @RequestBody AdminUpdateDTO adminUpdateDTO) {
+                                                        @RequestBody AdminUpdateDTO adminUpdateDTO) {
         AdminResponseDTO updatedAdmin = adminService.updateAdmin(id, adminUpdateDTO);
         if (updatedAdmin != null) {
             return new ResponseEntity<>(updatedAdmin, HttpStatus.OK);
@@ -66,11 +67,11 @@ public class AdminController {
 
     // Delete admin
     @DeleteMapping("delete-admin/{id}")
-    public ResponseEntity<Void> deleteAdmin(@PathVariable Long id) {
+    public ResponseEntity<String> deleteAdmin(@PathVariable Long id) {
         AdminResponseDTO admin = adminService.getAdminById(id);
         if (admin != null) {
             adminService.deleteAdmin(id);
-            return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+            return new ResponseEntity<>("Admin Deleletd Successfully!",HttpStatus.NO_CONTENT);
         }
         return new ResponseEntity<>(HttpStatus.NOT_FOUND);
     }
@@ -80,5 +81,22 @@ public class AdminController {
     public ResponseEntity<Boolean> existsByEmail(@PathVariable String email) {
         boolean exists = adminService.existsByEmail(email);
         return new ResponseEntity<>(exists, HttpStatus.OK);
+    }
+
+    // NEW: Authenticate admin with email and password
+    @PostMapping("/login-admin")
+    public ResponseEntity<AdminResponseDTO> authenticateAdmin(@RequestBody AdminLoginDTO adminLoginDTO) {
+        AdminResponseDTO admin = adminService.authenticateAdmin(adminLoginDTO);
+        if (admin != null) {
+            return new ResponseEntity<>(admin, HttpStatus.OK);
+        }
+        return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+    }
+
+    // NEW: Get admins by role
+    @GetMapping("/role/{role}")
+    public ResponseEntity<List<AdminResponseDTO>> getAdminsByRole(@PathVariable String role) {
+        List<AdminResponseDTO> admins = adminService.getAdminsByRole(role);
+        return new ResponseEntity<>(admins, HttpStatus.OK);
     }
 }

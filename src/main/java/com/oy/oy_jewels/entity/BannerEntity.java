@@ -3,6 +3,9 @@ package com.oy.oy_jewels.entity;
 
 import jakarta.persistence.*;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Entity
 @Table(name = "banners")
 public class BannerEntity {
@@ -20,8 +23,10 @@ public class BannerEntity {
     @Column(name = "text", columnDefinition = "TEXT")
     private String text;
 
-    @Column(name = "banner_file_one", columnDefinition = "LONGBLOB")
-    private byte[] bannerFileOne;
+    @ElementCollection
+    @CollectionTable(name = "banner_file_one", joinColumns = @JoinColumn(name = "banner_id"))
+    @Column(name = "file_data", columnDefinition = "LONGBLOB")
+    private List<byte[]> bannerFileOne = new ArrayList<>();
 
     @Column(name = "banner_file_two", columnDefinition = "LONGBLOB")
     private byte[] bannerFileTwo;
@@ -75,11 +80,11 @@ public class BannerEntity {
         this.text = text;
     }
 
-    public byte[] getBannerFileOne() {
+    public List<byte[]> getBannerFileOne() {
         return bannerFileOne;
     }
 
-    public void setBannerFileOne(byte[] bannerFileOne) {
+    public void setBannerFileOne(List<byte[]> bannerFileOne) {
         this.bannerFileOne = bannerFileOne;
     }
 

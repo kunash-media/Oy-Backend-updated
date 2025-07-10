@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,15 +21,23 @@ public class BannerServiceImpl implements BannerService {
     private BannerRepository bannerRepository;
 
     public BannerEntity saveBannerWithImages(String pageName, String header, String text,
-                                             MultipartFile bannerFileOne, MultipartFile bannerFileTwo,
+                                             MultipartFile[] bannerFileOne, MultipartFile bannerFileTwo,
                                              MultipartFile bannerFileThree, MultipartFile bannerFileFour) {
         try {
             BannerEntity banner = new BannerEntity(pageName, header, text);
 
-            // Process and save images with null checks
-            if (bannerFileOne != null && !bannerFileOne.isEmpty()) {
-                banner.setBannerFileOne(bannerFileOne.getBytes());
+            // Process and save multiple images for bannerFileOne
+            if (bannerFileOne != null && bannerFileOne.length > 0) {
+                List<byte[]> bannerFileOneList = new ArrayList<>();
+                for (MultipartFile file : bannerFileOne) {
+                    if (file != null && !file.isEmpty()) {
+                        bannerFileOneList.add(file.getBytes());
+                    }
+                }
+                banner.setBannerFileOne(bannerFileOneList);
             }
+
+            // Process and save other single images with null checks
             if (bannerFileTwo != null && !bannerFileTwo.isEmpty()) {
                 banner.setBannerFileTwo(bannerFileTwo.getBytes());
             }
@@ -46,11 +55,11 @@ public class BannerServiceImpl implements BannerService {
         }
     }
 
-   //patch api impl
+    //patch api impl
     @Transactional
     public BannerEntity updateBanner(Long id,
                                      BannerUpdateRequest updateRequest,
-                                     MultipartFile bannerFileOne,
+                                     MultipartFile[] bannerFileOne,
                                      MultipartFile bannerFileTwo,
                                      MultipartFile bannerFileThree,
                                      MultipartFile bannerFileFour) throws IOException {
@@ -71,10 +80,22 @@ public class BannerServiceImpl implements BannerService {
             }
         }
 
-        // Update image fields if new files are provided
-        if (bannerFileOne != null && !bannerFileOne.isEmpty()) {
-            existingBanner.setBannerFileOne(bannerFileOne.getBytes());
+        // Update bannerFileOne if new files are provided
+        if (bannerFileOne != null && bannerFileOne.length > 0) {
+            // Clear existing bannerFileOne images
+            existingBanner.getBannerFileOne().clear();
+
+            // Add new images
+            List<byte[]> newBannerFileOneList = new ArrayList<>();
+            for (MultipartFile file : bannerFileOne) {
+                if (file != null && !file.isEmpty()) {
+                    newBannerFileOneList.add(file.getBytes());
+                }
+            }
+            existingBanner.setBannerFileOne(newBannerFileOneList);
         }
+
+        // Update other image fields if new files are provided
         if (bannerFileTwo != null && !bannerFileTwo.isEmpty()) {
             existingBanner.setBannerFileTwo(bannerFileTwo.getBytes());
         }
@@ -88,7 +109,6 @@ public class BannerServiceImpl implements BannerService {
         return bannerRepository.save(existingBanner);
     }
 
-
     public List<BannerEntity> getAllBanners() {
         return bannerRepository.findAll();
     }
@@ -98,48 +118,9 @@ public class BannerServiceImpl implements BannerService {
         return bannerRepository.findById(id);
     }
 
-
-
     @Override
     public BannerEntity getBannerByPageName(String pageName) {
         return bannerRepository.findByPageName(pageName);
-    }
-
-    @Override
-    public BannerEntity updateBannerWithImages(Long id, String pageName, String header, String text,
-                                               MultipartFile bannerFileOne, MultipartFile bannerFileTwo,
-                                               MultipartFile bannerFileThree, MultipartFile bannerFileFour) {
-        try {
-            Optional<BannerEntity> existingBannerOpt = bannerRepository.findById(id);
-            if (existingBannerOpt.isEmpty()) {
-                throw new RuntimeException("Banner not found with id: " + id);
-            }
-
-            BannerEntity existingBanner = existingBannerOpt.get();
-
-            // Update text fields
-            existingBanner.setPageName(pageName);
-            existingBanner.setHeader(header);
-            existingBanner.setText(text);
-
-            // Update images only if new files are provided
-            if (bannerFileOne != null && !bannerFileOne.isEmpty()) {
-                existingBanner.setBannerFileOne(bannerFileOne.getBytes());
-            }
-            if (bannerFileTwo != null && !bannerFileTwo.isEmpty()) {
-                existingBanner.setBannerFileTwo(bannerFileTwo.getBytes());
-            }
-            if (bannerFileThree != null && !bannerFileThree.isEmpty()) {
-                existingBanner.setBannerFileThree(bannerFileThree.getBytes());
-            }
-            if (bannerFileFour != null && !bannerFileFour.isEmpty()) {
-                existingBanner.setBannerFileFour(bannerFileFour.getBytes());
-            }
-
-            return bannerRepository.save(existingBanner);
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to process image files: " + e.getMessage(), e);
-        }
     }
 
     @Override
@@ -151,29 +132,6 @@ public class BannerServiceImpl implements BannerService {
     }
 
     @Override
-    public byte[] getBannerImage(Long id, int imageNumber) {
-        Optional<BannerEntity> bannerOpt = bannerRepository.findById(id);
-        if (bannerOpt.isEmpty()) {
-            throw new RuntimeException("Banner not found with id: " + id);
-        }
-
-        BannerEntity banner = bannerOpt.get();
-
-        switch (imageNumber) {
-            case 1:
-                return banner.getBannerFileOne();
-            case 2:
-                return banner.getBannerFileTwo();
-            case 3:
-                return banner.getBannerFileThree();
-            case 4:
-                return banner.getBannerFileFour();
-            default:
-                throw new RuntimeException("Invalid image number. Must be between 1 and 4.");
-        }
-    }
-
-    @Override
     public List<BannerEntity> searchBannersByHeader(String header) {
         return bannerRepository.findByHeaderContainingIgnoreCase(header);
     }
@@ -182,15 +140,4 @@ public class BannerServiceImpl implements BannerService {
     public List<BannerEntity> getBannersWithImages() {
         return bannerRepository.findBannersWithImages();
     }
-
-    @Override
-    public Integer countImagesForBanner(Long id) {
-        if (!bannerRepository.existsById(id)) {
-            throw new RuntimeException("Banner not found with id: " + id);
-        }
-        return bannerRepository.countImagesById(id);
-    }
-
-
-
 }

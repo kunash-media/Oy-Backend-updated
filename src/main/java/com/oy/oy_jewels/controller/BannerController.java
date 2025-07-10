@@ -14,6 +14,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -29,7 +30,7 @@ public class BannerController {
     @PostMapping(value = "/create-banner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BannerEntity> createBanner(
             @RequestPart(value = "bannerData", required = false) BannerRequest bannerRequest,
-            @RequestPart(value = "bannerFileOne", required = false) MultipartFile bannerFileOne,
+            @RequestPart(value = "bannerFileOne", required = false) MultipartFile[] bannerFileOne,
             @RequestPart(value = "bannerFileTwo", required = false) MultipartFile bannerFileTwo,
             @RequestPart(value = "bannerFileThree", required = false) MultipartFile bannerFileThree,
             @RequestPart(value = "bannerFileFour", required = false) MultipartFile bannerFileFour) {
@@ -48,7 +49,6 @@ public class BannerController {
         }
     }
 
-
     // Get banner by ID
     @GetMapping("/{id}")
     public ResponseEntity<BannerEntity> getBannerById(@PathVariable Long id) {
@@ -61,22 +61,12 @@ public class BannerController {
         }
     }
 
-
-    // Get banner by page name
-    @GetMapping("/get-by-pageName/{pageName}")
-    public ResponseEntity<BannerEntity> getBannerByPageName(@PathVariable String pageName) {
-        BannerEntity banner = bannerService.getBannerByPageName(pageName);
-        return banner != null
-                ? ResponseEntity.ok(banner)
-                : ResponseEntity.notFound().build();
-    }
-
-
+    // patch api
     @PatchMapping(value = "/edit-banner/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<BannerEntity> updateBanner(
             @PathVariable Long id,
             @RequestPart(value = "bannerData", required = false) BannerUpdateRequest bannerUpdateRequest,
-            @RequestPart(value = "bannerFileOne", required = false) MultipartFile bannerFileOne,
+            @RequestPart(value = "bannerFileOne", required = false) MultipartFile[] bannerFileOne,
             @RequestPart(value = "bannerFileTwo", required = false) MultipartFile bannerFileTwo,
             @RequestPart(value = "bannerFileThree", required = false) MultipartFile bannerFileThree,
             @RequestPart(value = "bannerFileFour", required = false) MultipartFile bannerFileFour) {
@@ -95,93 +85,7 @@ public class BannerController {
         }
     }
 
-    // Update banner
-    @PutMapping("/{id}")
-    public ResponseEntity<BannerEntity> updateBanner(
-            @PathVariable Long id,
-            @RequestParam("pageName") String pageName,
-            @RequestParam("header") String header,
-            @RequestParam("text") String text,
-            @RequestParam(value = "bannerFileOne", required = false) MultipartFile bannerFileOne,
-            @RequestParam(value = "bannerFileTwo", required = false) MultipartFile bannerFileTwo,
-            @RequestParam(value = "bannerFileThree", required = false) MultipartFile bannerFileThree,
-            @RequestParam(value = "bannerFileFour", required = false) MultipartFile bannerFileFour) {
-        try {
-            BannerEntity updatedBanner = bannerService.updateBannerWithImages(id, pageName, header, text,
-                    bannerFileOne, bannerFileTwo, bannerFileThree, bannerFileFour);
-            return new ResponseEntity<>(updatedBanner, HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // Delete banner
-    @DeleteMapping("/delete-banner-page/{id}")
-    public ResponseEntity<String> deleteBanner(@PathVariable Long id) {
-        try {
-            bannerService.deleteBanner(id);
-            return new ResponseEntity<>("Banner Deleted Successfully!",HttpStatus.OK);
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // Get banner image by image number (1-4)
-    @GetMapping("/{id}/image/{imageNumber}")
-    public ResponseEntity<byte[]> getBannerImage(@PathVariable Long id, @PathVariable int imageNumber) {
-        try {
-            byte[] image = bannerService.getBannerImage(id, imageNumber);
-            if (image != null && image.length > 0) {
-                HttpHeaders headers = new HttpHeaders();
-                headers.setContentType(MediaType.IMAGE_JPEG);
-                return new ResponseEntity<>(image, headers, HttpStatus.OK);
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-        } catch (RuntimeException e) {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // Search banners by header
-    @GetMapping("/search")
-    public ResponseEntity<List<BannerEntity>> searchBannersByHeader(@RequestParam String header) {
-        try {
-            List<BannerEntity> banners = bannerService.searchBannersByHeader(header);
-            return new ResponseEntity<>(banners, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // Get banners with images
-    @GetMapping("/with-images")
-    public ResponseEntity<List<BannerEntity>> getBannersWithImages() {
-        try {
-            List<BannerEntity> banners = bannerService.getBannersWithImages();
-            return new ResponseEntity<>(banners, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
-    // Count images for a banner
-    @GetMapping("/{id}/image-count")
-    public ResponseEntity<Integer> countImagesForBanner(@PathVariable Long id) {
-        try {
-            Integer count = bannerService.countImagesForBanner(id);
-            return new ResponseEntity<>(count, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
-
+    //get all banner.
     @GetMapping("/get-all-banners")
     public ResponseEntity<List<BannerResponse>> getAllBanners() {
         try {
@@ -201,6 +105,62 @@ public class BannerController {
         }
     }
 
+    // Delete banner by ID
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteBanner(@PathVariable Long id) {
+        try {
+            bannerService.deleteBanner(id);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Get banner by page name
+    @GetMapping("/page/{pageName}")
+    public ResponseEntity<BannerEntity> getBannerByPageName(@PathVariable String pageName) {
+        try {
+            BannerEntity banner = bannerService.getBannerByPageName(pageName);
+            if (banner != null) {
+                return ResponseEntity.ok(banner);
+            } else {
+                return ResponseEntity.notFound().build();
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Search banners by header
+    @GetMapping("/search")
+    public ResponseEntity<List<BannerEntity>> searchBannersByHeader(@RequestParam String header) {
+        try {
+            List<BannerEntity> banners = bannerService.searchBannersByHeader(header);
+            if (banners.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(banners);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    // Get banners with images
+    @GetMapping("/with-images")
+    public ResponseEntity<List<BannerEntity>> getBannersWithImages() {
+        try {
+            List<BannerEntity> banners = bannerService.getBannersWithImages();
+            if (banners.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(banners);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     private BannerResponse convertToResponse(BannerEntity banner) {
         return new BannerResponse(
                 banner.getId(),
@@ -213,6 +173,4 @@ public class BannerController {
                 banner.getBannerFileFour()
         );
     }
-
-
 }

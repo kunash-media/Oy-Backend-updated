@@ -20,6 +20,9 @@ public class AdminEntity {
     @Column(name = "password", nullable = false, length = 100)
     private String password;
 
+    @Column(name = "role", nullable = false, length = 50)
+    private String role;
+
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
@@ -29,23 +32,13 @@ public class AdminEntity {
     // Default constructor
     public AdminEntity() {}
 
-    // Parameterized constructor
-    public AdminEntity(String name, String email, String password) {
+
+    // Updated constructor with role
+    public AdminEntity(String name, String email, String password, String role) {
         this.name = name;
         this.email = email;
         this.password = password;
-    }
-
-    // JPA lifecycle methods for automatic timestamp management
-    @PrePersist
-    protected void onCreate() {
-        this.createdAt = LocalDateTime.now();
-        this.updatedAt = LocalDateTime.now();
-    }
-
-    @PreUpdate
-    protected void onUpdate() {
-        this.updatedAt = LocalDateTime.now();
+        this.role = role;
     }
 
     // Getters and Setters
@@ -81,6 +74,14 @@ public class AdminEntity {
         this.password = password;
     }
 
+    public String getRole() {
+        return role;
+    }
+
+    public void setRole(String role) {
+        this.role = role;
+    }
+
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
@@ -95,30 +96,5 @@ public class AdminEntity {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
-    }
-
-    @Override
-    public String toString() {
-        return "AdminEntity{" +
-                "id=" + id +
-                ", name='" + name + '\'' +
-                ", email='" + email + '\'' +
-                ", password='[PROTECTED]'" +
-                ", createdAt=" + createdAt +
-                ", updatedAt=" + updatedAt +
-                '}';
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof AdminEntity)) return false;
-        AdminEntity that = (AdminEntity) o;
-        return id != null && id.equals(that.id);
-    }
-
-    @Override
-    public int hashCode() {
-        return getClass().hashCode();
     }
 }

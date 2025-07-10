@@ -7,6 +7,7 @@ import com.oy.oy_jewels.dto.response.AdminResponseDTO;
 import com.oy.oy_jewels.entity.AdminEntity;
 import org.springframework.stereotype.Component;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,58 +15,50 @@ import java.util.stream.Collectors;
 public class AdminMapper {
 
     // Convert AdminRequestDTO to AdminEntity
-    public AdminEntity toEntity(AdminRequestDTO requestDTO) {
-        if (requestDTO == null) {
-            return null;
-        }
-
-        AdminEntity admin = new AdminEntity();
-        admin.setName(requestDTO.getName());
-        admin.setEmail(requestDTO.getEmail());
-        admin.setPassword(requestDTO.getPassword());
-        return admin;
+    public AdminEntity toEntity(AdminRequestDTO adminRequestDTO) {
+        AdminEntity adminEntity = new AdminEntity();
+        adminEntity.setName(adminRequestDTO.getName());
+        adminEntity.setEmail(adminRequestDTO.getEmail());
+        adminEntity.setPassword(adminRequestDTO.getPassword());
+        adminEntity.setRole(adminRequestDTO.getRole());
+        adminEntity.setCreatedAt(LocalDateTime.now());
+        adminEntity.setUpdatedAt(LocalDateTime.now());
+        return adminEntity;
     }
 
     // Convert AdminEntity to AdminResponseDTO
-    public AdminResponseDTO toResponseDTO(AdminEntity entity) {
-        if (entity == null) {
-            return null;
-        }
-
+    public AdminResponseDTO toResponseDTO(AdminEntity adminEntity) {
         AdminResponseDTO responseDTO = new AdminResponseDTO();
-        responseDTO.setId(entity.getId());
-        responseDTO.setName(entity.getName());
-        responseDTO.setEmail(entity.getEmail());
-        responseDTO.setCreatedAt(entity.getCreatedAt());
-        responseDTO.setUpdatedAt(entity.getUpdatedAt());
+        responseDTO.setId(adminEntity.getId());
+        responseDTO.setName(adminEntity.getName());
+        responseDTO.setEmail(adminEntity.getEmail());
+        responseDTO.setRole(adminEntity.getRole());
+        responseDTO.setCreatedAt(adminEntity.getCreatedAt());
+        responseDTO.setUpdatedAt(adminEntity.getUpdatedAt());
         return responseDTO;
     }
 
-    // Convert List of AdminEntity to List of AdminResponseDTO
-    public List<AdminResponseDTO> toResponseDTOList(List<AdminEntity> entities) {
-        if (entities == null) {
-            return null;
-        }
-
-        return entities.stream()
+    // Convert List<AdminEntity> to List<AdminResponseDTO>
+    public List<AdminResponseDTO> toResponseDTOList(List<AdminEntity> adminEntities) {
+        return adminEntities.stream()
                 .map(this::toResponseDTO)
                 .collect(Collectors.toList());
     }
 
-    // Update AdminEntity with AdminUpdateDTO
-    public void updateEntityFromDTO(AdminUpdateDTO updateDTO, AdminEntity entity) {
-        if (entity == null || updateDTO == null) {
-            return;
+    // Update AdminEntity from AdminUpdateDTO
+    public void updateEntityFromDTO(AdminUpdateDTO adminUpdateDTO, AdminEntity adminEntity) {
+        if (adminUpdateDTO.getName() != null) {
+            adminEntity.setName(adminUpdateDTO.getName());
         }
-
-        if (updateDTO.getName() != null && !updateDTO.getName().trim().isEmpty()) {
-            entity.setName(updateDTO.getName());
+        if (adminUpdateDTO.getEmail() != null) {
+            adminEntity.setEmail(adminUpdateDTO.getEmail());
         }
-        if (updateDTO.getEmail() != null && !updateDTO.getEmail().trim().isEmpty()) {
-            entity.setEmail(updateDTO.getEmail());
+        if (adminUpdateDTO.getPassword() != null) {
+            adminEntity.setPassword(adminUpdateDTO.getPassword());
         }
-        if (updateDTO.getPassword() != null && !updateDTO.getPassword().trim().isEmpty()) {
-            entity.setPassword(updateDTO.getPassword());
+        if (adminUpdateDTO.getRole() != null) {
+            adminEntity.setRole(adminUpdateDTO.getRole());
         }
+        adminEntity.setUpdatedAt(LocalDateTime.now());
     }
 }
