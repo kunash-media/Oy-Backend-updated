@@ -46,3 +46,5 @@ build/
 
 /frontend_code
 /src/main/resources/config/application-secrets.properties
+
+/.env
