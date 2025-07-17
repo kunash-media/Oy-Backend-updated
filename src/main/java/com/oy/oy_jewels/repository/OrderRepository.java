@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
@@ -22,5 +23,10 @@ public interface OrderRepository extends JpaRepository<OrderEntity, Long> {
     // Find orders by user and status
     List<OrderEntity> findByUser_UserIdAndOrderStatus(Long userId, String orderStatus);
 
+    Optional<OrderEntity> findByShiprocketOrderId(String shiprocketOrderId);
+
+    // You can also add other useful methods
+    Optional<OrderEntity> findByAwbCode(String awbCode);
+    Optional<OrderEntity> findByShiprocketShipmentId(String shiprocketShipmentId);
 
 }

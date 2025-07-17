@@ -6,6 +6,7 @@ import java.time.LocalDateTime;
 public class AdminResponseDTO {
     private Long id;
     private String name;
+    private String mobileNumber;
     private String email;
     private String role;
     private LocalDateTime createdAt;
@@ -14,9 +15,10 @@ public class AdminResponseDTO {
     // Constructors
     public AdminResponseDTO() {}
 
-    public AdminResponseDTO(Long id, String name, String email, String role, LocalDateTime createdAt, LocalDateTime updatedAt) {
+    public AdminResponseDTO(Long id, String name, String mobileNumber,String email, String role, LocalDateTime createdAt, LocalDateTime updatedAt) {
         this.id = id;
         this.name = name;
+        this.mobileNumber = mobileNumber;
         this.email = email;
         this.role = role;
         this.createdAt = createdAt;
@@ -27,6 +29,15 @@ public class AdminResponseDTO {
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
+
     public void setName(String name) { this.name = name; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

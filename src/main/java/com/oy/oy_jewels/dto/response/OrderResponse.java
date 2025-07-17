@@ -13,6 +13,7 @@ public class OrderResponse {
     private Long orderId;
     private BigDecimal total;
     private String status;
+    private String shiprocketOrderId;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate orderDate;
@@ -31,6 +32,7 @@ public class OrderResponse {
         this.orderId = order.getOrderId();
         this.total = order.getTotalAmount();
         this.status = order.getOrderStatus();
+        this.shiprocketOrderId = order.getShiprocketOrderId();
         this.orderDate = order.getOrderDate();
         this.deliveryDate = order.getDeliveryDate();
         this.items = order.getOrderItems().stream()
@@ -62,6 +64,9 @@ public class OrderResponse {
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+
+    public String getShiprocketOrderId() { return shiprocketOrderId; }
+    public void setShiprocketOrderId(String shiprocketOrderId) { this.shiprocketOrderId = shiprocketOrderId; }
 
     public LocalDate getOrderDate() {
         return orderDate;

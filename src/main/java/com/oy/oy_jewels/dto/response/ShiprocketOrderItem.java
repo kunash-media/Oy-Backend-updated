@@ -1,4 +1,4 @@
-package com.oy.oy_jewels.dto.request;
+package com.oy.oy_jewels.dto.response;
 
 import java.math.BigDecimal;
 
@@ -7,13 +7,13 @@ public class ShiprocketOrderItem {
     private String sku;
     private Integer units;
     private BigDecimal selling_price;
-    private BigDecimal discount = BigDecimal.ZERO;
-    private BigDecimal tax = BigDecimal.ZERO;
-    // Removed HSN as it's not required for now
+    private BigDecimal discount;
+    private BigDecimal tax;
+    private String hsn;
 
     public ShiprocketOrderItem() {}
 
-    // Getters and Setters
+    // Getters and setters
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 
@@ -31,4 +31,7 @@ public class ShiprocketOrderItem {
 
     public BigDecimal getTax() { return tax; }
     public void setTax(BigDecimal tax) { this.tax = tax; }
+
+    public String getHsn() { return hsn; }
+    public void setHsn(String hsn) { this.hsn = hsn; }
 }

@@ -45,6 +45,6 @@ build/
 .vscode/
 
 /frontend_code
-/src/main/resources/config/application-secrets.properties
+/src/main/resources/config/application.secrets.properties
 
 /.env

@@ -31,19 +31,52 @@ public class OrderItemEntity {
     @Column(name = "subtotal")
     private BigDecimal subtotal;
 
+    // Add these fields to OrderItemEntity class
+
+    @Column(name = "item_name")
+    private String itemName;
+
+    @Column(name = "sku")
+    private String sku;
+
+    @Column(name = "units")
+    private Integer units;
+
+    @Column(name = "selling_price")
+    private BigDecimal sellingPrice;
+
+    @Column(name = "discount")
+    private BigDecimal discount = BigDecimal.ZERO;
+
+    @Column(name = "tax")
+    private BigDecimal tax = BigDecimal.ZERO;
+
+    @Column(name = "hsn")
+    private String hsn;
+
     // Constructors
     public OrderItemEntity() {}
 
-    public OrderItemEntity(Long orderItemId, OrderEntity order,
-                           ProductEntity product, Integer quantity,
-                           BigDecimal productPrice, BigDecimal subtotal) {
+    public OrderItemEntity(Long orderItemId, OrderEntity order, ProductEntity product,
+                           Integer quantity, BigDecimal productPrice,
+                           BigDecimal subtotal, String itemName, String sku,
+                           Integer units, BigDecimal sellingPrice, BigDecimal discount,
+                           BigDecimal tax, String hsn) {
         this.orderItemId = orderItemId;
         this.order = order;
         this.product = product;
         this.quantity = quantity;
         this.productPrice = productPrice;
         this.subtotal = subtotal;
+        this.itemName = itemName;
+        this.sku = sku;
+        this.units = units;
+        this.sellingPrice = sellingPrice;
+        this.discount = discount;
+        this.tax = tax;
+        this.hsn = hsn;
     }
+
 
     // Getters and Setters
     public Long getOrderItemId() { return orderItemId; }
@@ -63,4 +96,60 @@ public class OrderItemEntity {
 
     public BigDecimal getSubtotal() { return subtotal; }
     public void setSubtotal(BigDecimal subtotal) { this.subtotal = subtotal; }
+
+    public String getItemName() {
+        return itemName;
+    }
+
+    public void setItemName(String itemName) {
+        this.itemName = itemName;
+    }
+
+    public String getSku() {
+        return sku;
+    }
+
+    public void setSku(String sku) {
+        this.sku = sku;
+    }
+
+    public Integer getUnits() {
+        return units;
+    }
+
+    public void setUnits(Integer units) {
+        this.units = units;
+    }
+
+    public BigDecimal getSellingPrice() {
+        return sellingPrice;
+    }
+
+    public void setSellingPrice(BigDecimal sellingPrice) {
+        this.sellingPrice = sellingPrice;
+    }
+
+    public BigDecimal getDiscount() {
+        return discount;
+    }
+
+    public void setDiscount(BigDecimal discount) {
+        this.discount = discount;
+    }
+
+    public BigDecimal getTax() {
+        return tax;
+    }
+
+    public void setTax(BigDecimal tax) {
+        this.tax = tax;
+    }
+
+    public String getHsn() {
+        return hsn;
+    }
+
+    public void setHsn(String hsn) {
+        this.hsn = hsn;
+    }
 }

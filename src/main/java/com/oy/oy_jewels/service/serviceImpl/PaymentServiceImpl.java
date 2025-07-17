@@ -11,6 +11,8 @@ import com.oy.oy_jewels.service.PaymentService;
 import com.razorpay.Order;
 import com.razorpay.RazorpayClient;
 import com.razorpay.RazorpayException;
+import io.micrometer.common.util.StringUtils;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -48,10 +50,21 @@ public class PaymentServiceImpl implements PaymentService {
         return razorpayClient;
     }
 
+
     @Override
     public PaymentResponse createPaymentOrder(PaymentRequest request) throws Exception {
 
         try {
+            // Add logging to verify keys are loaded
+            log.info("Attempting to create Razorpay order...");
+            log.debug("Razorpay Key ID: {}", razorpayKeyId);
+            log.debug("Razorpay Key Secret present: {}", razorpayKeySecret != null ? "YES" : "NO");
+
+            if (StringUtils.isBlank(razorpayKeyId) || StringUtils.isBlank(razorpayKeySecret)) {
+                log.error("Razorpay keys are not properly configured!");
+                throw new Exception("Razorpay credentials not configured");
+            }
+
             // Convert amount to paise for Razorpay
             long amountInPaise = Math.round(request.getAmount() * 100);
 

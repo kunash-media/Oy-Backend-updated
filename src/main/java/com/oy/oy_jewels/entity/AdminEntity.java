@@ -14,6 +14,9 @@ public class AdminEntity {
     @Column(name = "name", nullable = false, length = 50)
     private String name;
 
+    @Column(name = "mobile_number", nullable = false)
+    private String mobileNumber;
+
     @Column(name = "email", nullable = false, unique = true, length = 100)
     private String email;
 
@@ -29,13 +32,15 @@ public class AdminEntity {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+
     // Default constructor
     public AdminEntity() {}
 
 
     // Updated constructor with role
-    public AdminEntity(String name, String email, String password, String role) {
+    public AdminEntity(String name, String mobileNumber, String email, String password, String role) {
         this.name = name;
+        this.mobileNumber = mobileNumber;
         this.email = email;
         this.password = password;
         this.role = role;
@@ -56,6 +61,14 @@ public class AdminEntity {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
     }
 
     public String getEmail() {

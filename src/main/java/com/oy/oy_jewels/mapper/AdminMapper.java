@@ -18,6 +18,7 @@ public class AdminMapper {
     public AdminEntity toEntity(AdminRequestDTO adminRequestDTO) {
         AdminEntity adminEntity = new AdminEntity();
         adminEntity.setName(adminRequestDTO.getName());
+        adminEntity.setMobileNumber(adminRequestDTO.getMobileNumber());
         adminEntity.setEmail(adminRequestDTO.getEmail());
         adminEntity.setPassword(adminRequestDTO.getPassword());
         adminEntity.setRole(adminRequestDTO.getRole());
@@ -31,6 +32,7 @@ public class AdminMapper {
         AdminResponseDTO responseDTO = new AdminResponseDTO();
         responseDTO.setId(adminEntity.getId());
         responseDTO.setName(adminEntity.getName());
+        responseDTO.setMobileNumber(adminEntity.getMobileNumber());
         responseDTO.setEmail(adminEntity.getEmail());
         responseDTO.setRole(adminEntity.getRole());
         responseDTO.setCreatedAt(adminEntity.getCreatedAt());
@@ -49,6 +51,9 @@ public class AdminMapper {
     public void updateEntityFromDTO(AdminUpdateDTO adminUpdateDTO, AdminEntity adminEntity) {
         if (adminUpdateDTO.getName() != null) {
             adminEntity.setName(adminUpdateDTO.getName());
+        }
+        if (adminUpdateDTO.getMobileNumber()!= null){
+            adminEntity.setMobileNumber(adminUpdateDTO.getMobileNumber());
         }
         if (adminUpdateDTO.getEmail() != null) {
             adminEntity.setEmail(adminUpdateDTO.getEmail());

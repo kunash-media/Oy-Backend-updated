@@ -5,8 +5,10 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.PropertySource;
 
 @SpringBootApplication
+@PropertySource("classpath:config/application.secrets.properties")
 public class OyJewelsApplication {
 
 	public static void main(String[] args) {
@@ -14,5 +16,4 @@ public class OyJewelsApplication {
 	}
 
 }
-
 

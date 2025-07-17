@@ -3,6 +3,7 @@ package com.oy.oy_jewels.dto.request;
 
 public class AdminUpdateDTO {
     private String name;
+    private String mobileNumber;
     private String email;
     private String password;
     private String role;
@@ -10,8 +11,9 @@ public class AdminUpdateDTO {
     // Constructors
     public AdminUpdateDTO() {}
 
-    public AdminUpdateDTO(String name, String email, String password, String role) {
+    public AdminUpdateDTO(String name, String mobileNumber,String email, String password, String role) {
         this.name = name;
+        this.mobileNumber = mobileNumber;
         this.email = email;
         this.password = password;
         this.role = role;
@@ -19,6 +21,15 @@ public class AdminUpdateDTO {
 
     // Getters and Setters
     public String getName() { return name; }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
+
     public void setName(String name) { this.name = name; }
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }

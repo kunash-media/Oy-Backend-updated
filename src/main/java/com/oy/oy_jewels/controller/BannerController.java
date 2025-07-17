@@ -119,7 +119,7 @@ public class BannerController {
     }
 
     // Get banner by page name
-    @GetMapping("/page/{pageName}")
+    @GetMapping("/get-by-pageName/{pageName}")
     public ResponseEntity<BannerEntity> getBannerByPageName(@PathVariable String pageName) {
         try {
             BannerEntity banner = bannerService.getBannerByPageName(pageName);

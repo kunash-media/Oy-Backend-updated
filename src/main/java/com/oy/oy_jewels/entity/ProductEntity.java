@@ -31,7 +31,6 @@ public class ProductEntity {
     @Column(name = "product_image", columnDefinition = "LONGBLOB")
     private byte[] productImage;
 
-
     @ElementCollection(fetch = FetchType.LAZY)
     @CollectionTable(name = "product_sub_images", joinColumns = @JoinColumn(name = "product_id"))
     @Column(name = "sub_image", columnDefinition = "LONGBLOB")
@@ -91,7 +90,6 @@ public class ProductEntity {
     public static Specification<ProductEntity> notDeleted() {
         return (root, query, cb) -> cb.equal(root.get("isDeleted"), false);
     }
-
 
     // Constructors
     public ProductEntity() {}
