@@ -2,23 +2,19 @@ package com.oy.oy_jewels.service.serviceImpl;
 
 import com.oy.oy_jewels.dto.request.*;
 import com.oy.oy_jewels.dto.response.OrderResponse;
-import com.oy.oy_jewels.entity.OrderEntity;
-import com.oy.oy_jewels.entity.OrderItemEntity;
-import com.oy.oy_jewels.entity.ProductEntity;
-import com.oy.oy_jewels.entity.UserEntity;
-import com.oy.oy_jewels.repository.OrderItemRepository;
-import com.oy.oy_jewels.repository.OrderRepository;
-import com.oy.oy_jewels.repository.ProductRepository;
-import com.oy.oy_jewels.repository.UserRepository;
+import com.oy.oy_jewels.entity.*;
+import com.oy.oy_jewels.repository.*;
 import com.oy.oy_jewels.service.OrderService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -35,17 +31,23 @@ public class OrderServiceImpl implements OrderService {
     private final ProductRepository productRepository;
     private final ShiprocketService shiprocketService;
 
+    private final ReturnRepository returnRepository;
+    private final ExchangeRepository exchangeRepository;
+
 
     private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
 
     public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             UserRepository userRepository, ProductRepository productRepository,
-                            ShiprocketService shiprocketService) {
+                            ShiprocketService shiprocketService,ReturnRepository returnRepository,
+                            ExchangeRepository exchangeRepository) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
         this.productRepository = productRepository;
         this.shiprocketService = shiprocketService;
+        this.returnRepository = returnRepository;
+        this.exchangeRepository = exchangeRepository;
     }
 
     @Override
@@ -55,7 +57,7 @@ public class OrderServiceImpl implements OrderService {
             logger.info("Starting order creation for user ID: {}", request.getUserId());
 
             // Validate required fields
-            if (request.getCustomerName() == null || request.getCustomerName().trim().isEmpty()) {
+            if ((request.getCustomerFirstName() == null && request.getCustomerLastName() == null) && (request.getCustomerFirstName().trim().isEmpty() && request.getCustomerLastName().trim().isEmpty()) ) {
                 throw new RuntimeException("Customer name is required");
             }
             if (request.getCustomerPhone() == null || request.getCustomerPhone().trim().isEmpty()) {
@@ -88,7 +90,8 @@ public class OrderServiceImpl implements OrderService {
 
             OrderEntity order = new OrderEntity();
             order.setUser(user);
-            order.setCustomerName(request.getCustomerName());
+            order.setCustomerFirstName(request.getCustomerFirstName());
+            order.setCustomerLastName(request.getCustomerLastName());
             order.setCustomerPhone(request.getCustomerPhone());
             order.setCustomerEmail(request.getCustomerEmail());
             order.setShippingAddress(request.getShippingAddress());
@@ -98,7 +101,8 @@ public class OrderServiceImpl implements OrderService {
             order.setShippingCountry(request.getShippingCountry());
 
             if (request.getShippingIsBilling() != null && request.getShippingIsBilling()) {
-                order.setBillingCustomerName(request.getCustomerName());
+                order.setBillingCustomerName(request.getCustomerFirstName());
+                order.setBillingLastName(request.getCustomerLastName());
                 order.setBillingAddress(request.getShippingAddress());
                 order.setBillingCity(request.getShippingCity());
                 order.setBillingState(request.getShippingState());
@@ -221,7 +225,7 @@ public class OrderServiceImpl implements OrderService {
         shiprocketRequest.setBilling_phone(order.getBillingPhone());
 
         shiprocketRequest.setShipping_is_billing(order.getShippingIsBilling() != null ? order.getShippingIsBilling() : false);
-        shiprocketRequest.setShipping_customer_name(order.getCustomerName());
+        shiprocketRequest.setShipping_customer_name(order.getCustomerFirstName());
         shiprocketRequest.setShipping_address(order.getShippingAddress());
         shiprocketRequest.setShipping_city(order.getShippingCity());
         shiprocketRequest.setShipping_pincode(order.getShippingPincode());
@@ -365,8 +369,11 @@ public class OrderServiceImpl implements OrderService {
                     case "deliveryDate":
                         existingOrder.setDeliveryDate(LocalDate.parse(value.toString()));
                         break;
-                    case "customerName":
-                        existingOrder.setCustomerName((String) value);
+                    case "customerFirstName":
+                        existingOrder.setCustomerFirstName((String) value);
+                        break;
+                    case "customerLastName" :
+                        existingOrder.setBillingLastName((String) value);
                         break;
                     case "customerPhone":
                         existingOrder.setCustomerPhone((String) value);
@@ -481,14 +488,14 @@ public class OrderServiceImpl implements OrderService {
         }
     }
     // Helper method to restore product quantities
-    private void restoreProductQuantities(OrderEntity order) {
-        for (OrderItemEntity orderItem : order.getOrderItems()) {
-            ProductEntity product = orderItem.getProduct();
-            product.setProductQuantity(product.getProductQuantity() + orderItem.getQuantity());
-            productRepository.save(product);
-            logger.info("Restored {} units for product id: {}", orderItem.getQuantity(), product.getProductId());
-        }
-    }
+//    private void restoreProductQuantities(OrderEntity order) {
+//        for (OrderItemEntity orderItem : order.getOrderItems()) {
+//            ProductEntity product = orderItem.getProduct();
+//            product.setProductQuantity(product.getProductQuantity() + orderItem.getQuantity());
+//            productRepository.save(product);
+//            logger.info("Restored {} units for product id: {}", orderItem.getQuantity(), product.getProductId());
+//        }
+//    }
 
     @Override
     @Transactional
@@ -503,9 +510,25 @@ public class OrderServiceImpl implements OrderService {
             }
 
             if (order.getShiprocketOrderId() != null && !order.getShiprocketOrderId().isEmpty()) {
+                String shiprocketOrderId = order.getShiprocketOrderId();
+                logger.info("Attempting to cancel Shiprocket order with ID: {}", shiprocketOrderId);
+
+                // Check Shiprocket order status to ensure it can be cancelled
+                String shiprocketStatus = null;
                 try {
-                    logger.info("Attempting to cancel Shiprocket order with ID: {}", order.getShiprocketOrderId());
-                    shiprocketService.cancelOrder(order.getShiprocketOrderId());
+                    shiprocketStatus = shiprocketService.getOrderStatus(shiprocketOrderId);
+                    if (List.of("OUT FOR PICKUP", "SHIPPED", "DELIVERED").contains(shiprocketStatus.toUpperCase())) {
+                        logger.warn("Shiprocket order ID {} is in {} status and cannot be cancelled", shiprocketOrderId, shiprocketStatus);
+                        throw new RuntimeException("Order cannot be cancelled: Status is " + shiprocketStatus);
+                    }
+                } catch (Exception e) {
+                    logger.warn("Failed to fetch Shiprocket order status for ID {}: {}. Proceeding with cancellation.", shiprocketOrderId, e.getMessage());
+                    // Proceed with cancellation even if status check fails
+                }
+
+                // Cancel order in Shiprocket
+                try {
+                    shiprocketService.cancelOrder(shiprocketOrderId);
                     logger.info("Shiprocket order cancelled successfully for order ID: {}", orderId);
                 } catch (Exception e) {
                     logger.error("Failed to cancel Shiprocket order for order ID: {}: {}", orderId, e.getMessage());
@@ -515,9 +538,16 @@ public class OrderServiceImpl implements OrderService {
                 logger.warn("No Shiprocket order ID found for order ID: {}. Skipping Shiprocket cancellation.", orderId);
             }
 
+            // Update local database
             order.setOrderStatus("cancelled");
-            restoreProductQuantities(order);
+            try {
+                restoreProductQuantities(order);
+            } catch (Exception e) {
+                logger.error("Failed to restore product quantities for order ID: {}: {}", orderId, e.getMessage());
+                throw new RuntimeException("Failed to restore product quantities: " + e.getMessage());
+            }
             orderRepository.save(order);
+            logger.info("Order status updated to 'cancelled' in local database for order ID: {}", orderId);
 
             logger.info("Order cancelled successfully for order ID: {}", orderId);
         } catch (Exception e) {
@@ -525,6 +555,7 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Failed to cancel order: " + e.getMessage());
         }
     }
+
 
     @Override
     @Transactional
@@ -538,10 +569,16 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Order is already cancelled");
             }
 
-            String shiprocketStatus = shiprocketService.getOrderStatus(shiprocketOrderId);
-            if (List.of("OUT FOR PICKUP", "SHIPPED", "DELIVERED").contains(shiprocketStatus.toUpperCase())) {
-                logger.warn("Shiprocket order ID {} is in {} status and cannot be cancelled", shiprocketOrderId, shiprocketStatus);
-                throw new RuntimeException("Order cannot be cancelled: Status is " + shiprocketStatus);
+            String shiprocketStatus = null;
+            try {
+                shiprocketStatus = shiprocketService.getOrderStatus(shiprocketOrderId);
+                if (List.of("OUT FOR PICKUP", "SHIPPED", "DELIVERED").contains(shiprocketStatus.toUpperCase())) {
+                    logger.warn("Shiprocket order ID {} is in {} status and cannot be cancelled", shiprocketOrderId, shiprocketStatus);
+                    throw new RuntimeException("Order cannot be cancelled: Status is " + shiprocketStatus);
+                }
+            } catch (Exception e) {
+                logger.warn("Failed to fetch Shiprocket order status for ID {}: {}. Proceeding with cancellation.", shiprocketOrderId, e.getMessage());
+                // Optionally, proceed with cancellation or throw the exception based on your business logic
             }
 
             shiprocketService.cancelOrder(shiprocketOrderId);
@@ -557,10 +594,9 @@ public class OrderServiceImpl implements OrderService {
     }
 
 
-
     @Override
     @Transactional
-    public String createReturnOrder(Long orderId, Map<String, Object> returnRequest) {
+    public String createReturnOrder(Long orderId, ReturnRequestDTO returnRequest) {
         try {
             logger.info("Starting return creation for order ID: {}", orderId);
             OrderEntity order = orderRepository.findById(orderId)
@@ -570,8 +606,8 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Order must be delivered to initiate a return");
             }
 
-            List<String> orderItemIds = (List<String>) returnRequest.get("order_item_ids");
-            String reason = (String) returnRequest.get("reason");
+            List<String> orderItemIds = returnRequest.getOrderItemIds();
+            String reason = returnRequest.getReason();
 
             if (orderItemIds == null || orderItemIds.isEmpty()) {
                 throw new RuntimeException("Order item IDs are required for return");
@@ -580,13 +616,47 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Return reason is required");
             }
 
-            String returnId = shiprocketService.createReturnOrder(order.getShiprocketOrderId(), orderItemIds, reason);
+            // Validate order item IDs
+            List<Long> orderItemIdList = orderItemIds.stream()
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+            List<Long> validOrderItemIds = order.getOrderItems().stream()
+                    .map(OrderItemEntity::getOrderItemId)
+                    .collect(Collectors.toList());
+            if (!validOrderItemIds.containsAll(orderItemIdList)) {
+                throw new RuntimeException("Invalid order item IDs provided for return");
+            }
+
+            String shiprocketReturnId = null;
+            if (order.getShiprocketOrderId() != null && !order.getShiprocketOrderId().isEmpty()) {
+                shiprocketReturnId = shiprocketService.createReturnOrder(order.getShiprocketOrderId(), orderItemIds, reason);
+            } else {
+                logger.warn("No Shiprocket order ID found for order ID: {}. Skipping Shiprocket return creation.", orderId);
+            }
+
+            // Create and save ReturnEntity
+            ReturnEntity returnEntity = new ReturnEntity();
+            returnEntity.setUser(order.getUser());
+            returnEntity.setOrder(order);
+            returnEntity.setShiprocketReturnId(shiprocketReturnId);
+            returnEntity.setOrderItemIds(String.join(",", orderItemIds));
+            returnEntity.setReason(reason);
+            returnEntity.setReturnStatus("initiated");
+            returnEntity.setCreatedAt(LocalDateTime.now());
+            returnRepository.save(returnEntity);
+
+            // Update order status
             order.setOrderStatus("return_initiated");
-            restoreProductQuantities(order);
+            try {
+                restoreProductQuantities(order);
+            } catch (Exception e) {
+                logger.error("Failed to restore product quantities for order ID: {}: {}", orderId, e.getMessage());
+                throw new RuntimeException("Failed to restore product quantities: " + e.getMessage());
+            }
             orderRepository.save(order);
 
-            logger.info("Return order created successfully for order ID: {}, Return ID: {}", orderId, returnId);
-            return returnId;
+            logger.info("Return order created successfully for order ID: {}, Return ID: {}", orderId, shiprocketReturnId);
+            return shiprocketReturnId != null ? shiprocketReturnId : returnEntity.getReturnId().toString();
         } catch (Exception e) {
             logger.error("Error creating return for order with id: {}", orderId, e);
             throw new RuntimeException("Failed to create return order: " + e.getMessage());
@@ -595,7 +665,7 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public String createExchangeOrder(Long orderId, Map<String, Object> exchangeRequest) {
+    public String createExchangeOrder(Long orderId, ExchangeRequestDTO exchangeRequest) {
         try {
             logger.info("Starting exchange creation for order ID: {}", orderId);
             OrderEntity order = orderRepository.findById(orderId)
@@ -605,9 +675,9 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Order must be delivered to initiate an exchange");
             }
 
-            List<String> orderItemIds = (List<String>) exchangeRequest.get("order_item_ids");
-            String newProductId = (String) exchangeRequest.get("new_product_id");
-            String reason = (String) exchangeRequest.get("reason");
+            List<String> orderItemIds = exchangeRequest.getOrderItemIds();
+            String newProductId = exchangeRequest.getNewProductId();
+            String reason = exchangeRequest.getReason();
 
             if (orderItemIds == null || orderItemIds.isEmpty()) {
                 throw new RuntimeException("Order item IDs are required for exchange");
@@ -619,6 +689,18 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Exchange reason is required");
             }
 
+            // Validate order item IDs
+            List<Long> orderItemIdList = orderItemIds.stream()
+                    .map(Long::parseLong)
+                    .collect(Collectors.toList());
+            List<Long> validOrderItemIds = order.getOrderItems().stream()
+                    .map(OrderItemEntity::getOrderItemId)
+                    .collect(Collectors.toList());
+            if (!validOrderItemIds.containsAll(orderItemIdList)) {
+                throw new RuntimeException("Invalid order item IDs provided for exchange");
+            }
+
+            // Validate new product
             ProductEntity newProduct = productRepository.findById(Long.parseLong(newProductId))
                     .orElseThrow(() -> new RuntimeException("New product not found with id: " + newProductId));
 
@@ -626,18 +708,55 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("New product is out of stock");
             }
 
-            String exchangeId = shiprocketService.createExchangeOrder(order.getShiprocketOrderId(), orderItemIds, newProductId, reason);
+            String shiprocketExchangeId = null;
+            if (order.getShiprocketOrderId() != null && !order.getShiprocketOrderId().isEmpty()) {
+                shiprocketExchangeId = shiprocketService.createExchangeOrder(order.getShiprocketOrderId(), orderItemIds, newProductId, reason);
+            } else {
+                logger.warn("No Shiprocket order ID found for order ID: {}. Skipping Shiprocket exchange creation.", orderId);
+            }
+
+            // Create and save ExchangeEntity
+            ExchangeEntity exchangeEntity = new ExchangeEntity();
+            exchangeEntity.setUser(order.getUser());
+            exchangeEntity.setOrder(order);
+            exchangeEntity.setShiprocketExchangeId(shiprocketExchangeId);
+            exchangeEntity.setOrderItemIds(String.join(",", orderItemIds));
+            exchangeEntity.setNewProductId(Long.parseLong(newProductId));
+            exchangeEntity.setReason(reason);
+            exchangeEntity.setExchangeStatus("initiated");
+            exchangeEntity.setCreatedAt(LocalDateTime.now());
+            exchangeRepository.save(exchangeEntity);
+
+            // Update order status and product quantities
             order.setOrderStatus("exchange_initiated");
-            restoreProductQuantities(order);
+            try {
+                restoreProductQuantities(order);
+            } catch (Exception e) {
+                logger.error("Failed to restore product quantities for order ID: {}: {}", orderId, e.getMessage());
+                throw new RuntimeException("Failed to restore product quantities: " + e.getMessage());
+            }
             newProduct.setProductQuantity(newProduct.getProductQuantity() - 1);
             productRepository.save(newProduct);
             orderRepository.save(order);
 
-            logger.info("Exchange order created successfully for order ID: {}, Exchange ID: {}", orderId, exchangeId);
-            return exchangeId;
+            logger.info("Exchange order created successfully for order ID: {}, Exchange ID: {}", orderId, shiprocketExchangeId);
+            return shiprocketExchangeId != null ? shiprocketExchangeId : exchangeEntity.getExchangeId().toString();
         } catch (Exception e) {
             logger.error("Error creating exchange for order with id: {}", orderId, e);
             throw new RuntimeException("Failed to create exchange order: " + e.getMessage());
+        }
+    }
+
+    private void restoreProductQuantities(OrderEntity order) {
+        try {
+            for (OrderItemEntity item : order.getOrderItems()) {
+                ProductEntity product = item.getProduct();
+                product.setProductQuantity(product.getProductQuantity() + item.getQuantity());
+                productRepository.save(product);
+            }
+        } catch (Exception e) {
+            logger.error("Error restoring product quantities for order ID: {}: {}", order.getOrderId(), e.getMessage());
+            throw new RuntimeException("Failed to restore product quantities: " + e.getMessage());
         }
     }
 

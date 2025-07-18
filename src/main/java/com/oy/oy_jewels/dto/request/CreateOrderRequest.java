@@ -1,7 +1,5 @@
 package com.oy.oy_jewels.dto.request;
 
-import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.util.List;
 
 public class CreateOrderRequest {
@@ -11,7 +9,8 @@ public class CreateOrderRequest {
     private String shippingState;
     private String shippingPincode;
     private String shippingCountry = "India";
-    private String customerName;
+    private String customerFirstName;
+    private String customerLastName;
     private String customerPhone;
     private String customerEmail;
     private String paymentMethod;
@@ -51,8 +50,21 @@ public class CreateOrderRequest {
     public String getShippingCountry() { return shippingCountry; }
     public void setShippingCountry(String shippingCountry) { this.shippingCountry = shippingCountry; }
 
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getCustomerFirstName() {
+        return customerFirstName;
+    }
+
+    public void setCustomerFirstName(String customerFirstName) {
+        this.customerFirstName = customerFirstName;
+    }
+
+    public String getCustomerLastName() {
+        return customerLastName;
+    }
+
+    public void setCustomerLastName(String customerLastName) {
+        this.customerLastName = customerLastName;
+    }
 
     public String getCustomerPhone() { return customerPhone; }
     public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }

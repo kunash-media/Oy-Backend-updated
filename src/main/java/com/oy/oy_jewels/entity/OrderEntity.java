@@ -37,8 +37,11 @@ public class OrderEntity {
     private String shippingCountry = "India";
 
     // Customer details for shipping
-    @Column(name = "customer_name")
-    private String customerName;
+    @Column(name = "customer_first_name")
+    private String customerFirstName;
+
+    @Column(name = "customer_last_name")
+    private String customerLastName;
 
     @Column(name = "customer_phone")
     private String customerPhone;
@@ -127,7 +130,7 @@ public class OrderEntity {
     private String pickupLocation = "Primary";
 
     @Column(name = "channel_id")
-    private String channelId = "1";
+    private String channelId = "";
 
     // Package dimensions
     @Column(name = "package_length")
@@ -148,6 +151,66 @@ public class OrderEntity {
 
     // Constructors
     public OrderEntity() {}
+
+    public OrderEntity(Long orderId, UserEntity user, String shippingAddress, String shippingCity,
+                       String shippingState, String shippingPincode, String shippingCountry,
+                       String customerFirstName, String customerLastName, String customerPhone,
+                       String customerEmail, String paymentMethod, BigDecimal totalAmount,
+                       String orderStatus, LocalDate orderDate, LocalDate deliveryDate,
+                       String shiprocketOrderId, String shiprocketShipmentId,
+                       String awbCode, Integer courierCompanyId, String trackingUrl,
+                       String billingCustomerName, String billingLastName, String billingAddress,
+                       String billingAddress2, String billingCity, String billingPincode,
+                       String billingState, String billingCountry, String billingEmail,
+                       String billingPhone, Boolean shippingIsBilling, String shippingLastName,
+                       String shippingAddress2, String shippingEmail, String shippingPhone,
+                       String pickupLocation, String channelId, Integer packageLength,
+                       Integer packageBreadth, Integer packageHeight, Integer packageWeight,
+                       List<OrderItemEntity> orderItems) {
+        this.orderId = orderId;
+        this.user = user;
+        this.shippingAddress = shippingAddress;
+        this.shippingCity = shippingCity;
+        this.shippingState = shippingState;
+        this.shippingPincode = shippingPincode;
+        this.shippingCountry = shippingCountry;
+        this.customerFirstName = customerFirstName;
+        this.customerLastName = customerLastName;
+        this.customerPhone = customerPhone;
+        this.customerEmail = customerEmail;
+        this.paymentMethod = paymentMethod;
+        this.totalAmount = totalAmount;
+        this.orderStatus = orderStatus;
+        this.orderDate = orderDate;
+        this.deliveryDate = deliveryDate;
+        this.shiprocketOrderId = shiprocketOrderId;
+        this.shiprocketShipmentId = shiprocketShipmentId;
+        this.awbCode = awbCode;
+        this.courierCompanyId = courierCompanyId;
+        this.trackingUrl = trackingUrl;
+        this.billingCustomerName = billingCustomerName;
+        this.billingLastName = billingLastName;
+        this.billingAddress = billingAddress;
+        this.billingAddress2 = billingAddress2;
+        this.billingCity = billingCity;
+        this.billingPincode = billingPincode;
+        this.billingState = billingState;
+        this.billingCountry = billingCountry;
+        this.billingEmail = billingEmail;
+        this.billingPhone = billingPhone;
+        this.shippingIsBilling = shippingIsBilling;
+        this.shippingLastName = shippingLastName;
+        this.shippingAddress2 = shippingAddress2;
+        this.shippingEmail = shippingEmail;
+        this.shippingPhone = shippingPhone;
+        this.pickupLocation = pickupLocation;
+        this.channelId = channelId;
+        this.packageLength = packageLength;
+        this.packageBreadth = packageBreadth;
+        this.packageHeight = packageHeight;
+        this.packageWeight = packageWeight;
+        this.orderItems = orderItems;
+    }
 
     // Getters and Setters
     public Long getOrderId() { return orderId; }
@@ -171,8 +234,8 @@ public class OrderEntity {
     public String getShippingCountry() { return shippingCountry; }
     public void setShippingCountry(String shippingCountry) { this.shippingCountry = shippingCountry; }
 
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getCustomerFirstName() { return customerFirstName; }
+    public void setCustomerFirstName(String customerFirstName) { this.customerFirstName = customerFirstName; }
 
     public String getCustomerPhone() { return customerPhone; }
     public void setCustomerPhone(String customerPhone) { this.customerPhone = customerPhone; }
@@ -275,4 +338,12 @@ public class OrderEntity {
 
     public List<OrderItemEntity> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItemEntity> orderItems) { this.orderItems = orderItems; }
+
+    public String getCustomerLastName() {
+        return customerLastName;
+    }
+
+    public void setCustomerLastName(String customerLastName) {
+        this.customerLastName = customerLastName;
+    }
 }

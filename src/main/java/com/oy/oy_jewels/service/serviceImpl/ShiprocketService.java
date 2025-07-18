@@ -5,15 +5,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oy.oy_jewels.dto.request.ShiprocketLoginRequest;
 import com.oy.oy_jewels.dto.request.ShiprocketOrderRequest;
 import com.oy.oy_jewels.dto.response.ShiprocketLoginResponse;
-import com.oy.oy_jewels.dto.response.ShiprocketOrderResponse;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
@@ -293,48 +289,59 @@ public class ShiprocketService {
     }
 
 
+
     public String getOrderStatus(String shiprocketOrderId) {
         try {
             logger.info("Fetching status for Shiprocket order ID: {}", shiprocketOrderId);
             String token = getAuthToken();
-            String statusUrl = shiprocketApiUrl + "/orders/show/" + shiprocketOrderId;
+            String url = shiprocketApiUrl + "/orders/show/" + shiprocketOrderId;
 
             HttpHeaders headers = new HttpHeaders();
+            headers.setContentType(MediaType.APPLICATION_JSON);
             headers.setBearerAuth(token);
 
-            HttpEntity<String> request = new HttpEntity<>(headers);
-            ResponseEntity<Map> response = restTemplate.getForEntity(statusUrl, Map.class);
+            HttpEntity<?> request = new HttpEntity<>(headers);
 
-            if (response.getBody() != null) {
+            ResponseEntity<Map> response = restTemplate.exchange(url, HttpMethod.GET, request, Map.class);
+
+            logger.info("Shiprocket API response status: {}", response.getStatusCode());
+            logger.debug("Shiprocket API response headers: {}", response.getHeaders());
+            logger.debug("Shiprocket API response body: {}", response.getBody());
+
+            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
                 Map<String, Object> responseBody = response.getBody();
-                String responseJson = objectMapper.writeValueAsString(responseBody);
-                logger.info("Shiprocket API complete response for status: {}", responseJson);
-
-                String status = null;
-                if (responseBody.containsKey("status")) {
-                    status = String.valueOf(responseBody.get("status"));
-                } else if (responseBody.containsKey("data") && responseBody.get("data") instanceof Map) {
-                    Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
-                    status = String.valueOf(data.getOrDefault("status", "unknown"));
-                }
-
-                if (status != null && !status.isEmpty()) {
-                    logger.info("Shiprocket order status for ID {}: {}", shiprocketOrderId, status);
-                    return status;
+                Map<String, Object> data = (Map<String, Object>) responseBody.get("data");
+                if (data != null) {
+                    Map<String, Object> order = (Map<String, Object>) data.get("order");
+                    if (order != null) {
+                        String status = (String) order.get("status");
+                        if (status != null) {
+                            logger.info("Order status for Shiprocket order ID {}: {}", shiprocketOrderId, status);
+                            return status;
+                        } else {
+                            logger.error("Status field not found in order data: {}", order);
+                            throw new RuntimeException("Order status not found in response");
+                        }
+                    } else {
+                        logger.error("Order object not found in data: {}", data);
+                        throw new RuntimeException("Order object not found in response");
+                    }
                 } else {
-                    logger.error("Shiprocket order status response does not contain a valid status: {}", responseBody);
-                    throw new RuntimeException("Shiprocket order status fetch failed: No valid status in response");
+                    logger.error("Data object not found in response: {}", responseBody);
+                    throw new RuntimeException("Data object not found in response");
                 }
+            } else {
+                logger.error("Failed to fetch order status: Invalid response or status code {}", response.getStatusCode());
+                throw new RuntimeException("Failed to fetch order status: Invalid response");
             }
-            throw new RuntimeException("Empty response from Shiprocket");
         } catch (HttpClientErrorException e) {
             logger.error("HTTP Client Error during Shiprocket order status fetch: {}", e.getResponseBodyAsString());
             throw new RuntimeException("Shiprocket order status fetch failed: " + e.getStatusCode() + " " + e.getStatusText());
         } catch (ResourceAccessException e) {
-            logger.error("Network/Resource Access error during Shiprocket order status fetch:", e);
+            logger.error("Network error during Shiprocket order status fetch: {}", e.getMessage());
             throw new RuntimeException("Network error during Shiprocket order status fetch: " + e.getMessage());
         } catch (Exception e) {
-            logger.error("Unexpected error during Shiprocket order status fetch:", e);
+            logger.error("Unexpected error during Shiprocket order status fetch: {}", e.getMessage());
             throw new RuntimeException("Failed to fetch Shiprocket order status: " + e.getMessage());
         }
     }
@@ -368,12 +375,16 @@ public class ShiprocketService {
                 String responseJson = objectMapper.writeValueAsString(responseBody);
                 logger.info("Shiprocket API complete response: {}", responseJson);
 
-                if (response.getStatusCode().is2xxSuccessful() && responseBody.containsKey("status") &&
-                        "success".equalsIgnoreCase(responseBody.get("status").toString())) {
+                if (response.getStatusCode().is2xxSuccessful() &&
+                        responseBody.containsKey("status_code") &&
+                        responseBody.get("status_code").equals(200) &&
+                        responseBody.containsKey("message") &&
+                        "Order cancelled successfully.".equalsIgnoreCase(responseBody.get("message").toString())) {
                     logger.info("Shiprocket order cancelled successfully for ID: {}", shiprocketOrderId);
                 } else {
                     logger.error("Shiprocket order cancellation failed - Response: {}", responseBody);
-                    throw new RuntimeException("Shiprocket order cancellation failed: " + responseBody.getOrDefault("message", "Unknown error"));
+                    throw new RuntimeException("Shiprocket order cancellation failed: " +
+                            responseBody.getOrDefault("message", "Unknown error"));
                 }
             } else {
                 logger.error("Empty response body from Shiprocket");
@@ -390,6 +401,7 @@ public class ShiprocketService {
             throw new RuntimeException("Failed to cancel Shiprocket order: " + e.getMessage());
         }
     }
+
 
     public String createReturnOrder(String shiprocketOrderId, List<String> orderItemIds, String reason) {
         try {
@@ -449,7 +461,6 @@ public class ShiprocketService {
                 logger.error("Empty response body from Shiprocket");
                 throw new RuntimeException("Empty response from Shiprocket");
             }
-
         } catch (HttpClientErrorException e) {
             logger.error("HTTP Client Error during Shiprocket return order creation:");
             logger.error("Status Code: {}", e.getStatusCode());
@@ -539,7 +550,6 @@ public class ShiprocketService {
                 logger.error("Empty response body from Shiprocket");
                 throw new RuntimeException("Empty response from Shiprocket");
             }
-
         } catch (HttpClientErrorException e) {
             logger.error("HTTP Client Error during Shiprocket exchange order creation:");
             logger.error("Status Code: {}", e.getStatusCode());

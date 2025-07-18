@@ -1,6 +1,8 @@
 package com.oy.oy_jewels.controller;
 
 import com.oy.oy_jewels.dto.request.CreateOrderRequest;
+import com.oy.oy_jewels.dto.request.ExchangeRequestDTO;
+import com.oy.oy_jewels.dto.request.ReturnRequestDTO;
 import com.oy.oy_jewels.dto.request.UpdateOrderRequest;
 import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.service.OrderService;
@@ -213,19 +215,18 @@ public class OrderController {
         }
     }
 
-    // Cancel order
     @PostMapping("/cancel/{orderId}")
     public ResponseEntity<Map<String, String>> cancelOrder(@PathVariable Long orderId) {
         try {
-            logger.info("Canceling order with id: {}", orderId);
+            logger.info("Canceling order with ID: {}", orderId);
             orderService.cancelOrder(orderId);
             return ResponseEntity.ok(Map.of("message", "Order canceled successfully", "orderId", orderId.toString()));
         } catch (RuntimeException e) {
-            logger.error("Order not found with id: {}", orderId, e);
+            logger.error("Error canceling order with ID: {}", orderId, e);
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", e.getMessage()));
         } catch (Exception e) {
-            logger.error("Error canceling order with id: {}", orderId, e);
+            logger.error("Unexpected error canceling order with ID: {}", orderId, e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", "Failed to cancel order: " + e.getMessage()));
         }
@@ -249,10 +250,9 @@ public class OrderController {
         }
     }
 
-    // Create return order
     @PostMapping("/return/{orderId}")
     public ResponseEntity<Map<String, String>> createReturnOrder(@PathVariable Long orderId,
-                                                                 @RequestBody Map<String, Object> returnRequest) {
+                                                                 @RequestBody ReturnRequestDTO returnRequest) {
         try {
             logger.info("Creating return for order with id: {}", orderId);
             String returnId = orderService.createReturnOrder(orderId, returnRequest);
@@ -270,10 +270,9 @@ public class OrderController {
         }
     }
 
-    // Create exchange order
     @PostMapping("/exchange/{orderId}")
     public ResponseEntity<Map<String, String>> createExchangeOrder(@PathVariable Long orderId,
-                                                                   @RequestBody Map<String, Object> exchangeRequest) {
+                                                                   @RequestBody ExchangeRequestDTO exchangeRequest) {
         try {
             logger.info("Creating exchange for order with id: {}", orderId);
             String exchangeId = orderService.createExchangeOrder(orderId, exchangeRequest);

@@ -1,6 +1,8 @@
 package com.oy.oy_jewels.service;
 
 import com.oy.oy_jewels.dto.request.CreateOrderRequest;
+import com.oy.oy_jewels.dto.request.ExchangeRequestDTO;
+import com.oy.oy_jewels.dto.request.ReturnRequestDTO;
 import com.oy.oy_jewels.dto.request.UpdateOrderRequest;
 import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.entity.OrderEntity;
@@ -29,6 +31,6 @@ public interface OrderService {
     void cancelOrder(Long orderId);
 
     public void cancelOrderByShiprocketId(String shiprocketOrderId);
-    String createReturnOrder(Long orderId, Map<String, Object> returnRequest);
-    String createExchangeOrder(Long orderId, Map<String, Object> exchangeRequest);
+    String createReturnOrder(Long orderId, ReturnRequestDTO returnRequest);
+    String createExchangeOrder(Long orderId, ExchangeRequestDTO exchangeRequest);
 }
