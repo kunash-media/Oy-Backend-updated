@@ -1,6 +1,7 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
 import com.oy.oy_jewels.dto.request.*;
+import com.oy.oy_jewels.dto.response.AllOrderResponseDTO;
 import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.entity.*;
 import com.oy.oy_jewels.repository.*;
@@ -9,7 +10,6 @@ import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -89,6 +89,7 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderEntity order = new OrderEntity();
+
             order.setUser(user);
             order.setCustomerFirstName(request.getCustomerFirstName());
             order.setCustomerLastName(request.getCustomerLastName());
@@ -148,15 +149,28 @@ public class OrderServiceImpl implements OrderService {
                 }
 
                 OrderItemEntity orderItem = new OrderItemEntity();
+
                 orderItem.setOrder(order);
                 orderItem.setProduct(product);
                 orderItem.setQuantity(itemRequest.getProductQuantity());
                 orderItem.setProductPrice(product.getProductPrice());
                 orderItem.setItemName(product.getProductTitle());
-                orderItem.setSku(product.getProductId().toString());
+                orderItem.setSku(product.getSkuNo());
                 orderItem.setUnits(itemRequest.getProductQuantity());
                 orderItem.setSellingPrice(product.getProductPrice());
-                orderItem.setDiscount(BigDecimal.ZERO);
+
+                // Convert the string discount to BigDecimal safely
+                BigDecimal discount;
+
+                try {
+                    String discountStr = product.getProductDiscount();
+                    discount = (discountStr != null && !discountStr.isEmpty())
+                            ? new BigDecimal(discountStr)
+                            : BigDecimal.ZERO;
+                } catch (NumberFormatException e) {
+                    discount = BigDecimal.ZERO; // or handle the error as appropriate
+                }
+                orderItem.setDiscount(discount);
                 orderItem.setTax(BigDecimal.ZERO);
 
                 BigDecimal subtotal = product.getProductPrice().multiply(new BigDecimal(itemRequest.getProductQuantity()));
@@ -263,18 +277,51 @@ public class OrderServiceImpl implements OrderService {
         return shiprocketRequest;
     }
 
+    //get all orders
     @Override
-    public List<OrderResponse> getAllOrders() {
-        try {
-            List<OrderEntity> orders = orderRepository.findAll();
-            return orders.stream()
-                    .map(OrderResponse::new)
-                    .collect(Collectors.toList());
-        } catch (Exception e) {
-            logger.error("Error fetching all orders", e);
-            throw new RuntimeException("Failed to fetch orders: " + e.getMessage());
-        }
+    public List<AllOrderResponseDTO> getAllOrders() {
+        List<OrderEntity> orders = orderRepository.findAll();
+        return orders.stream().map(this::convertToDTO).collect(Collectors.toList());
     }
+
+    private AllOrderResponseDTO convertToDTO(OrderEntity order) {
+        AllOrderResponseDTO dto = new AllOrderResponseDTO();
+        dto.setSuccess(true);
+        dto.setOrderId(order.getOrderId());
+        dto.setTotal(order.getTotalAmount());
+        dto.setStatus(order.getOrderStatus());
+        dto.setShiprocketOrderId(order.getShiprocketOrderId());
+        dto.setOrderDate(order.getOrderDate());
+        dto.setDeliveryDate(order.getDeliveryDate());
+        dto.setMessage("Order retrieved successfully!");
+        dto.setError(null);
+        dto.setProductId(null);
+        dto.setCustomerFirstName(order.getCustomerFirstName());
+        dto.setCustomerLastName(order.getCustomerLastName());
+        dto.setCustomerPhone(order.getCustomerPhone());
+        dto.setPaymentMethod(order.getPaymentMethod());
+        dto.setPickupLocation(order.getPickupLocation());
+        dto.setShippingAddress(order.getShippingAddress());
+        dto.setState(order.getShippingState());
+        dto.setPincode(order.getShippingPincode());
+        dto.setUserId(order.getUser().getUserId());
+
+        List<AllOrderResponseDTO.OrderItemDTO> itemDTOs = new ArrayList<>();
+        for (OrderItemEntity item : order.getOrderItems()) {
+            AllOrderResponseDTO.OrderItemDTO itemDTO = new AllOrderResponseDTO.OrderItemDTO();
+            itemDTO.setProductId(item.getProduct().getProductId());
+            itemDTO.setName(item.getProduct().getProductTitle());
+            itemDTO.setProductQuantity(item.getQuantity());
+            itemDTO.setProductPrice(item.getProductPrice());
+            itemDTO.setSubtotal(item.getProductPrice().multiply(new BigDecimal(item.getQuantity())));
+            itemDTOs.add(itemDTO);
+        }
+        dto.setItems(itemDTOs);
+
+        return dto;
+    }
+
+
 
     @Override
     public OrderResponse getOrderById(Long orderId) {

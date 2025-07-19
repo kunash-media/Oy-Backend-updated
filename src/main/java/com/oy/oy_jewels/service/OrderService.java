@@ -4,9 +4,9 @@ import com.oy.oy_jewels.dto.request.CreateOrderRequest;
 import com.oy.oy_jewels.dto.request.ExchangeRequestDTO;
 import com.oy.oy_jewels.dto.request.ReturnRequestDTO;
 import com.oy.oy_jewels.dto.request.UpdateOrderRequest;
+import com.oy.oy_jewels.dto.response.AllOrderResponseDTO;
 import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.entity.OrderEntity;
-
 import java.time.LocalDate;
 import java.util.List;
 import java.util.Map;
@@ -15,8 +15,10 @@ public interface OrderService {
 
     // Core CRUD operations
     OrderResponse createOrder(CreateOrderRequest request);
-    List<OrderResponse> getAllOrders();
     OrderResponse getOrderById(Long orderId);
+
+    List<AllOrderResponseDTO> getAllOrders();
+
     OrderResponse updateOrder(Long orderId, UpdateOrderRequest request);
     OrderResponse patchOrder(Long orderId, Map<String, Object> updates);
     void deleteOrder(Long orderId);

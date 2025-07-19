@@ -4,6 +4,7 @@ import com.oy.oy_jewels.dto.request.CreateOrderRequest;
 import com.oy.oy_jewels.dto.request.ExchangeRequestDTO;
 import com.oy.oy_jewels.dto.request.ReturnRequestDTO;
 import com.oy.oy_jewels.dto.request.UpdateOrderRequest;
+import com.oy.oy_jewels.dto.response.AllOrderResponseDTO;
 import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.service.OrderService;
 import com.oy.oy_jewels.service.serviceImpl.ShiprocketService;
@@ -11,13 +12,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -56,19 +55,6 @@ public class OrderController {
         }
     }
 
-    // Get all orders
-    @GetMapping("/get-all-order")
-    public ResponseEntity<List<OrderResponse>> getAllOrders() {
-        try {
-            logger.info("Fetching all orders");
-            List<OrderResponse> orders = orderService.getAllOrders();
-            return ResponseEntity.ok(orders);
-        } catch (Exception e) {
-            logger.error("Error fetching all orders", e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
-    }
-
     // Get order by ID
     @GetMapping("/get-order/{orderId}")
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long orderId) {
@@ -85,6 +71,12 @@ public class OrderController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(new OrderResponse("error", "Failed to fetch order: " + e.getMessage(), null));
         }
+    }
+
+    @GetMapping("/get-all-orders")
+    public ResponseEntity<List<AllOrderResponseDTO>> getAllOrders() {
+        List<AllOrderResponseDTO> orders = orderService.getAllOrders();
+        return ResponseEntity.ok(orders);
     }
 
     // Update order (PUT)
