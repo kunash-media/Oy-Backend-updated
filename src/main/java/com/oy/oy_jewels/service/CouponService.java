@@ -1,25 +1,34 @@
 package com.oy.oy_jewels.service;
 
+import com.oy.oy_jewels.dto.request.CouponRequestDto;
+import com.oy.oy_jewels.dto.response.CouponResponseDto;
+import com.oy.oy_jewels.dto.response.UserCouponsResponseDto;
 
-import com.oy.oy_jewels.entity.CouponEntity;
-import org.springframework.web.multipart.MultipartFile;
 import java.util.List;
 
 public interface CouponService {
 
-    CouponEntity createCoupon(MultipartFile couponBanner, String couponName, String couponCode,
-                              String validDate, String validUntil, String discountType,
-                              Double discountValue, String description);
+    CouponResponseDto createCoupon(CouponRequestDto couponRequestDto);
 
-    List<CouponEntity> getAllCoupons();
+    CouponResponseDto getCouponById(Long couponId);
 
-    CouponEntity getCouponById(Long id);
+    List<CouponResponseDto> getAllCoupons();
 
-    CouponEntity getCouponByCode(String couponCode);
+    CouponResponseDto updateCoupon(Long couponId, CouponRequestDto couponRequestDto);
 
-    CouponEntity updateCoupon(Long id, MultipartFile couponBanner, String couponName,
-                              String couponCode, String validDate, String validUntil,
-                              String discountType, Double discountValue, String description);
+    void deleteCoupon(Long couponId);
 
-    void deleteCoupon(Long id);
+    CouponResponseDto getCouponByCode(String couponCode);
+
+    List<CouponResponseDto> getCouponsByType(String couponType);
+
+    List<CouponResponseDto> getAvailableCoupons();
+
+    CouponResponseDto applyCoupon(String couponCode);
+
+    CouponResponseDto validateCoupon(String couponCode);
+
+    List<CouponResponseDto> bulkCreateCoupons(CouponRequestDto couponRequestDto, List<Long> userIds);
+
+    UserCouponsResponseDto getCouponsByUserId(Long userId);
 }

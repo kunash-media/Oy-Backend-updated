@@ -1,6 +1,7 @@
 package com.oy.oy_jewels.entity;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -15,8 +16,11 @@ public class UserEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long userId;
 
-    @Column(name = "customer_name")
-    private String customerName;
+    @Column(name = "customer_first_name")
+    private String customerFirstName;
+
+    @Column(name = "customer_last_name")
+    private String customerLastName;
 
     @Column(name = "email")
     private String email;
@@ -41,14 +45,20 @@ public class UserEntity {
     @Column(name = "user_password")
     private String password;
 
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<ShippingAddressEntity> shippingAddresses = new ArrayList<>();
+
     // Constructors
     public UserEntity() {}
 
-    public UserEntity(Long userId, String customerName, String email,
+    public UserEntity(Long userId, String customerFirstName, String customerLastName, String email,
                       String mobile, String maritalStatus, LocalDate customerDOB,
                       LocalDate anniversary, String status, String password) {
         this.userId = userId;
-        this.customerName = customerName;
+        this.customerFirstName = customerFirstName;
+        this.customerLastName = customerLastName;
         this.email = email;
         this.mobile = mobile;
         this.maritalStatus = maritalStatus;
@@ -62,8 +72,8 @@ public class UserEntity {
     public Long getUserId() { return userId; }
     public void setUserId(Long userId) { this.userId = userId; }
 
-    public String getCustomerName() { return customerName; }
-    public void setCustomerName(String customerName) { this.customerName = customerName; }
+    public String getCustomerName() { return customerFirstName; }
+    public void setCustomerName(String customerFirstName) { this.customerFirstName = customerFirstName; }
 
     public String getEmail() { return email; }
     public void setEmail(String email) { this.email = email; }
@@ -89,5 +99,29 @@ public class UserEntity {
 
     public void setPassword(String password) {
         this.password = password;
+    }
+
+    public List<ShippingAddressEntity> getShippingAddresses() {
+        return shippingAddresses;
+    }
+
+    public void setShippingAddresses(List<ShippingAddressEntity> shippingAddresses) {
+        this.shippingAddresses = shippingAddresses;
+    }
+
+    public String getCustomerFirstName() {
+        return customerFirstName;
+    }
+
+    public void setCustomerFirstName(String customerFirstName) {
+        this.customerFirstName = customerFirstName;
+    }
+
+    public String getCustomerLastName() {
+        return customerLastName;
+    }
+
+    public void setCustomerLastName(String customerLastName) {
+        this.customerLastName = customerLastName;
     }
 }

@@ -1,19 +1,22 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+import com.oy.oy_jewels.dto.request.CouponRequestDto;
+import com.oy.oy_jewels.dto.response.CouponResponseDto;
+import com.oy.oy_jewels.dto.response.UserCouponsResponseDto;
 import com.oy.oy_jewels.entity.CouponEntity;
+import com.oy.oy_jewels.entity.UserEntity;
 import com.oy.oy_jewels.repository.CouponRepository;
+import com.oy.oy_jewels.repository.UserRepository;
 import com.oy.oy_jewels.service.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class CouponServiceImpl implements CouponService {
@@ -21,98 +24,248 @@ public class CouponServiceImpl implements CouponService {
     @Autowired
     private CouponRepository couponRepository;
 
-    private static final String UPLOAD_DIR = "uploads/coupons/";
+    @Autowired
+    private UserRepository userRepository;
+
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
+    private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
     @Override
-    public CouponEntity createCoupon(MultipartFile couponBanner, String couponName, String couponCode,
-                                     String validDate, String validUntil, String discountType,
-                                     Double discountValue, String description) {
-        byte[] bannerData = null;
-        if (couponBanner != null && !couponBanner.isEmpty()) {
-            try {
-                bannerData = couponBanner.getBytes();
-            } catch (IOException e) {
-                throw new RuntimeException("Failed to process coupon banner image", e);
+    public CouponResponseDto createCoupon(CouponRequestDto couponRequestDto) {
+        UserEntity user = userRepository.findById(couponRequestDto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + couponRequestDto.getUserId()));
+
+        if (couponRepository.existsByCouponCode(couponRequestDto.getCouponCode())) {
+            throw new RuntimeException("Coupon code already exists: " + couponRequestDto.getCouponCode());
+        }
+
+        CouponEntity couponEntity = new CouponEntity();
+        couponEntity.setCouponDescription(couponRequestDto.getCouponDescription());
+        couponEntity.setCouponType(couponRequestDto.getCouponType());
+        couponEntity.setCouponDiscount(couponRequestDto.getCouponDiscount());
+        couponEntity.setValidFromDate(LocalDate.parse(couponRequestDto.getValidFromDate(), DATE_FORMATTER));
+        couponEntity.setValidUntilDate(LocalDate.parse(couponRequestDto.getValidUntilDate(), DATE_FORMATTER));
+        couponEntity.setCouponCode(couponRequestDto.getCouponCode());
+        couponEntity.setCreatedAt(LocalDateTime.now());
+        couponEntity.setStatus(couponRequestDto.getStatus() != null ? couponRequestDto.getStatus() : "valid");
+        couponEntity.setIsUsed(couponRequestDto.getIsUsed() != null ? couponRequestDto.getIsUsed() : false);
+        couponEntity.setUser(user);
+
+        CouponEntity savedCoupon = couponRepository.save(couponEntity);
+        return convertToResponseDto(savedCoupon);
+    }
+
+    @Override
+    public CouponResponseDto getCouponById(Long couponId) {
+        CouponEntity couponEntity = couponRepository.findById(couponId)
+                .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + couponId));
+        return convertToResponseDto(couponEntity);
+    }
+
+    @Override
+    public List<CouponResponseDto> getAllCoupons() {
+        List<CouponEntity> coupons = couponRepository.findAll();
+        return coupons.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CouponResponseDto updateCoupon(Long couponId, CouponRequestDto couponRequestDto) {
+        CouponEntity existingCoupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + couponId));
+
+        UserEntity user = userRepository.findById(couponRequestDto.getUserId())
+                .orElseThrow(() -> new RuntimeException("User not found with id: " + couponRequestDto.getUserId()));
+
+        if (!existingCoupon.getCouponCode().equals(couponRequestDto.getCouponCode()) &&
+                couponRepository.existsByCouponCode(couponRequestDto.getCouponCode())) {
+            throw new RuntimeException("Coupon code already exists: " + couponRequestDto.getCouponCode());
+        }
+
+        existingCoupon.setCouponDescription(couponRequestDto.getCouponDescription());
+        existingCoupon.setCouponType(couponRequestDto.getCouponType());
+        existingCoupon.setCouponDiscount(couponRequestDto.getCouponDiscount());
+        existingCoupon.setValidFromDate(LocalDate.parse(couponRequestDto.getValidFromDate(), DATE_FORMATTER));
+        existingCoupon.setValidUntilDate(LocalDate.parse(couponRequestDto.getValidUntilDate(), DATE_FORMATTER));
+        existingCoupon.setCouponCode(couponRequestDto.getCouponCode());
+        existingCoupon.setUser(user);
+
+        if (couponRequestDto.getStatus() != null) {
+            existingCoupon.setStatus(couponRequestDto.getStatus());
+        }
+        if (couponRequestDto.getIsUsed() != null) {
+            existingCoupon.setIsUsed(couponRequestDto.getIsUsed());
+        }
+
+        CouponEntity updatedCoupon = couponRepository.save(existingCoupon);
+        return convertToResponseDto(updatedCoupon);
+    }
+
+    @Override
+    public void deleteCoupon(Long couponId) {
+        if (!couponRepository.existsById(couponId)) {
+            throw new RuntimeException("Coupon not found with id: " + couponId);
+        }
+        couponRepository.deleteById(couponId);
+    }
+
+    @Override
+    public CouponResponseDto getCouponByCode(String couponCode) {
+        CouponEntity couponEntity = couponRepository.findByCouponCode(couponCode)
+                .orElseThrow(() -> new RuntimeException("Coupon not found with code: " + couponCode));
+        return convertToResponseDto(couponEntity);
+    }
+
+    @Override
+    public List<CouponResponseDto> getCouponsByType(String couponType) {
+        List<CouponEntity> coupons = couponRepository.findByCouponType(couponType);
+        return coupons.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public List<CouponResponseDto> getAvailableCoupons() {
+        List<CouponEntity> coupons = couponRepository.findAvailableCoupons();
+        return coupons.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CouponResponseDto applyCoupon(String couponCode) {
+        CouponEntity couponEntity = couponRepository.findValidCouponByCode(couponCode)
+                .orElseThrow(() -> new RuntimeException("Valid coupon not found with code: " + couponCode));
+
+        if (LocalDate.now().isAfter(couponEntity.getValidUntilDate())) {
+            couponEntity.setStatus("invalid");
+            couponRepository.save(couponEntity);
+            throw new RuntimeException("Coupon has expired");
+        }
+
+        List<CouponEntity> userCoupons = couponRepository.findByUserUserId(couponEntity.getUser().getUserId());
+        LocalDate today = LocalDate.now();
+        boolean hasOtherValidCoupons = userCoupons.stream()
+                .anyMatch(c -> !c.getCouponId().equals(couponEntity.getCouponId()) &&
+                        c.getStatus().equals("valid") &&
+                        !c.getIsUsed() &&
+                        c.getValidFromDate().isEqual(today));
+
+        if (hasOtherValidCoupons) {
+            userCoupons.stream()
+                    .filter(c -> !c.getCouponId().equals(couponEntity.getCouponId()) &&
+                            c.getStatus().equals("valid") &&
+                            !c.getIsUsed())
+                    .forEach(c -> {
+                        c.setStatus("invalid");
+                        couponRepository.save(c);
+                    });
+        }
+
+        couponEntity.setIsUsed(true);
+        CouponEntity updatedCoupon = couponRepository.save(couponEntity);
+        return convertToResponseDto(updatedCoupon);
+    }
+
+    @Override
+    public CouponResponseDto validateCoupon(String couponCode) {
+        CouponEntity couponEntity = couponRepository.findByCouponCode(couponCode)
+                .orElseThrow(() -> new RuntimeException("Coupon not found with code: " + couponCode));
+
+        if (!couponEntity.getStatus().equals("valid")) {
+            throw new RuntimeException("Coupon is not valid");
+        }
+
+        if (couponEntity.getIsUsed()) {
+            throw new RuntimeException("Coupon has already been used");
+        }
+
+        if (LocalDate.now().isAfter(couponEntity.getValidUntilDate())) {
+            throw new RuntimeException("Coupon has expired");
+        }
+
+        if (LocalDate.now().isBefore(couponEntity.getValidFromDate())) {
+            throw new RuntimeException("Coupon is not yet active");
+        }
+
+        return convertToResponseDto(couponEntity);
+    }
+
+    @Override
+    public List<CouponResponseDto> bulkCreateCoupons(CouponRequestDto couponRequestDto, List<Long> userIds) {
+        List<CouponEntity> createdCoupons = new ArrayList<>();
+        List<String> skippedUserIds = new ArrayList<>();
+
+        for (Long userId : userIds) {
+            UserEntity user = userRepository.findById(userId)
+                    .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
+
+            String generatedCouponCode = couponRequestDto.getCouponCode() + "-" + userId;
+
+            // Check if coupon code already exists
+            if (couponRepository.existsByCouponCode(generatedCouponCode)) {
+                skippedUserIds.add(userId.toString());
+                continue;
             }
+
+            CouponEntity couponEntity = new CouponEntity();
+            couponEntity.setCouponDescription(couponRequestDto.getCouponDescription());
+            couponEntity.setCouponType(couponRequestDto.getCouponType());
+            couponEntity.setCouponDiscount(couponRequestDto.getCouponDiscount());
+            couponEntity.setValidFromDate(LocalDate.parse(couponRequestDto.getValidFromDate(), DATE_FORMATTER));
+            couponEntity.setValidUntilDate(LocalDate.parse(couponRequestDto.getValidUntilDate(), DATE_FORMATTER));
+            couponEntity.setCouponCode(generatedCouponCode);
+            couponEntity.setCreatedAt(LocalDateTime.now());
+            couponEntity.setStatus("valid");
+            couponEntity.setIsUsed(false);
+            couponEntity.setUser(user);
+
+            createdCoupons.add(couponRepository.save(couponEntity));
         }
 
-        CouponEntity coupon = new CouponEntity();
-        coupon.setCouponBanner(bannerData);
-        coupon.setCouponName(couponName);
-        coupon.setCouponCode(couponCode);
-        coupon.setValidDate(LocalDate.parse(validDate));
-        coupon.setValidUntil(LocalDate.parse(validUntil));
-        coupon.setDiscountType(discountType);
-        coupon.setDiscountValue(discountValue);
-        coupon.setDescription(description);
-
-        return couponRepository.save(coupon);
-    }
-
-    @Override
-    public List<CouponEntity> getAllCoupons() {
-        return couponRepository.findAll();
-    }
-
-    @Override
-    public CouponEntity getCouponById(Long id) {
-        return couponRepository.findById(id).orElse(null);
-    }
-
-    @Override
-    public CouponEntity getCouponByCode(String couponCode) {
-        return couponRepository.findByCouponCode(couponCode).orElse(null);
-    }
-
-    @Override
-    public CouponEntity updateCoupon(Long id, MultipartFile couponBanner, String couponName,
-                                     String couponCode, String validDate, String validUntil,
-                                     String discountType, Double discountValue, String description) {
-
-        CouponEntity existingCoupon = couponRepository.findById(id).orElse(null);
-        if (existingCoupon == null) {
-            return null;
+        if (!skippedUserIds.isEmpty()) {
+            System.out.println("Skipped creating coupons for user IDs " + skippedUserIds + " due to duplicate coupon codes.");
         }
 
-//        if (couponBanner != null && !couponBanner.isEmpty()) {
-//            String bannerPath = saveFile(couponBanner);
-//            existingCoupon.setCouponBanner(bannerPath);
-//        }
-
-        existingCoupon.setCouponName(couponName);
-        existingCoupon.setCouponCode(couponCode);
-        existingCoupon.setValidDate(LocalDate.parse(validDate));
-        existingCoupon.setValidUntil(LocalDate.parse(validUntil));
-        existingCoupon.setDiscountType(discountType);
-        existingCoupon.setDiscountValue(discountValue);
-        existingCoupon.setDescription(description);
-
-        return couponRepository.save(existingCoupon);
+        return createdCoupons.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    public void deleteCoupon(Long id) {
-        couponRepository.deleteById(id);
+    public UserCouponsResponseDto getCouponsByUserId(Long userId) {
+        List<CouponEntity> coupons = couponRepository.findByUserUserId(userId);
+        List<CouponResponseDto> couponDtos = coupons.stream()
+                .map(this::convertToResponseDto)
+                .collect(Collectors.toList());
+
+        int totalValidCoupons = (int) coupons.stream()
+                .filter(c -> c.getStatus().equals("valid") && !c.getIsUsed() &&
+                        !LocalDate.now().isAfter(c.getValidUntilDate()) &&
+                        !LocalDate.now().isBefore(c.getValidFromDate()))
+                .count();
+
+        int totalExpiredCoupons = (int) coupons.stream()
+                .filter(c -> c.getStatus().equals("expired") || LocalDate.now().isAfter(c.getValidUntilDate()))
+                .count();
+
+        return new UserCouponsResponseDto(userId, couponDtos, totalValidCoupons, totalExpiredCoupons);
     }
 
-    private String saveFile(MultipartFile file) {
-        try {
-            // Create directory if it doesn't exist
-            File uploadDir = new File(UPLOAD_DIR);
-            if (!uploadDir.exists()) {
-                uploadDir.mkdirs();
-            }
-
-            // Generate unique filename
-            String fileName = System.currentTimeMillis() + "_" + file.getOriginalFilename();
-            Path filePath = Paths.get(UPLOAD_DIR + fileName);
-
-            // Save file
-            Files.copy(file.getInputStream(), filePath);
-
-            return filePath.toString();
-        } catch (IOException e) {
-            throw new RuntimeException("Failed to save file: " + e.getMessage());
-        }
+    private CouponResponseDto convertToResponseDto(CouponEntity couponEntity) {
+        return new CouponResponseDto(
+                couponEntity.getCouponId(),
+                couponEntity.getCouponDescription(),
+                couponEntity.getCouponType(),
+                couponEntity.getCouponDiscount(),
+                couponEntity.getValidFromDate().format(DATE_FORMATTER),
+                couponEntity.getValidUntilDate().format(DATE_FORMATTER),
+                couponEntity.getCreatedAt().format(DATE_TIME_FORMATTER),
+                couponEntity.getStatus(),
+                couponEntity.getCouponCode(),
+                couponEntity.getIsUsed(),
+                couponEntity.getUser().getUserId()
+        );
     }
 }

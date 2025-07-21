@@ -1,69 +1,46 @@
-package com.oy.oy_jewels.entity;
+package com.oy.oy_jewels.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
-import jakarta.persistence.*;
 
-import java.time.LocalDate;
-import java.time.LocalDateTime;
+public class CouponResponseDto {
 
-@Entity
-@Table(name = "coupons")
-public class CouponEntity {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long couponId;
-
-    @Column(nullable = false)
     private String couponDescription;
-
-    @Column(nullable = false)
     private String couponType;
-
-    @Column(nullable = false)
     private String couponDiscount;
 
-    @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate validFromDate;
+    private String validFromDate;
 
-    @Column(nullable = false)
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
-    private LocalDate validUntilDate;
+    private String validUntilDate;
 
-    @Column(nullable = false)
-    private LocalDateTime createdAt;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss")
+    private String createdAt;
 
-    @Column(nullable = false)
-    private String status; // valid/invalid
-
-    @Column(unique = true, nullable = false)
+    private String status;
     private String couponCode;
-
-    @Column(nullable = false)
     private Boolean isUsed;
-
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private UserEntity user;
+    private Long userId;
 
     // Constructors
-    public CouponEntity() {
-        this.createdAt = LocalDateTime.now();
-        this.isUsed = false;
-        this.status = "valid";
+    public CouponResponseDto() {
     }
 
-    public CouponEntity(String couponDescription, String couponType, String couponDiscount,
-                        LocalDate validFromDate, LocalDate validUntilDate, String couponCode, UserEntity user) {
-        this();
+    public CouponResponseDto(Long couponId, String couponDescription, String couponType,
+                             String couponDiscount, String validFromDate, String validUntilDate,
+                             String createdAt, String status, String couponCode, Boolean isUsed, Long userId) {
+        this.couponId = couponId;
         this.couponDescription = couponDescription;
         this.couponType = couponType;
         this.couponDiscount = couponDiscount;
         this.validFromDate = validFromDate;
         this.validUntilDate = validUntilDate;
+        this.createdAt = createdAt;
+        this.status = status;
         this.couponCode = couponCode;
-        this.user = user;
+        this.isUsed = isUsed;
+        this.userId = userId;
     }
 
     // Getters and Setters
@@ -99,27 +76,27 @@ public class CouponEntity {
         this.couponDiscount = couponDiscount;
     }
 
-    public LocalDate getValidFromDate() {
+    public String getValidFromDate() {
         return validFromDate;
     }
 
-    public void setValidFromDate(LocalDate validFromDate) {
+    public void setValidFromDate(String validFromDate) {
         this.validFromDate = validFromDate;
     }
 
-    public LocalDate getValidUntilDate() {
+    public String getValidUntilDate() {
         return validUntilDate;
     }
 
-    public void setValidUntilDate(LocalDate validUntilDate) {
+    public void setValidUntilDate(String validUntilDate) {
         this.validUntilDate = validUntilDate;
     }
 
-    public LocalDateTime getCreatedAt() {
+    public String getCreatedAt() {
         return createdAt;
     }
 
-    public void setCreatedAt(LocalDateTime createdAt) {
+    public void setCreatedAt(String createdAt) {
         this.createdAt = createdAt;
     }
 
@@ -147,12 +124,11 @@ public class CouponEntity {
         this.isUsed = isUsed;
     }
 
-    public UserEntity getUser() {
-        return user;
+    public Long getUserId() {
+        return userId;
     }
 
-    public void setUser(UserEntity user) {
-        this.user = user;
+    public void setUserId(Long userId) {
+        this.userId = userId;
     }
 }
-

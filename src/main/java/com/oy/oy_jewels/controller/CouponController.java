@@ -1,15 +1,15 @@
 package com.oy.oy_jewels.controller;
 
-import com.oy.oy_jewels.dto.request.CouponDataDto;
-import com.oy.oy_jewels.entity.CouponEntity;
+import com.oy.oy_jewels.dto.request.CouponRequestDto;
+import com.oy.oy_jewels.dto.response.CouponResponseDto;
+import com.oy.oy_jewels.dto.response.UserCouponsResponseDto;
 import com.oy.oy_jewels.service.CouponService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,82 +18,145 @@ import java.util.Map;
 public class CouponController {
 
     @Autowired
-
-
     private CouponService couponService;
 
-    // COMPLETE CORRECTED CONTROLLER - Replace your existing controller method with this
-    @PostMapping(value = "/create-coupon", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<?> createCoupon(
-            @RequestPart(value = "couponBanner", required = false) MultipartFile couponBanner,
-            @RequestPart("couponData") CouponDataDto couponData) {
-
+    // Create a new coupon
+    @PostMapping("/create-Coupon")
+    public ResponseEntity<CouponResponseDto> createCoupon(@RequestBody CouponRequestDto couponRequestDto) {
         try {
-            CouponEntity coupon = couponService.createCoupon(
-                    couponBanner,
-                    couponData.getCouponName(),
-                    couponData.getCouponCode(),
-                    couponData.getValidDate(),
-                    couponData.getValidUntil(),
-                    couponData.getDiscountType(),
-                    couponData.getDiscountValue(),
-                    couponData.getDescription()
-            );
-            return ResponseEntity.ok(coupon);
+            CouponResponseDto createdCoupon = couponService.createCoupon(couponRequestDto);
+            return new ResponseEntity<>(createdCoupon, HttpStatus.CREATED);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("error", "Failed to create coupon: " + e.getMessage()));
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
 
-    @GetMapping("/Get-All-Coupons")
-    public ResponseEntity<List<CouponEntity>> getAllCoupons() {
-        List<CouponEntity> coupons = couponService.getAllCoupons();
-        return ResponseEntity.ok(coupons);
+    // Get all coupons
+    @GetMapping("/get-All-Coupons")
+    public ResponseEntity<List<CouponResponseDto>> getAllCoupons() {
+        List<CouponResponseDto> coupons = couponService.getAllCoupons();
+        return new ResponseEntity<>(coupons, HttpStatus.OK);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<CouponEntity> getCouponById(@PathVariable Long id) {
-        CouponEntity coupon = couponService.getCouponById(id);
-        if (coupon != null) {
-            return ResponseEntity.ok(coupon);
+    // Get coupon by ID
+    @GetMapping("/{couponId}")
+    public ResponseEntity<CouponResponseDto> getCouponById(@PathVariable Long couponId) {
+        try {
+            CouponResponseDto coupon = couponService.getCouponById(couponId);
+            return new ResponseEntity<>(coupon, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.notFound().build();
     }
 
+    // Update coupon
+    @PutMapping("/{couponId}")
+    public ResponseEntity<CouponResponseDto> updateCoupon(@PathVariable Long couponId,
+                                                          @RequestBody CouponRequestDto couponRequestDto) {
+        try {
+            CouponResponseDto updatedCoupon = couponService.updateCoupon(couponId, couponRequestDto);
+            return new ResponseEntity<>(updatedCoupon, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // Delete coupon
+    @DeleteMapping("/{couponId}")
+    public ResponseEntity<Map<String, String>> deleteCoupon(@PathVariable Long couponId) {
+        try {
+            couponService.deleteCoupon(couponId);
+            Map<String, String> response = new HashMap<>();
+            response.put("message", "Coupon deleted successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, String> response = new HashMap<>();
+            response.put("error", "Coupon not found");
+            return new ResponseEntity<>(response, HttpStatus.NOT_FOUND);
+        }
+    }
+
+    // Get coupon by code
     @GetMapping("/code/{couponCode}")
-    public ResponseEntity<CouponEntity> getCouponByCode(@PathVariable String couponCode) {
-        CouponEntity coupon = couponService.getCouponByCode(couponCode);
-        if (coupon != null) {
-            return ResponseEntity.ok(coupon);
+    public ResponseEntity<CouponResponseDto> getCouponByCode(@PathVariable String couponCode) {
+        try {
+            CouponResponseDto coupon = couponService.getCouponByCode(couponCode);
+            return new ResponseEntity<>(coupon, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
         }
-        return ResponseEntity.notFound().build();
     }
 
-    @PutMapping("/{id}")
-    public ResponseEntity<CouponEntity> updateCoupon(
-            @PathVariable Long id,
-            @RequestPart(value = "couponBanner", required = false) MultipartFile couponBanner,
-            @RequestPart("couponName") String couponName,
-            @RequestPart("couponCode") String couponCode,
-            @RequestPart("validDate") String validDate,
-            @RequestPart("validUntil") String validUntil,
-            @RequestPart("discountType") String discountType,
-            @RequestPart("discountValue") Double discountValue,
-            @RequestPart(value = "description", required = false) String description) {
-
-        CouponEntity updatedCoupon = couponService.updateCoupon(id, couponBanner, couponName,
-                couponCode, validDate, validUntil, discountType, discountValue, description);
-
-        if (updatedCoupon != null) {
-            return ResponseEntity.ok(updatedCoupon);
-        }
-        return ResponseEntity.notFound().build();
+    // Get coupons by type
+    @GetMapping("/type/{couponType}")
+    public ResponseEntity<List<CouponResponseDto>> getCouponsByType(@PathVariable String couponType) {
+        List<CouponResponseDto> coupons = couponService.getCouponsByType(couponType);
+        return new ResponseEntity<>(coupons, HttpStatus.OK);
     }
 
-    @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteCoupon(@PathVariable Long id) {
-        couponService.deleteCoupon(id);
-        return ResponseEntity.ok().build();
+    // Get available coupons
+    @GetMapping("/available")
+    public ResponseEntity<List<CouponResponseDto>> getAvailableCoupons() {
+        List<CouponResponseDto> coupons = couponService.getAvailableCoupons();
+        return new ResponseEntity<>(coupons, HttpStatus.OK);
+    }
+
+    // Validate coupon
+    @PostMapping("/validate/{couponCode}")
+    public ResponseEntity<Map<String, Object>> validateCoupon(@PathVariable String couponCode) {
+        try {
+            CouponResponseDto coupon = couponService.validateCoupon(couponCode);
+            Map<String, Object> response = new HashMap<>();
+            response.put("valid", true);
+            response.put("coupon", coupon);
+            response.put("message", "Coupon is valid and can be used");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("valid", false);
+            response.put("message", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Apply coupon
+    @PostMapping("/apply/{couponCode}")
+    public ResponseEntity<Map<String, Object>> applyCoupon(@PathVariable String couponCode) {
+        try {
+            CouponResponseDto coupon = couponService.applyCoupon(couponCode);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("coupon", coupon);
+            response.put("message", "Coupon applied successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Bulk create coupons
+    @PostMapping("/bulk-create")
+    public ResponseEntity<List<CouponResponseDto>> bulkCreateCoupons(@RequestBody CouponRequestDto couponRequestDto) {
+        try {
+            List<CouponResponseDto> createdCoupons = couponService.bulkCreateCoupons(couponRequestDto, couponRequestDto.getUserIds());
+            return new ResponseEntity<>(createdCoupons, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
+        }
+    }
+
+    // Get coupons by user ID
+    @GetMapping("/user/{userId}")
+    public ResponseEntity<UserCouponsResponseDto> getCouponsByUserId(@PathVariable Long userId) {
+        try {
+            UserCouponsResponseDto response = couponService.getCouponsByUserId(userId);
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(null, HttpStatus.NOT_FOUND);
+        }
     }
 }
+

@@ -24,7 +24,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     List<UserEntity> findByMaritalStatus(String maritalStatus);
 
     // Find users by customer name containing
-    List<UserEntity> findByCustomerNameContainingIgnoreCase(String customerName);
+//    List<UserEntity> findByCustomerNameContainingIgnoreCase(String customerFirstName);
 
     boolean existsByMobileOrEmail(String mobile, String email);
 
