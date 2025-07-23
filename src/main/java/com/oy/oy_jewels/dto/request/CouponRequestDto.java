@@ -7,7 +7,6 @@ import java.util.List;
 public class CouponRequestDto {
 
     private String couponDescription;
-    private String couponType;
     private String couponDiscount;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -21,21 +20,23 @@ public class CouponRequestDto {
     private Boolean isUsed;
     private Long userId;
     private List<Long> userIds;
+    private List<String> category;
 
     // Constructors
     public CouponRequestDto() {
     }
 
-    public CouponRequestDto(String couponDescription, String couponType, String couponDiscount,
-                            String validFromDate, String validUntilDate, String couponCode, Long userId, List<Long> userIds) {
+    public CouponRequestDto(String couponDescription, String couponDiscount,
+                            String validFromDate, String validUntilDate, String couponCode, Long userId,
+                            List<Long> userIds, List<String> category) {
         this.couponDescription = couponDescription;
-        this.couponType = couponType;
         this.couponDiscount = couponDiscount;
         this.validFromDate = validFromDate;
         this.validUntilDate = validUntilDate;
         this.couponCode = couponCode;
         this.userId = userId;
         this.userIds = userIds;
+        this.category = category;
     }
 
     // Getters and Setters
@@ -45,14 +46,6 @@ public class CouponRequestDto {
 
     public void setCouponDescription(String couponDescription) {
         this.couponDescription = couponDescription;
-    }
-
-    public String getCouponType() {
-        return couponType;
-    }
-
-    public void setCouponType(String couponType) {
-        this.couponType = couponType;
     }
 
     public String getCouponDiscount() {
@@ -117,5 +110,13 @@ public class CouponRequestDto {
 
     public void setUserIds(List<Long> userIds) {
         this.userIds = userIds;
+    }
+
+    public List<String> getCategory() {
+        return category;
+    }
+
+    public void setCategory(List<String> category) {
+        this.category = category;
     }
 }

@@ -14,8 +14,6 @@ public interface CouponRepository extends JpaRepository<CouponEntity, Long> {
 
     Optional<CouponEntity> findByCouponCode(String couponCode);
 
-    List<CouponEntity> findByCouponType(String couponType);
-
     List<CouponEntity> findByStatus(String status);
 
     List<CouponEntity> findByIsUsed(Boolean isUsed);

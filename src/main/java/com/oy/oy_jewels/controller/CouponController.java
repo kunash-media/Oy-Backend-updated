@@ -87,13 +87,6 @@ public class CouponController {
         }
     }
 
-    // Get coupons by type
-    @GetMapping("/type/{couponType}")
-    public ResponseEntity<List<CouponResponseDto>> getCouponsByType(@PathVariable String couponType) {
-        List<CouponResponseDto> coupons = couponService.getCouponsByType(couponType);
-        return new ResponseEntity<>(coupons, HttpStatus.OK);
-    }
-
     // Get available coupons
     @GetMapping("/available")
     public ResponseEntity<List<CouponResponseDto>> getAvailableCoupons() {

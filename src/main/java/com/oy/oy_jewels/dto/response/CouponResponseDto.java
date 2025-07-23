@@ -2,11 +2,12 @@ package com.oy.oy_jewels.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 
+import java.util.List;
+
 public class CouponResponseDto {
 
     private Long couponId;
     private String couponDescription;
-    private String couponType;
     private String couponDiscount;
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
@@ -22,17 +23,18 @@ public class CouponResponseDto {
     private String couponCode;
     private Boolean isUsed;
     private Long userId;
+    private List<String> category;
 
     // Constructors
     public CouponResponseDto() {
     }
 
-    public CouponResponseDto(Long couponId, String couponDescription, String couponType,
+    public CouponResponseDto(Long couponId, String couponDescription,
                              String couponDiscount, String validFromDate, String validUntilDate,
-                             String createdAt, String status, String couponCode, Boolean isUsed, Long userId) {
+                             String createdAt, String status, String couponCode, Boolean isUsed,
+                             Long userId, List<String> category) {
         this.couponId = couponId;
         this.couponDescription = couponDescription;
-        this.couponType = couponType;
         this.couponDiscount = couponDiscount;
         this.validFromDate = validFromDate;
         this.validUntilDate = validUntilDate;
@@ -41,6 +43,7 @@ public class CouponResponseDto {
         this.couponCode = couponCode;
         this.isUsed = isUsed;
         this.userId = userId;
+        this.category = category;
     }
 
     // Getters and Setters
@@ -58,14 +61,6 @@ public class CouponResponseDto {
 
     public void setCouponDescription(String couponDescription) {
         this.couponDescription = couponDescription;
-    }
-
-    public String getCouponType() {
-        return couponType;
-    }
-
-    public void setCouponType(String couponType) {
-        this.couponType = couponType;
     }
 
     public String getCouponDiscount() {
@@ -130,5 +125,13 @@ public class CouponResponseDto {
 
     public void setUserId(Long userId) {
         this.userId = userId;
+    }
+
+    public List<String> getCategory() {
+        return category;
+    }
+
+    public void setCategory(List<String> category) {
+        this.category = category;
     }
 }

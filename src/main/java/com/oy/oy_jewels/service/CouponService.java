@@ -20,8 +20,6 @@ public interface CouponService {
 
     CouponResponseDto getCouponByCode(String couponCode);
 
-    List<CouponResponseDto> getCouponsByType(String couponType);
-
     List<CouponResponseDto> getAvailableCoupons();
 
     CouponResponseDto applyCoupon(String couponCode);

@@ -5,6 +5,7 @@ import jakarta.persistence.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "coupons")
@@ -16,9 +17,6 @@ public class CouponEntity {
 
     @Column(nullable = false)
     private String couponDescription;
-
-    @Column(nullable = false)
-    private String couponType;
 
     @Column(nullable = false)
     private String couponDiscount;
@@ -47,6 +45,11 @@ public class CouponEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    @ElementCollection
+    @CollectionTable(name = "coupon_categories", joinColumns = @JoinColumn(name = "coupon_id"))
+    @Column(name = "category")
+    private List<String> category;
+
     // Constructors
     public CouponEntity() {
         this.createdAt = LocalDateTime.now();
@@ -54,16 +57,17 @@ public class CouponEntity {
         this.status = "valid";
     }
 
-    public CouponEntity(String couponDescription, String couponType, String couponDiscount,
-                        LocalDate validFromDate, LocalDate validUntilDate, String couponCode, UserEntity user) {
+    public CouponEntity(String couponDescription, String couponDiscount,
+                        LocalDate validFromDate, LocalDate validUntilDate, String couponCode,
+                        UserEntity user, List<String> category) {
         this();
         this.couponDescription = couponDescription;
-        this.couponType = couponType;
         this.couponDiscount = couponDiscount;
         this.validFromDate = validFromDate;
         this.validUntilDate = validUntilDate;
         this.couponCode = couponCode;
         this.user = user;
+        this.category = category;
     }
 
     // Getters and Setters
@@ -81,14 +85,6 @@ public class CouponEntity {
 
     public void setCouponDescription(String couponDescription) {
         this.couponDescription = couponDescription;
-    }
-
-    public String getCouponType() {
-        return couponType;
-    }
-
-    public void setCouponType(String couponType) {
-        this.couponType = couponType;
     }
 
     public String getCouponDiscount() {
@@ -154,5 +150,12 @@ public class CouponEntity {
     public void setUser(UserEntity user) {
         this.user = user;
     }
-}
 
+    public List<String> getCategory() {
+        return category;
+    }
+
+    public void setCategory(List<String> category) {
+        this.category = category;
+    }
+}

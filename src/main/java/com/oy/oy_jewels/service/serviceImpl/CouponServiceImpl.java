@@ -41,7 +41,6 @@ public class CouponServiceImpl implements CouponService {
 
         CouponEntity couponEntity = new CouponEntity();
         couponEntity.setCouponDescription(couponRequestDto.getCouponDescription());
-        couponEntity.setCouponType(couponRequestDto.getCouponType());
         couponEntity.setCouponDiscount(couponRequestDto.getCouponDiscount());
         couponEntity.setValidFromDate(LocalDate.parse(couponRequestDto.getValidFromDate(), DATE_FORMATTER));
         couponEntity.setValidUntilDate(LocalDate.parse(couponRequestDto.getValidUntilDate(), DATE_FORMATTER));
@@ -50,6 +49,7 @@ public class CouponServiceImpl implements CouponService {
         couponEntity.setStatus(couponRequestDto.getStatus() != null ? couponRequestDto.getStatus() : "valid");
         couponEntity.setIsUsed(couponRequestDto.getIsUsed() != null ? couponRequestDto.getIsUsed() : false);
         couponEntity.setUser(user);
+        couponEntity.setCategory(couponRequestDto.getCategory());
 
         CouponEntity savedCoupon = couponRepository.save(couponEntity);
         return convertToResponseDto(savedCoupon);
@@ -84,12 +84,12 @@ public class CouponServiceImpl implements CouponService {
         }
 
         existingCoupon.setCouponDescription(couponRequestDto.getCouponDescription());
-        existingCoupon.setCouponType(couponRequestDto.getCouponType());
         existingCoupon.setCouponDiscount(couponRequestDto.getCouponDiscount());
         existingCoupon.setValidFromDate(LocalDate.parse(couponRequestDto.getValidFromDate(), DATE_FORMATTER));
         existingCoupon.setValidUntilDate(LocalDate.parse(couponRequestDto.getValidUntilDate(), DATE_FORMATTER));
         existingCoupon.setCouponCode(couponRequestDto.getCouponCode());
         existingCoupon.setUser(user);
+        existingCoupon.setCategory(couponRequestDto.getCategory());
 
         if (couponRequestDto.getStatus() != null) {
             existingCoupon.setStatus(couponRequestDto.getStatus());
@@ -115,14 +115,6 @@ public class CouponServiceImpl implements CouponService {
         CouponEntity couponEntity = couponRepository.findByCouponCode(couponCode)
                 .orElseThrow(() -> new RuntimeException("Coupon not found with code: " + couponCode));
         return convertToResponseDto(couponEntity);
-    }
-
-    @Override
-    public List<CouponResponseDto> getCouponsByType(String couponType) {
-        List<CouponEntity> coupons = couponRepository.findByCouponType(couponType);
-        return coupons.stream()
-                .map(this::convertToResponseDto)
-                .collect(Collectors.toList());
     }
 
     @Override
@@ -211,7 +203,6 @@ public class CouponServiceImpl implements CouponService {
 
             CouponEntity couponEntity = new CouponEntity();
             couponEntity.setCouponDescription(couponRequestDto.getCouponDescription());
-            couponEntity.setCouponType(couponRequestDto.getCouponType());
             couponEntity.setCouponDiscount(couponRequestDto.getCouponDiscount());
             couponEntity.setValidFromDate(LocalDate.parse(couponRequestDto.getValidFromDate(), DATE_FORMATTER));
             couponEntity.setValidUntilDate(LocalDate.parse(couponRequestDto.getValidUntilDate(), DATE_FORMATTER));
@@ -220,6 +211,7 @@ public class CouponServiceImpl implements CouponService {
             couponEntity.setStatus("valid");
             couponEntity.setIsUsed(false);
             couponEntity.setUser(user);
+            couponEntity.setCategory(couponRequestDto.getCategory());
 
             createdCoupons.add(couponRepository.save(couponEntity));
         }
@@ -257,7 +249,6 @@ public class CouponServiceImpl implements CouponService {
         return new CouponResponseDto(
                 couponEntity.getCouponId(),
                 couponEntity.getCouponDescription(),
-                couponEntity.getCouponType(),
                 couponEntity.getCouponDiscount(),
                 couponEntity.getValidFromDate().format(DATE_FORMATTER),
                 couponEntity.getValidUntilDate().format(DATE_FORMATTER),
@@ -265,7 +256,8 @@ public class CouponServiceImpl implements CouponService {
                 couponEntity.getStatus(),
                 couponEntity.getCouponCode(),
                 couponEntity.getIsUsed(),
-                couponEntity.getUser().getUserId()
+                couponEntity.getUser().getUserId(),
+                couponEntity.getCategory()
         );
     }
 }
