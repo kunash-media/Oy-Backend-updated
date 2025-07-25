@@ -2,12 +2,21 @@ package com.oy.oy_jewels.dto.request;
 
 public class PaymentRequest {
 
+    private Long userId;
     private Integer amount; // Amount in rupees (will be converted to paise)
     private String currency = "INR";
     private String receipt;
     private String customerName;
     private String customerEmail;
     private String customerPhone;
+
+    public Long getUserId() {
+        return userId;
+    }
+
+    public void setUserId(Long userId) {
+        this.userId = userId;
+    }
 
     public Integer getAmount() {
         return amount;

@@ -35,4 +35,11 @@ public interface PaymentService {
      * Update payment status
      */
     PaymentOrder updatePaymentStatus(String razorpayOrderId, String status);
+
+    // New methods for user-based operations
+    List<PaymentOrder> getPaymentOrdersByUserId(Long userId);
+
+    PaymentOrder getPaymentOrderByRazorpayIdAndUserId(String razorpayOrderId, Long userId);
+
+    List<PaymentOrder> getPaymentOrdersByUserIdAndStatus(Long userId, String status);
 }

@@ -44,6 +44,11 @@ public class PaymentOrder {
     @Column(name = "customer_phone")
     private String customerPhone;
 
+    // Foreign key relationship with UserEntity
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false, foreignKey = @ForeignKey(name = "fk_payment_order_user"))
+    private UserEntity user;
+
     @Column(name = "created_at")
     private LocalDateTime createdAt;
 
@@ -60,6 +65,7 @@ public class PaymentOrder {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
+
 
     public PaymentOrder(){}
 
@@ -79,6 +85,26 @@ public class PaymentOrder {
         this.customerName = customerName;
         this.customerEmail = customerEmail;
         this.customerPhone = customerPhone;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+    }
+
+    public PaymentOrder(Long id, String razorpayOrderId, String razorpayPaymentId, String razorpaySignature,
+                        Integer amount, String currency, String receipt, PaymentStatus status,
+                        String customerName, String customerEmail, String customerPhone,
+                        UserEntity user, LocalDateTime createdAt, LocalDateTime updatedAt) {
+        this.id = id;
+        this.razorpayOrderId = razorpayOrderId;
+        this.razorpayPaymentId = razorpayPaymentId;
+        this.razorpaySignature = razorpaySignature;
+        this.amount = amount;
+        this.currency = currency;
+        this.receipt = receipt;
+        this.status = status;
+        this.customerName = customerName;
+        this.customerEmail = customerEmail;
+        this.customerPhone = customerPhone;
+        this.user = user;
         this.createdAt = createdAt;
         this.updatedAt = updatedAt;
     }
@@ -185,5 +211,13 @@ public class PaymentOrder {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
     }
 }

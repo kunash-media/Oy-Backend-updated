@@ -50,12 +50,19 @@ public class UserEntity {
     @JsonIgnore
     private List<ShippingAddressEntity> shippingAddresses = new ArrayList<>();
 
+    // Add relationship with PaymentOrder
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
+    private List<PaymentOrder> paymentOrders = new ArrayList<>();
+
     // Constructors
     public UserEntity() {}
 
-    public UserEntity(Long userId, String customerFirstName, String customerLastName, String email,
-                      String mobile, String maritalStatus, LocalDate customerDOB,
-                      LocalDate anniversary, String status, String password) {
+
+    public UserEntity(Long userId, String customerFirstName, String customerLastName,
+                      String email, String mobile, String maritalStatus, LocalDate customerDOB,
+                      LocalDate anniversary, String status, String password,
+                      List<ShippingAddressEntity> shippingAddresses, List<PaymentOrder> paymentOrders) {
         this.userId = userId;
         this.customerFirstName = customerFirstName;
         this.customerLastName = customerLastName;
@@ -66,6 +73,8 @@ public class UserEntity {
         this.anniversary = anniversary;
         this.status = status;
         this.password = password;
+        this.shippingAddresses = shippingAddresses;
+        this.paymentOrders = paymentOrders;
     }
 
     // Getters and Setters
@@ -123,5 +132,13 @@ public class UserEntity {
 
     public void setCustomerLastName(String customerLastName) {
         this.customerLastName = customerLastName;
+    }
+
+    public List<PaymentOrder> getPaymentOrders() {
+        return paymentOrders;
+    }
+
+    public void setPaymentOrders(List<PaymentOrder> paymentOrders) {
+        this.paymentOrders = paymentOrders;
     }
 }

@@ -127,7 +127,7 @@ public class OrderServiceImpl implements OrderService {
 
             order.setPaymentMethod(request.getPaymentMethod());
             order.setOrderDate(LocalDate.now());
-            order.setOrderStatus("processing");
+            order.setOrderStatus("placed");
             order.setShippingIsBilling(request.getShippingIsBilling());
             order.setPickupLocation("Home");
             order.setChannelId("");
