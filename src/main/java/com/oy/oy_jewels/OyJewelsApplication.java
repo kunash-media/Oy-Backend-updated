@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.PropertySource;
 
 @SpringBootApplication
-@PropertySource("classpath:config/application.secrets.properties")
+@PropertySource(value="classpath:config/application.secrets.properties",ignoreResourceNotFound = true)
 public class OyJewelsApplication {
 
 	public static void main(String[] args) {
