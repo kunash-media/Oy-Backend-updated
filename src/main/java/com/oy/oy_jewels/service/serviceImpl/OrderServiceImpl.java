@@ -6,10 +6,12 @@ import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.entity.*;
 import com.oy.oy_jewels.repository.*;
 import com.oy.oy_jewels.service.OrderService;
+import com.oy.oy_jewels.service.WhatsAppService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -30,25 +32,11 @@ public class OrderServiceImpl implements OrderService {
     private final UserRepository userRepository;
     private final ProductRepository productRepository;
     private final ShiprocketService shiprocketService;
-
     private final ReturnRepository returnRepository;
     private final ExchangeRepository exchangeRepository;
 
-
-    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
-
-    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-                            UserRepository userRepository, ProductRepository productRepository,
-                            ShiprocketService shiprocketService,ReturnRepository returnRepository,
-                            ExchangeRepository exchangeRepository) {
-        this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.userRepository = userRepository;
-        this.productRepository = productRepository;
-        this.shiprocketService = shiprocketService;
-        this.returnRepository = returnRepository;
-        this.exchangeRepository = exchangeRepository;
-    }
+    @Autowired
+    private WhatsAppService whatsAppService;
 
     @Override
     @Transactional
@@ -57,11 +45,17 @@ public class OrderServiceImpl implements OrderService {
             logger.info("Starting order creation for user ID: {}", request.getUserId());
 
             // Validate required fields
-            if ((request.getCustomerFirstName() == null && request.getCustomerLastName() == null) && (request.getCustomerFirstName().trim().isEmpty() && request.getCustomerLastName().trim().isEmpty()) ) {
+            if ((request.getCustomerFirstName() == null && request.getCustomerLastName() == null) &&
+                    (request.getCustomerFirstName() == null || request.getCustomerFirstName().trim().isEmpty()) &&
+                    (request.getCustomerLastName() == null || request.getCustomerLastName().trim().isEmpty())) {
                 throw new RuntimeException("Customer name is required");
             }
             if (request.getCustomerPhone() == null || request.getCustomerPhone().trim().isEmpty()) {
                 throw new RuntimeException("Customer phone is required");
+            }
+            if (!request.getCustomerPhone().matches("^\\d{10,14}$")) {
+                logger.warn("Invalid phone number format for user ID: {}", request.getUserId());
+                throw new RuntimeException("Invalid phone number format");
             }
             if (request.getCustomerEmail() == null || request.getCustomerEmail().trim().isEmpty()) {
                 throw new RuntimeException("Customer email is required");
@@ -89,7 +83,6 @@ public class OrderServiceImpl implements OrderService {
             }
 
             OrderEntity order = new OrderEntity();
-
             order.setUser(user);
             order.setCustomerFirstName(request.getCustomerFirstName());
             order.setCustomerLastName(request.getCustomerLastName());
@@ -134,6 +127,7 @@ public class OrderServiceImpl implements OrderService {
 
             BigDecimal totalAmount = BigDecimal.ZERO;
             List<OrderItemEntity> orderItems = new ArrayList<>();
+            List<String> productNames = new ArrayList<>(); // Collect product names
 
             for (OrderItemRequest itemRequest : request.getItems()) {
                 ProductEntity product = productRepository.findById(itemRequest.getProductId())
@@ -149,7 +143,6 @@ public class OrderServiceImpl implements OrderService {
                 }
 
                 OrderItemEntity orderItem = new OrderItemEntity();
-
                 orderItem.setOrder(order);
                 orderItem.setProduct(product);
                 orderItem.setQuantity(itemRequest.getProductQuantity());
@@ -159,16 +152,14 @@ public class OrderServiceImpl implements OrderService {
                 orderItem.setUnits(itemRequest.getProductQuantity());
                 orderItem.setSellingPrice(product.getProductPrice());
 
-                // Convert the string discount to BigDecimal safely
                 BigDecimal discount;
-
                 try {
                     String discountStr = product.getProductDiscount();
                     discount = (discountStr != null && !discountStr.isEmpty())
                             ? new BigDecimal(discountStr)
                             : BigDecimal.ZERO;
                 } catch (NumberFormatException e) {
-                    discount = BigDecimal.ZERO; // or handle the error as appropriate
+                    discount = BigDecimal.ZERO;
                 }
                 orderItem.setDiscount(discount);
                 orderItem.setTax(BigDecimal.ZERO);
@@ -177,6 +168,7 @@ public class OrderServiceImpl implements OrderService {
                 orderItem.setSubtotal(subtotal);
 
                 orderItems.add(orderItem);
+                productNames.add(product.getProductTitle()); // Add product name to list
                 totalAmount = totalAmount.add(subtotal);
 
                 int newQuantity = product.getProductQuantity() - itemRequest.getProductQuantity();
@@ -201,6 +193,24 @@ public class OrderServiceImpl implements OrderService {
                 savedOrder.setShiprocketOrderId(shiprocketOrderId);
                 orderRepository.save(savedOrder);
                 logger.info("Updated order ID: {} with Shiprocket order ID: {}", savedOrder.getOrderId(), shiprocketOrderId);
+
+                // Send WhatsApp confirmation message after successful Shiprocket order creation
+                try {
+                    logger.info("Sending WhatsApp confirmation for order ID: {}", savedOrder.getOrderId());
+                    String fullName = savedOrder.getCustomerFirstName() + " " +
+                            (savedOrder.getCustomerLastName() != null ? savedOrder.getCustomerLastName() : "");
+                    whatsAppService.sendOrderConfirmationMessage(
+                            savedOrder.getCustomerPhone(),
+                            fullName.trim(),
+                            savedOrder.getOrderId().toString(),
+                            savedOrder.getTotalAmount().toPlainString(),
+                            productNames, // Pass product names
+                            "order_confirmation"
+                    );
+                    logger.info("WhatsApp confirmation sent successfully for order ID: {}", savedOrder.getOrderId());
+                } catch (Exception e) {
+                    logger.error("Failed to send WhatsApp confirmation for order ID: {}. Error: {}", savedOrder.getOrderId(), e.getMessage());
+                }
             } catch (Exception e) {
                 logger.error("Failed to create Shiprocket order for order ID: {}", savedOrder.getOrderId());
                 logger.error("Shiprocket error details: {}", e.getMessage());
@@ -277,7 +287,21 @@ public class OrderServiceImpl implements OrderService {
         return shiprocketRequest;
     }
 
-    //get all orders
+    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+
+    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
+                            UserRepository userRepository, ProductRepository productRepository,
+                            ShiprocketService shiprocketService, ReturnRepository returnRepository,
+                            ExchangeRepository exchangeRepository) {
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.shiprocketService = shiprocketService;
+        this.returnRepository = returnRepository;
+        this.exchangeRepository = exchangeRepository;
+    }
+
     @Override
     public List<AllOrderResponseDTO> getAllOrders() {
         List<OrderEntity> orders = orderRepository.findAll();
@@ -321,8 +345,6 @@ public class OrderServiceImpl implements OrderService {
         return dto;
     }
 
-
-
     @Override
     public OrderResponse getOrderById(Long orderId) {
         try {
@@ -342,10 +364,8 @@ public class OrderServiceImpl implements OrderService {
             OrderEntity existingOrder = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-            // Store original values for rollback if needed
             String originalStatus = existingOrder.getOrderStatus();
 
-            // Update provided fields
             if (request.getShippingAddress() != null) {
                 existingOrder.setShippingAddress(request.getShippingAddress());
             }
@@ -370,12 +390,6 @@ public class OrderServiceImpl implements OrderService {
 
             OrderEntity updatedOrder = orderRepository.save(existingOrder);
 
-            // If order status changed to cancelled, restore product quantities
-            if ("cancelled".equalsIgnoreCase(request.getOrderStatus()) &&
-                    !"cancelled".equalsIgnoreCase(originalStatus)) {
-                restoreProductQuantities(updatedOrder);
-            }
-
             return new OrderResponse(updatedOrder);
         } catch (Exception e) {
             logger.error("Error updating order with id: {}", orderId, e);
@@ -392,7 +406,6 @@ public class OrderServiceImpl implements OrderService {
 
             String originalStatus = existingOrder.getOrderStatus();
 
-            // Apply partial updates
             updates.forEach((key, value) -> {
                 switch (key) {
                     case "shippingAddress":
@@ -419,8 +432,8 @@ public class OrderServiceImpl implements OrderService {
                     case "customerFirstName":
                         existingOrder.setCustomerFirstName((String) value);
                         break;
-                    case "customerLastName" :
-                        existingOrder.setBillingLastName((String) value);
+                    case "customerLastName":
+                        existingOrder.setCustomerLastName((String) value);
                         break;
                     case "customerPhone":
                         existingOrder.setCustomerPhone((String) value);
@@ -435,11 +448,31 @@ public class OrderServiceImpl implements OrderService {
 
             OrderEntity updatedOrder = orderRepository.save(existingOrder);
 
-            // If order status changed to cancelled, restore product quantities
             if (updates.containsKey("orderStatus") &&
                     "cancelled".equalsIgnoreCase(updates.get("orderStatus").toString()) &&
                     !"cancelled".equalsIgnoreCase(originalStatus)) {
                 restoreProductQuantities(updatedOrder);
+                try {
+                    logger.info("Sending WhatsApp cancellation notification for order ID: {}", updatedOrder.getOrderId());
+                    // Collect product names from order items
+                    List<String> productNames = updatedOrder.getOrderItems().stream()
+                            .map(OrderItemEntity::getItemName)
+                            .collect(Collectors.toList());
+                    // Concatenate customer first and last name
+                    String fullName = updatedOrder.getCustomerFirstName() + " " +
+                            (updatedOrder.getCustomerLastName() != null ? updatedOrder.getCustomerLastName() : "");
+                    whatsAppService.sendOrderConfirmationMessage(
+                            updatedOrder.getCustomerPhone(),
+                            fullName.trim(),
+                            updatedOrder.getOrderId().toString(),
+                            updatedOrder.getTotalAmount().toPlainString(),
+                            productNames,
+                            "order_cancelled"
+                    );
+                    logger.info("WhatsApp cancellation notification sent successfully for order ID: {}", updatedOrder.getOrderId());
+                } catch (Exception e) {
+                    logger.error("Failed to send WhatsApp cancellation notification for order ID: {}. Error: {}", updatedOrder.getOrderId(), e.getMessage());
+                }
             }
 
             return new OrderResponse(updatedOrder);
@@ -456,10 +489,7 @@ public class OrderServiceImpl implements OrderService {
             OrderEntity order = orderRepository.findById(orderId)
                     .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-            // Restore product quantities before deletion
             restoreProductQuantities(order);
-
-            // Delete the order (cascade will handle order items)
             orderRepository.delete(order);
 
             logger.info("Order deleted successfully with id: {}", orderId);
@@ -534,15 +564,6 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Failed to find orders by product: " + e.getMessage());
         }
     }
-    // Helper method to restore product quantities
-//    private void restoreProductQuantities(OrderEntity order) {
-//        for (OrderItemEntity orderItem : order.getOrderItems()) {
-//            ProductEntity product = orderItem.getProduct();
-//            product.setProductQuantity(product.getProductQuantity() + orderItem.getQuantity());
-//            productRepository.save(product);
-//            logger.info("Restored {} units for product id: {}", orderItem.getQuantity(), product.getProductId());
-//        }
-//    }
 
     @Override
     @Transactional
@@ -560,7 +581,6 @@ public class OrderServiceImpl implements OrderService {
                 String shiprocketOrderId = order.getShiprocketOrderId();
                 logger.info("Attempting to cancel Shiprocket order with ID: {}", shiprocketOrderId);
 
-                // Check Shiprocket order status to ensure it can be cancelled
                 String shiprocketStatus = null;
                 try {
                     shiprocketStatus = shiprocketService.getOrderStatus(shiprocketOrderId);
@@ -570,10 +590,8 @@ public class OrderServiceImpl implements OrderService {
                     }
                 } catch (Exception e) {
                     logger.warn("Failed to fetch Shiprocket order status for ID {}: {}. Proceeding with cancellation.", shiprocketOrderId, e.getMessage());
-                    // Proceed with cancellation even if status check fails
                 }
 
-                // Cancel order in Shiprocket
                 try {
                     shiprocketService.cancelOrder(shiprocketOrderId);
                     logger.info("Shiprocket order cancelled successfully for order ID: {}", orderId);
@@ -585,7 +603,6 @@ public class OrderServiceImpl implements OrderService {
                 logger.warn("No Shiprocket order ID found for order ID: {}. Skipping Shiprocket cancellation.", orderId);
             }
 
-            // Update local database
             order.setOrderStatus("cancelled");
             try {
                 restoreProductQuantities(order);
@@ -594,7 +611,28 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Failed to restore product quantities: " + e.getMessage());
             }
             orderRepository.save(order);
-            logger.info("Order status updated to 'cancelled' in local database for order ID: {}", orderId);
+
+            try {
+                logger.info("Sending WhatsApp cancellation notification for order ID: {}", orderId);
+                // Collect product names from order items
+                List<String> productNames = order.getOrderItems().stream()
+                        .map(OrderItemEntity::getItemName)
+                        .collect(Collectors.toList());
+                // Concatenate customer first and last name
+                String fullName = order.getCustomerFirstName() + " " +
+                        (order.getCustomerLastName() != null ? order.getCustomerLastName() : "");
+                whatsAppService.sendOrderConfirmationMessage(
+                        order.getCustomerPhone(),
+                        fullName.trim(),
+                        order.getOrderId().toString(),
+                        order.getTotalAmount().toPlainString(),
+                        productNames,
+                        "order_cancelled"
+                );
+                logger.info("WhatsApp cancellation notification sent successfully for order ID: {}", orderId);
+            } catch (Exception e) {
+                logger.error("Failed to send WhatsApp cancellation notification for order ID: {}. Error: {}", orderId, e.getMessage());
+            }
 
             logger.info("Order cancelled successfully for order ID: {}", orderId);
         } catch (Exception e) {
@@ -602,7 +640,6 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Failed to cancel order: " + e.getMessage());
         }
     }
-
 
     @Override
     @Transactional
@@ -625,7 +662,6 @@ public class OrderServiceImpl implements OrderService {
                 }
             } catch (Exception e) {
                 logger.warn("Failed to fetch Shiprocket order status for ID {}: {}. Proceeding with cancellation.", shiprocketOrderId, e.getMessage());
-                // Optionally, proceed with cancellation or throw the exception based on your business logic
             }
 
             shiprocketService.cancelOrder(shiprocketOrderId);
@@ -633,12 +669,36 @@ public class OrderServiceImpl implements OrderService {
             restoreProductQuantities(order);
             orderRepository.save(order);
 
+            try {
+                logger.info("Sending WhatsApp cancellation notification for order ID: {}", order.getOrderId());
+                // Collect product names from order items
+                List<String> productNames = order.getOrderItems().stream()
+                        .map(OrderItemEntity::getItemName)
+                        .collect(Collectors.toList());
+                // Concatenate customer first and last name
+                String fullName = order.getCustomerFirstName() + " " +
+                        (order.getCustomerLastName() != null ? order.getCustomerLastName() : "");
+                whatsAppService.sendOrderConfirmationMessage(
+                        order.getCustomerPhone(),
+                        fullName.trim(),
+                        order.getOrderId().toString(),
+                        order.getTotalAmount().toPlainString(),
+                        productNames,
+                        "order_cancelled"
+                );
+                logger.info("WhatsApp cancellation notification sent successfully for order ID: {}", order.getOrderId());
+            } catch (Exception e) {
+                logger.error("Failed to send WhatsApp cancellation notification for order ID: {}. Error: {}", order.getOrderId(), e.getMessage());
+            }
+
             logger.info("Order cancelled successfully for Shiprocket order ID: {}", shiprocketOrderId);
         } catch (Exception e) {
             logger.error("Error cancelling order with Shiprocket order ID: {}", shiprocketOrderId, e);
             throw new RuntimeException("Failed to cancel order: " + e.getMessage());
         }
     }
+
+
 
 
     @Override
@@ -663,7 +723,6 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Return reason is required");
             }
 
-            // Validate order item IDs
             List<Long> orderItemIdList = orderItemIds.stream()
                     .map(Long::parseLong)
                     .collect(Collectors.toList());
@@ -681,7 +740,6 @@ public class OrderServiceImpl implements OrderService {
                 logger.warn("No Shiprocket order ID found for order ID: {}. Skipping Shiprocket return creation.", orderId);
             }
 
-            // Create and save ReturnEntity
             ReturnEntity returnEntity = new ReturnEntity();
             returnEntity.setUser(order.getUser());
             returnEntity.setOrder(order);
@@ -692,7 +750,6 @@ public class OrderServiceImpl implements OrderService {
             returnEntity.setCreatedAt(LocalDateTime.now());
             returnRepository.save(returnEntity);
 
-            // Update order status
             order.setOrderStatus("return_initiated");
             try {
                 restoreProductQuantities(order);
@@ -701,6 +758,28 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Failed to restore product quantities: " + e.getMessage());
             }
             orderRepository.save(order);
+
+            try {
+                logger.info("Sending WhatsApp return notification for order ID: {}", orderId);
+                // Collect product names from order items
+                List<String> productNames = order.getOrderItems().stream()
+                        .map(OrderItemEntity::getItemName)
+                        .collect(Collectors.toList());
+                // Concatenate customer first and last name
+                String fullName = order.getCustomerFirstName() + " " +
+                        (order.getCustomerLastName() != null ? order.getCustomerLastName() : "");
+                whatsAppService.sendOrderConfirmationMessage(
+                        order.getCustomerPhone(),
+                        fullName.trim(),
+                        order.getOrderId().toString(),
+                        order.getTotalAmount().toPlainString(),
+                        productNames,
+                        "return_initiated"
+                );
+                logger.info("WhatsApp return notification sent successfully for order ID: {}", orderId);
+            } catch (Exception e) {
+                logger.error("Failed to send WhatsApp return notification for order ID: {}. Error: {}", orderId, e.getMessage());
+            }
 
             logger.info("Return order created successfully for order ID: {}, Return ID: {}", orderId, shiprocketReturnId);
             return shiprocketReturnId != null ? shiprocketReturnId : returnEntity.getReturnId().toString();
@@ -736,7 +815,6 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Exchange reason is required");
             }
 
-            // Validate order item IDs
             List<Long> orderItemIdList = orderItemIds.stream()
                     .map(Long::parseLong)
                     .collect(Collectors.toList());
@@ -747,7 +825,6 @@ public class OrderServiceImpl implements OrderService {
                 throw new RuntimeException("Invalid order item IDs provided for exchange");
             }
 
-            // Validate new product
             ProductEntity newProduct = productRepository.findById(Long.parseLong(newProductId))
                     .orElseThrow(() -> new RuntimeException("New product not found with id: " + newProductId));
 
@@ -762,7 +839,6 @@ public class OrderServiceImpl implements OrderService {
                 logger.warn("No Shiprocket order ID found for order ID: {}. Skipping Shiprocket exchange creation.", orderId);
             }
 
-            // Create and save ExchangeEntity
             ExchangeEntity exchangeEntity = new ExchangeEntity();
             exchangeEntity.setUser(order.getUser());
             exchangeEntity.setOrder(order);
@@ -774,7 +850,6 @@ public class OrderServiceImpl implements OrderService {
             exchangeEntity.setCreatedAt(LocalDateTime.now());
             exchangeRepository.save(exchangeEntity);
 
-            // Update order status and product quantities
             order.setOrderStatus("exchange_initiated");
             try {
                 restoreProductQuantities(order);
@@ -785,6 +860,28 @@ public class OrderServiceImpl implements OrderService {
             newProduct.setProductQuantity(newProduct.getProductQuantity() - 1);
             productRepository.save(newProduct);
             orderRepository.save(order);
+
+            try {
+                logger.info("Sending WhatsApp exchange notification for order ID: {}", orderId);
+                // Collect product names from order items
+                List<String> productNames = order.getOrderItems().stream()
+                        .map(OrderItemEntity::getItemName)
+                        .collect(Collectors.toList());
+                // Concatenate customer first and last name
+                String fullName = order.getCustomerFirstName() + " " +
+                        (order.getCustomerLastName() != null ? order.getCustomerLastName() : "");
+                whatsAppService.sendOrderConfirmationMessage(
+                        order.getCustomerPhone(),
+                        fullName.trim(),
+                        order.getOrderId().toString(),
+                        order.getTotalAmount().toPlainString(),
+                        productNames,
+                        "exchange_initiated"
+                );
+                logger.info("WhatsApp exchange notification sent successfully for order ID: {}", orderId);
+            } catch (Exception e) {
+                logger.error("Failed to send WhatsApp exchange notification for order ID: {}. Error: {}", orderId, e.getMessage());
+            }
 
             logger.info("Exchange order created successfully for order ID: {}, Exchange ID: {}", orderId, shiprocketExchangeId);
             return shiprocketExchangeId != null ? shiprocketExchangeId : exchangeEntity.getExchangeId().toString();
@@ -806,5 +903,4 @@ public class OrderServiceImpl implements OrderService {
             throw new RuntimeException("Failed to restore product quantities: " + e.getMessage());
         }
     }
-
 }

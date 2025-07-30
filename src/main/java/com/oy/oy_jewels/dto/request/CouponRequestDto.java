@@ -6,6 +6,7 @@ import java.util.List;
 
 public class CouponRequestDto {
 
+    private String eventType;
     private String couponDescription;
     private String couponDiscount;
 
@@ -39,7 +40,39 @@ public class CouponRequestDto {
         this.category = category;
     }
 
+    public CouponRequestDto(String eventType, String couponDescription, String couponDiscount, String validFromDate, String validUntilDate, String couponCode, String status, Boolean isUsed, Long userId, List<Long> userIds, List<String> category) {
+        this.eventType = eventType;
+        this.couponDescription = couponDescription;
+        this.couponDiscount = couponDiscount;
+        this.validFromDate = validFromDate;
+        this.validUntilDate = validUntilDate;
+        this.couponCode = couponCode;
+        this.status = status;
+        this.isUsed = isUsed;
+        this.userId = userId;
+        this.userIds = userIds;
+        this.category = category;
+    }
+
     // Getters and Setters
+
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
+    public Boolean getUsed() {
+        return isUsed;
+    }
+
+    public void setUsed(Boolean used) {
+        isUsed = used;
+    }
+
     public String getCouponDescription() {
         return couponDescription;
     }

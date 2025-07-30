@@ -15,6 +15,9 @@ public class CouponEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long couponId;
 
+    @Column(name = "event_name")
+    private String eventType;
+
     @Column(nullable = false)
     private String couponDescription;
 
@@ -70,6 +73,21 @@ public class CouponEntity {
         this.category = category;
     }
 
+    public CouponEntity(Long couponId, String eventType, String couponDescription, String couponDiscount, LocalDate validFromDate, LocalDate validUntilDate, LocalDateTime createdAt, String status, String couponCode, Boolean isUsed, UserEntity user, List<String> category) {
+        this.couponId = couponId;
+        this.eventType = eventType;
+        this.couponDescription = couponDescription;
+        this.couponDiscount = couponDiscount;
+        this.validFromDate = validFromDate;
+        this.validUntilDate = validUntilDate;
+        this.createdAt = createdAt;
+        this.status = status;
+        this.couponCode = couponCode;
+        this.isUsed = isUsed;
+        this.user = user;
+        this.category = category;
+    }
+
     // Getters and Setters
     public Long getCouponId() {
         return couponId;
@@ -77,6 +95,22 @@ public class CouponEntity {
 
     public void setCouponId(Long couponId) {
         this.couponId = couponId;
+    }
+
+    public String getEventType() {
+        return eventType;
+    }
+
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
+    }
+
+    public Boolean getUsed() {
+        return isUsed;
+    }
+
+    public void setUsed(Boolean used) {
+        isUsed = used;
     }
 
     public String getCouponDescription() {

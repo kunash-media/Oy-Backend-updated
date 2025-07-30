@@ -40,6 +40,7 @@ public class CouponServiceImpl implements CouponService {
         }
 
         CouponEntity couponEntity = new CouponEntity();
+        couponEntity.setEventType(couponRequestDto.getEventType());
         couponEntity.setCouponDescription(couponRequestDto.getCouponDescription());
         couponEntity.setCouponDiscount(couponRequestDto.getCouponDiscount());
         couponEntity.setValidFromDate(LocalDate.parse(couponRequestDto.getValidFromDate(), DATE_FORMATTER));
