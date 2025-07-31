@@ -2,8 +2,10 @@ package com.oy.oy_jewels.service.serviceImpl;
 
 import com.oy.oy_jewels.bcrypt.BcryptEncoderConfig;
 import com.oy.oy_jewels.dto.request.OtpVerificationDto;
+import com.oy.oy_jewels.entity.AdminEntity;
 import com.oy.oy_jewels.entity.OtpEntity;
 import com.oy.oy_jewels.entity.UserEntity;
+import com.oy.oy_jewels.repository.AdminRepository;
 import com.oy.oy_jewels.repository.OtpRepository;
 import com.oy.oy_jewels.repository.UserRepository;
 import com.oy.oy_jewels.service.OtpService;
@@ -20,6 +22,7 @@ import java.util.Random;
 public class OtpServiceImpl implements OtpService {
 
     private final UserRepository userRepository;
+    private final AdminRepository adminRepository;
     private final OtpRepository otpRepository;
     private final BcryptEncoderConfig passwordEncoder;
 //    private final SmsService smsService; // Your SMS service implementation
@@ -34,6 +37,9 @@ public class OtpServiceImpl implements OtpService {
         UserEntity user = userRepository.findUserByMobile(mobileNumber)
                 .orElseThrow(() -> new RuntimeException("User not found with mobile: " + mobileNumber));
 
+        AdminEntity admin = adminRepository.findAdminByMobile(mobileNumber)
+                .orElseThrow(() -> new RuntimeException("User not found with mobile: " + mobileNumber));
+
         // Invalidate previous OTPs
         otpRepository.deleteByUserId(user.getUserId());
 
@@ -43,6 +49,7 @@ public class OtpServiceImpl implements OtpService {
         // Create and save OTP
         OtpEntity otpEntity = new OtpEntity(
                 user,
+                admin,
                 passwordEncoder.encode(otp), // Hash the OTP
                 mobileNumber,
                 LocalDateTime.now().plusMinutes(5) // Expires in 5 minutes

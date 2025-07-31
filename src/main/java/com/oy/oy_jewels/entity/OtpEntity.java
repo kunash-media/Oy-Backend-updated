@@ -13,8 +13,12 @@ public class OtpEntity {
     private Long id;
 
     @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
+    @JoinColumn(name = "user_id")
     private UserEntity user;
+
+    @ManyToOne
+    @JoinColumn(name = "admin_id")
+    private AdminEntity admin;
 
     @Column(name = "otp_code", nullable = false)
     private String otpCode;
@@ -34,8 +38,9 @@ public class OtpEntity {
     // Constructors, getters, setters
     public OtpEntity() {}
 
-    public OtpEntity(UserEntity user, String otpCode, String mobileNumber, LocalDateTime expiresAt) {
+    public OtpEntity(UserEntity user, AdminEntity admin, String otpCode, String mobileNumber, LocalDateTime expiresAt) {
         this.user = user;
+        this.admin = admin;
         this.otpCode = otpCode;
         this.mobileNumber = mobileNumber;
         this.expiresAt = expiresAt;
@@ -46,6 +51,15 @@ public class OtpEntity {
     public void setId(Long id) { this.id = id; }
     public UserEntity getUser() { return user; }
     public void setUser(UserEntity user) { this.user = user; }
+
+    public AdminEntity getAdmin() {
+        return admin;
+    }
+
+    public void setAdmin(AdminEntity admin) {
+        this.admin = admin;
+    }
+
     public String getOtpCode() { return otpCode; }
     public void setOtpCode(String otpCode) { this.otpCode = otpCode; }
     public String getMobileNumber() { return mobileNumber; }
