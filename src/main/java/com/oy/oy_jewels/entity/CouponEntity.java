@@ -60,18 +60,6 @@ public class CouponEntity {
         this.status = "valid";
     }
 
-    public CouponEntity(String couponDescription, String couponDiscount,
-                        LocalDate validFromDate, LocalDate validUntilDate, String couponCode,
-                        UserEntity user, List<String> category) {
-        this();
-        this.couponDescription = couponDescription;
-        this.couponDiscount = couponDiscount;
-        this.validFromDate = validFromDate;
-        this.validUntilDate = validUntilDate;
-        this.couponCode = couponCode;
-        this.user = user;
-        this.category = category;
-    }
 
     public CouponEntity(Long couponId, String eventType, String couponDescription, String couponDiscount, LocalDate validFromDate, LocalDate validUntilDate, LocalDateTime createdAt, String status, String couponCode, Boolean isUsed, UserEntity user, List<String> category) {
         this.couponId = couponId;

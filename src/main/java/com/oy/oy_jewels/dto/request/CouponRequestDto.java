@@ -27,18 +27,6 @@ public class CouponRequestDto {
     public CouponRequestDto() {
     }
 
-    public CouponRequestDto(String couponDescription, String couponDiscount,
-                            String validFromDate, String validUntilDate, String couponCode, Long userId,
-                            List<Long> userIds, List<String> category) {
-        this.couponDescription = couponDescription;
-        this.couponDiscount = couponDiscount;
-        this.validFromDate = validFromDate;
-        this.validUntilDate = validUntilDate;
-        this.couponCode = couponCode;
-        this.userId = userId;
-        this.userIds = userIds;
-        this.category = category;
-    }
 
     public CouponRequestDto(String eventType, String couponDescription, String couponDiscount, String validFromDate, String validUntilDate, String couponCode, String status, Boolean isUsed, Long userId, List<Long> userIds, List<String> category) {
         this.eventType = eventType;
