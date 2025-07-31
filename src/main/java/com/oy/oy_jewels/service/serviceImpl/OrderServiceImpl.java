@@ -53,7 +53,7 @@ public class OrderServiceImpl implements OrderService {
             if (request.getCustomerPhone() == null || request.getCustomerPhone().trim().isEmpty()) {
                 throw new RuntimeException("Customer phone is required");
             }
-            if (!request.getCustomerPhone().matches("^\\d{10,14}$")) {
+            if (!request.getCustomerPhone().matches("^\\+\\d{10,14}$")) {
                 logger.warn("Invalid phone number format for user ID: {}", request.getUserId());
                 throw new RuntimeException("Invalid phone number format");
             }
