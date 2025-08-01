@@ -50,7 +50,7 @@ public class WhatsAppServiceImpl implements WhatsAppService {
     private String festivalWishesTemplate;
 
     private static final String TRACKING_URL = "https://www.shiprocket.in/shipment-tracking/";
-    private static final String SUPPORT_URL = "https://jewelry-frontend-six.vercel.app/index.html";
+    private static final String SUPPORT_URL = "https://oyjewells.com/";
 
     @Value("${aisensy.origin:http://localhost:8080}")
     private String origin;

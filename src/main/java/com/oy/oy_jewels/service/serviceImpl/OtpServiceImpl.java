@@ -18,14 +18,22 @@ import java.util.List;
 import java.util.Random;
 
 @Service
-@RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
 
     private final UserRepository userRepository;
     private final AdminRepository adminRepository;
     private final OtpRepository otpRepository;
     private final BcryptEncoderConfig passwordEncoder;
+
+    public OtpServiceImpl(UserRepository userRepository, AdminRepository adminRepository, OtpRepository otpRepository, BcryptEncoderConfig passwordEncoder) {
+        this.userRepository = userRepository;
+        this.adminRepository = adminRepository;
+        this.otpRepository = otpRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 //    private final SmsService smsService; // Your SMS service implementation
+
+
 
     @Override
     @Transactional

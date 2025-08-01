@@ -1,6 +1,5 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
-
 import com.oy.oy_jewels.bcrypt.BcryptEncoderConfig;
 import com.oy.oy_jewels.dto.request.AdminLoginDTO;
 import com.oy.oy_jewels.dto.request.AdminRequestDTO;
@@ -12,7 +11,6 @@ import com.oy.oy_jewels.repository.AdminRepository;
 import com.oy.oy_jewels.service.AdminService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
 import java.util.List;
 import java.util.Optional;
 

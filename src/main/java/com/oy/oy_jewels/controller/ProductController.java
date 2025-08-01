@@ -7,6 +7,9 @@ import com.oy.oy_jewels.dto.request.ProductDataDTO;
 import com.oy.oy_jewels.dto.request.ProductPatchRequestDTO;
 import com.oy.oy_jewels.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -76,15 +79,35 @@ public class ProductController {
     }
 
     // Get all products
+//    @GetMapping("/get-all-product")
+//    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+//        try {
+//            List<ProductDTO> products = productService.getAllProducts();
+//            return new ResponseEntity<>(products, HttpStatus.OK);
+//        } catch (Exception e) {
+//            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+//        }
+//    }
+
+
     @GetMapping("/get-all-product")
-    public ResponseEntity<List<ProductDTO>> getAllProducts() {
+    public ResponseEntity<List<ProductDTO>> getAllProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            @RequestParam(defaultValue = "100") long delayMillis) {
         try {
-            List<ProductDTO> products = productService.getAllProducts();
-            return new ResponseEntity<>(products, HttpStatus.OK);
+            // Add delay to simulate controlled response rate
+            Thread.sleep(delayMillis);
+
+            Pageable pageable = PageRequest.of(page, size);
+            Page<ProductDTO> productPage = productService.getAllProducts(pageable);
+
+            return new ResponseEntity<>(productPage.getContent(), HttpStatus.OK);
         } catch (Exception e) {
             return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
 
     // Get product by ID
     @GetMapping("/{productId}")
@@ -263,7 +286,7 @@ public class ProductController {
 
     // Get product count
     @GetMapping("/count")
-    public ResponseEntity<Long> getProductCount() {
+    public ResponseEntity<Long> getProductCountOnly() {
         try {
             long count = productService.getProductCount();
             return new ResponseEntity<>(count, HttpStatus.OK);

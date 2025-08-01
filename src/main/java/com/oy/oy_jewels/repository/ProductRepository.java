@@ -1,6 +1,8 @@
 package com.oy.oy_jewels.repository;
 
 import com.oy.oy_jewels.entity.ProductEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -39,4 +41,10 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>, J
     default List<ProductEntity> findAllActive() {
         return findAll(ProductEntity.notDeleted());
     }
+
+    default Page<ProductEntity> findAllActive(Pageable pageable) {
+        return findAll(ProductEntity.notDeleted(), pageable);
+    }
+
+
 }

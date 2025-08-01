@@ -9,6 +9,9 @@ import com.oy.oy_jewels.repository.ProductRepository;
 import com.oy.oy_jewels.service.ProductService;
 import com.sun.jdi.request.DuplicateRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,6 +23,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
@@ -62,6 +67,31 @@ public class ProductServiceImpl implements ProductService {
         }
     }
 
+//    @Override
+//    @Transactional(readOnly = true)
+//    public List<ProductDTO> getAllProducts() {
+//        try {
+//            List<ProductEntity> entities = productRepository.findAllActive();
+//            return productMapper.toDTOList(entities);
+//        } catch (Exception e) {
+//            throw new RuntimeException("Failed to retrieve products: " + e.getMessage(), e);
+//        }
+//    }
+
+
+
+
+    @Override
+    @Transactional(readOnly = true)
+    public Page<ProductDTO> getAllProducts(Pageable pageable) {
+        try {
+            Page<ProductEntity> entities = productRepository.findAllActive(pageable);
+            return entities.map(productMapper::toDTO);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to retrieve products: " + e.getMessage(), e);
+        }
+    }
+
     @Override
     @Transactional(readOnly = true)
     public List<ProductDTO> getAllProducts() {
@@ -72,6 +102,7 @@ public class ProductServiceImpl implements ProductService {
             throw new RuntimeException("Failed to retrieve products: " + e.getMessage(), e);
         }
     }
+
 
     @Override
     @Transactional(readOnly = true)
