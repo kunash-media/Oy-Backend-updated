@@ -52,7 +52,7 @@ public class WhatsAppServiceImpl implements WhatsAppService {
     private static final String TRACKING_URL = "https://www.shiprocket.in/shipment-tracking/";
     private static final String SUPPORT_URL = "https://www.oyjewells.com/";
 
-    @Value("${aisensy.origin:http://localhost:8080}")
+    @Value("${aisensy.origin:https://api.oyjewells.com}")
     private String origin;
 
     private final RestTemplate restTemplate;
