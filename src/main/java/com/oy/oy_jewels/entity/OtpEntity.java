@@ -35,22 +35,40 @@ public class OtpEntity {
     @Column(name = "is_used", nullable = false)
     private boolean isUsed = false;
 
-    // Constructors, getters, setters
-    public OtpEntity() {}
+    @Column(name = "email")
+    private String email;
 
-    public OtpEntity(UserEntity user, AdminEntity admin, String otpCode, String mobileNumber, LocalDateTime expiresAt) {
+
+
+    public OtpEntity(Long id, UserEntity user, AdminEntity admin, String otpCode, String mobileNumber, LocalDateTime createdAt, LocalDateTime expiresAt, boolean isUsed, String email) {
+        this.id = id;
         this.user = user;
         this.admin = admin;
         this.otpCode = otpCode;
         this.mobileNumber = mobileNumber;
+        this.createdAt = createdAt;
         this.expiresAt = expiresAt;
+        this.isUsed = isUsed;
+        this.email = email;
     }
 
-    // Getters and Setters
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-    public UserEntity getUser() { return user; }
-    public void setUser(UserEntity user) { this.user = user; }
+    public OtpEntity() {}
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public UserEntity getUser() {
+        return user;
+    }
+
+    public void setUser(UserEntity user) {
+        this.user = user;
+    }
 
     public AdminEntity getAdmin() {
         return admin;
@@ -60,14 +78,53 @@ public class OtpEntity {
         this.admin = admin;
     }
 
-    public String getOtpCode() { return otpCode; }
-    public void setOtpCode(String otpCode) { this.otpCode = otpCode; }
-    public String getMobileNumber() { return mobileNumber; }
-    public void setMobileNumber(String mobileNumber) { this.mobileNumber = mobileNumber; }
-    public LocalDateTime getCreatedAt() { return createdAt; }
-    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
-    public LocalDateTime getExpiresAt() { return expiresAt; }
-    public void setExpiresAt(LocalDateTime expiresAt) { this.expiresAt = expiresAt; }
-    public boolean isUsed() { return isUsed; }
-    public void setUsed(boolean used) { isUsed = used; }
+    public String getOtpCode() {
+        return otpCode;
+    }
+
+    public void setOtpCode(String otpCode) {
+        this.otpCode = otpCode;
+    }
+
+    public String getMobileNumber() {
+        return mobileNumber;
+    }
+
+    public void setMobileNumber(String mobileNumber) {
+        this.mobileNumber = mobileNumber;
+    }
+
+    public LocalDateTime getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public LocalDateTime getExpiresAt() {
+        return expiresAt;
+    }
+
+    public void setExpiresAt(LocalDateTime expiresAt) {
+        this.expiresAt = expiresAt;
+    }
+
+    public boolean isUsed() {
+        return isUsed;
+    }
+
+    public void setUsed(boolean used) {
+        isUsed = used;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+
 }

@@ -130,6 +130,24 @@ public class CouponController {
         }
     }
 
+    //unselect the coupon
+    @PostMapping("/unselect/{couponCode}")
+    public ResponseEntity<Map<String, Object>> unselectCoupon(@PathVariable String couponCode) {
+        try {
+            CouponResponseDto coupon = couponService.unselectCoupon(couponCode);
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", true);
+            response.put("coupon", coupon);
+            response.put("message", "Coupon unselected successfully");
+            return new ResponseEntity<>(response, HttpStatus.OK);
+        } catch (Exception e) {
+            Map<String, Object> response = new HashMap<>();
+            response.put("success", false);
+            response.put("message", e.getMessage());
+            return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
+        }
+    }
+
     // Bulk create coupons
     @PostMapping("/bulk-create")
     public ResponseEntity<List<CouponResponseDto>> bulkCreateCoupons(@RequestBody CouponRequestDto couponRequestDto) {

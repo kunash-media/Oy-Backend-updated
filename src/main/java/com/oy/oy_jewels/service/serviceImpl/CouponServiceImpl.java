@@ -129,6 +129,34 @@ public class CouponServiceImpl implements CouponService {
     }
 
     @Override
+    public CouponResponseDto unselectCoupon(String couponCode) {
+        logger.debug("Unselecting coupon with code: {}", couponCode);
+
+        CouponEntity couponEntity = couponRepository.findByCouponCode(couponCode)
+                .orElseThrow(() -> new RuntimeException("Coupon not found with code: " + couponCode));
+
+        if (!couponEntity.getStatus().equals("valid")) {
+            throw new RuntimeException("Coupon is not valid");
+        }
+
+        if (LocalDate.now().isAfter(couponEntity.getValidUntilDate())) {
+            couponEntity.setStatus("expired");
+            couponRepository.save(couponEntity);
+            throw new RuntimeException("Coupon has expired");
+        }
+
+        if (LocalDate.now().isBefore(couponEntity.getValidFromDate())) {
+            throw new RuntimeException("Coupon is not yet active");
+        }
+
+        couponEntity.setIsUsed(false);
+        CouponEntity updatedCoupon = couponRepository.save(couponEntity);
+        logger.info("Coupon unselected successfully: ID={}, Code={}", updatedCoupon.getCouponId(), updatedCoupon.getCouponCode());
+
+        return convertToResponseDto(updatedCoupon);
+    }
+
+    @Override
     public CouponResponseDto updateCoupon(Long couponId, CouponRequestDto couponRequestDto) {
         CouponEntity existingCoupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new RuntimeException("Coupon not found with id: " + couponId));

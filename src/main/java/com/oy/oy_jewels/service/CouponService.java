@@ -18,4 +18,6 @@ public interface CouponService {
     CouponResponseDto validateCoupon(String couponCode);
     List<CouponResponseDto> bulkCreateCoupons(CouponRequestDto couponRequestDto, List<Long> userIds);
     UserCouponsResponseDto getCouponsByUserId(Long userId);
+
+    CouponResponseDto unselectCoupon(String couponCode); // New method to unselect a coupon
 }

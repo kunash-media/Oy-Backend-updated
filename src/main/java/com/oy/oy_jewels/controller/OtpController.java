@@ -5,14 +5,11 @@ import com.oy.oy_jewels.dto.request.OtpVerificationDto;
 import com.oy.oy_jewels.service.OtpService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/otp")
-@RequiredArgsConstructor
+//@RequiredArgsConstructor
 public class OtpController {
 
     private final OtpService otpService;
@@ -31,4 +28,42 @@ public class OtpController {
         }
         return ResponseEntity.badRequest().body("Invalid OTP or expired");
     }
+    public OtpController(OtpService otpService) {
+        this.otpService = otpService;
+    }
+
+    @PostMapping("/send-email")
+    public ResponseEntity<String> sendEmailOtp(@RequestParam String email) {
+        try {
+            otpService.sendOtpEmail(email);
+            return ResponseEntity.ok("OTP sent successfully to email: " + email);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Failed to send OTP: " + e.getMessage());
+        }
+    }
+
+//    @PostMapping("/verify-email")
+//    public ResponseEntity<String> verifyEmailOtp(@RequestBody OtpVerificationDto otpVerificationDto) {
+//        try {
+//            boolean isValid = otpService.verifyEmailOtp(otpVerificationDto);
+//            if (isValid) {
+//                return ResponseEntity.ok("OTP verified successfully");
+//            } else {
+//                return ResponseEntity.badRequest().body("Invalid or expired OTP");
+//            }
+//        } catch (Exception e) {
+//            return ResponseEntity.badRequest().body("Verification failed: " + e.getMessage());
+//        }
+//    }
+
+    // Simple DTO for email request
+    public static class EmailRequest {
+        private String email;
+
+        public EmailRequest() {}
+
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
+    }
+
 }

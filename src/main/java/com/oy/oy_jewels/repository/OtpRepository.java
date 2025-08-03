@@ -25,4 +25,9 @@ public interface OtpRepository extends JpaRepository<OtpEntity, Long> {
     @Modifying
     @Query("DELETE FROM OtpEntity o WHERE o.expiresAt < :currentTime")
     void deleteByExpiresAtBefore(@Param("currentTime") LocalDateTime currentTime);
+
+    @Query("SELECT o FROM OtpEntity o WHERE o.user.userId = :userId AND o.email = :email AND o.expiresAt > :currentTime AND o.isUsed = false")
+    List<OtpEntity> findValidOtpsByEmail(@Param("userId") Long userId, @Param("email") String email, @Param("currentTime") LocalDateTime currentTime);
+
+    void deleteByEmail(String email);
 }
