@@ -27,6 +27,7 @@ public interface AdminRepository extends JpaRepository<AdminEntity, Long> {
     // Check if admin exists by name
     boolean existsByName(String name);
 
+    Optional<AdminEntity> findAdminByEmail(String email);
 
     @Query("SELECT u FROM AdminEntity u WHERE u.mobileNumber = :mobileNumber")
     Optional<AdminEntity> findAdminByMobile(@Param("mobileNumber") String mobileNumber);
@@ -34,4 +35,6 @@ public interface AdminRepository extends JpaRepository<AdminEntity, Long> {
     // New methods
     Optional<AdminEntity> findByEmailAndPassword(String email, String password);
     List<AdminEntity> findByRole(String role);
+
+
 }
