@@ -1,0 +1,56 @@
+spring.application.name=oy-jewels
+
+# Database configuration
+spring.datasource.driver-class-name=com.mysql.cj.jdbc.Driver
+spring.datasource.url=jdbc:mysql://localhost:3306/oyjewelsdb
+spring.datasource.username=root
+spring.datasource.password=${DB_PASSWORD}  # Use environment variable for security
+
+# JPA/Hibernate settings (production-ready)
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=false
+
+# Jackson settings
+spring.jackson.serialization.write-dates-as-timestamps=false
+spring.jackson.deserialization.fail-on-unknown-properties=false
+spring.jackson.deserialization.use-big-decimal-for-floats=true
+spring.jackson.serialization.write-bigdecimal-as-plain=true
+spring.jackson.stream-write-constraints.max-nesting-depth=2000
+
+# Multipart settings
+spring.servlet.multipart.max-file-size=50MB
+spring.servlet.multipart.max-request-size=100MB
+spring.servlet.multipart.file-size-threshold=2KB
+spring.servlet.multipart.enabled=true
+
+# Tomcat settings
+server.tomcat.max-http-form-post-size=100MB
+server.tomcat.max-swallow-size=100MB
+server.tomcat.max-connections=20000
+server.tomcat.max-threads=200
+server.tomcat.additional-tld-skip-patterns=*.jar
+server.tomcat.max-parameter-count=200
+
+# Enable dispatch options
+spring.mvc.dispatch-options-request=true
+
+# Logging configuration
+logging.level.root=INFO
+logging.level.org.springframework.web=INFO
+logging.level.org.hibernate=ERROR
+logging.level.com.oy.oy_jewels=DEBUG
+logging.level.com.oy.oy_jewels.service.serviceImpl.ShiprocketService=DEBUG
+logging.level.com.oy.oy_jewels.service.serviceImpl.OrderServiceImpl=DEBUG
+logging.level.org.springframework.web.client.RestTemplate=DEBUG
+logging.level.org.apache.http=DEBUG
+logging.level.org.springframework.web.client=DEBUG
+
+# Shiprocket configuration
+shiprocket.api.base-url=https://apiv2.shiprocket.in/v1/external
+shiprocket.email=${SHIPROCKET_EMAIL}
+shiprocket.password=${SHIPROCKET_PASSWORD}
+shiprocket.pickup-location=Home
+shiprocket.api.token=${SHIPROCKET_API_TOKEN}  # Use environment variable
+
+# Import sensitive properties
+spring.config.import=optional:file:./config/application-secrets.properties
