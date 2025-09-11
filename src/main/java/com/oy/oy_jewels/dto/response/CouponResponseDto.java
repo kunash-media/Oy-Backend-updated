@@ -7,7 +7,7 @@ import java.util.List;
 public class CouponResponseDto {
 
     private Long couponId;
-    private String eventtype;
+    private String eventType;
     private String couponDescription;
     private String couponDiscount;
 
@@ -30,9 +30,9 @@ public class CouponResponseDto {
     public CouponResponseDto() {
     }
 
-    public CouponResponseDto(Long couponId, String eventtype, String couponDescription, String couponDiscount, String validFromDate, String validUntilDate, String createdAt, String status, String couponCode, Boolean isUsed, Long userId, List<String> category) {
+    public CouponResponseDto(Long couponId, String eventType, String couponDescription, String couponDiscount, String validFromDate, String validUntilDate, String createdAt, String status, String couponCode, Boolean isUsed, Long userId, List<String> category) {
         this.couponId = couponId;
-        this.eventtype = eventtype;
+        this.eventType = eventType;
         this.couponDescription = couponDescription;
         this.couponDiscount = couponDiscount;
         this.validFromDate = validFromDate;
@@ -54,12 +54,12 @@ public class CouponResponseDto {
         this.couponId = couponId;
     }
 
-    public String getEventtype() {
-        return eventtype;
+    public String getEventType() {
+        return eventType;
     }
 
-    public void setEventtype(String eventtype) {
-        this.eventtype = eventtype;
+    public void setEventType(String eventType) {
+        this.eventType = eventType;
     }
 
     public Boolean getUsed() {

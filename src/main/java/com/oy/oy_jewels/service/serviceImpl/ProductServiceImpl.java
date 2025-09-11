@@ -7,27 +7,19 @@ import com.oy.oy_jewels.entity.ProductEntity;
 import com.oy.oy_jewels.mapper.ProductMapper;
 import com.oy.oy_jewels.repository.ProductRepository;
 import com.oy.oy_jewels.service.ProductService;
-import com.sun.jdi.request.DuplicateRequestException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
-
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -136,9 +128,35 @@ public class ProductServiceImpl implements ProductService {
             }
             if (patchRequest.isProductImagePresent()) {
                 existingEntity.setProductImage(patchRequest.getProductImage());
+            } else if (patchRequest.getExistingProductImage() != null) {
+                // Keep existing image in database (no update needed)
             }
             if (patchRequest.isProductSubImagesPresent()) {
+                // New sub-images uploaded, replace existing ones
                 existingEntity.setProductSubImages(patchRequest.getProductSubImages());
+            } else if (patchRequest.getExistingProductSubImages() != null) {
+                // Handle sub-image removals and keep only specified URLs
+                List<String> newSubImageUrls = patchRequest.getExistingProductSubImages();
+                List<byte[]> currentSubImages = existingEntity.getProductSubImages() != null ? existingEntity.getProductSubImages() : new ArrayList<>();
+                List<byte[]> updatedSubImages = new ArrayList<>();
+
+                // Assume URLs like /api/products/{productId}/subimage/{index} map to currentSubImages index
+                for (String url : newSubImageUrls) {
+                    try {
+                        // Extract index from URL (e.g., /api/products/4/subimage/0 -> 0)
+                        String indexStr = url.substring(url.lastIndexOf('/') + 1);
+                        int index = Integer.parseInt(indexStr);
+                        if (index >= 0 && index < currentSubImages.size()) {
+                            updatedSubImages.add(currentSubImages.get(index));
+                        }
+                    } catch (NumberFormatException | IndexOutOfBoundsException e) {
+                        System.err.println("Invalid sub-image URL or index: " + url);
+                    }
+                }
+                existingEntity.setProductSubImages(updatedSubImages);
+            } else {
+                // If no sub-images provided, clear existing sub-images
+                existingEntity.setProductSubImages(new ArrayList<>());
             }
             if (patchRequest.getProductDescription() != null) {
                 existingEntity.setProductDescription(patchRequest.getProductDescription());
@@ -259,7 +277,7 @@ public class ProductServiceImpl implements ProductService {
             if (!StringUtils.hasText(category)) {
                 throw new IllegalArgumentException("Category cannot be null or empty");
             }
-            List<ProductEntity> entities = productRepository.findByProductCategory(category.trim());
+            List<ProductEntity> entities = productRepository.findByProductCategoryAndNotDeleted(category.trim());
             return productMapper.toDTOList(entities);
         } catch (Exception e) {
             throw new RuntimeException("Failed to get products by category '" + category + "': " + e.getMessage(), e);

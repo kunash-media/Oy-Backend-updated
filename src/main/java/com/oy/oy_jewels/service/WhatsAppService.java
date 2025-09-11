@@ -8,4 +8,6 @@ public interface WhatsAppService {
     void sendAnniversaryCouponMessage(String userPhone, String userFirstName, String couponDiscount, List<String> categories, String couponCode, String validUntilDate);
     void sendFestivalCouponMessage(String userPhone, String userFirstName, String couponDiscount, List<String> categories, String couponCode, String validUntilDate, String festivalName);
     void testWithRealData();
+
+    void sendOtpMessage(String userPhone, String userName, String otp);
 }

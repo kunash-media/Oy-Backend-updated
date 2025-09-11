@@ -20,21 +20,17 @@ public interface UserService {
 
     // Get user by ID
     UserEntity getUserById(Long userId);
-
     // Update user
     UserEntity updateUser(Long userId, UserEntity user);
-
     // Delete user
     void deleteUser(Long userId);
-
     // Get users by status
     List<UserEntity> getUsersByStatus(String status);
-
     // Get user by email
     UserEntity getUserByEmail(String email);
-
     UserEntity patchUser(Long userId, Map<String, Object> updates);
-
     boolean changePassword(Long userId, String oldPassword, String newPassword);
 
+    Long getUserCountByStatus(String status);
+    Long getTotalUserCount();
 }

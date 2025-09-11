@@ -1,10 +1,13 @@
 package com.oy.oy_jewels.controller;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oy.oy_jewels.dto.request.ProductCreateRequestDTO;
 import com.oy.oy_jewels.dto.request.ProductDTO;
 import com.oy.oy_jewels.dto.request.ProductDataDTO;
 import com.oy.oy_jewels.dto.request.ProductPatchRequestDTO;
+import com.oy.oy_jewels.entity.ProductEntity;
+import com.oy.oy_jewels.repository.ProductRepository;
 import com.oy.oy_jewels.service.ProductService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -19,6 +22,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/products")
@@ -26,6 +30,9 @@ public class ProductController {
 
     @Autowired
     private ProductService productService;
+
+    @Autowired
+    ProductRepository productRepository;
 
     @Autowired
     private ObjectMapper objectMapper;
@@ -78,16 +85,29 @@ public class ProductController {
         }
     }
 
-    // Get all products
-//    @GetMapping("/get-all-product")
-//    public ResponseEntity<List<ProductDTO>> getAllProducts() {
-//        try {
-//            List<ProductDTO> products = productService.getAllProducts();
-//            return new ResponseEntity<>(products, HttpStatus.OK);
-//        } catch (Exception e) {
-//            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-//        }
-//    }
+
+    // In your ProductController or a new ImageController
+    @GetMapping("/{productId}/image")
+    public ResponseEntity<byte[]> getProductImage(@PathVariable Long productId) {
+        Optional<ProductEntity> product = productRepository.findById(productId);
+        if (product.isPresent() && product.get().getProductImage() != null) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)  // Or IMAGE_PNG if needed
+                    .body(product.get().getProductImage());
+        }
+        return ResponseEntity.notFound().build();
+    }
+
+    @GetMapping("/{productId}/subimage/{index}")
+    public ResponseEntity<byte[]> getProductSubImage(@PathVariable Long productId, @PathVariable int index) {
+        Optional<ProductEntity> product = productRepository.findById(productId);
+        if (product.isPresent() && index < product.get().getProductSubImages().size()) {
+            return ResponseEntity.ok()
+                    .contentType(MediaType.IMAGE_JPEG)
+                    .body(product.get().getProductSubImages().get(index));
+        }
+        return ResponseEntity.notFound().build();
+    }
 
 
     @GetMapping("/get-all-product")
@@ -131,7 +151,9 @@ public class ProductController {
             @PathVariable Long productId,
             @RequestPart(value = "productData", required = false) String productData,
             @RequestPart(value = "productImage", required = false) MultipartFile productImage,
-            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages) {
+            @RequestPart(value = "productSubImages", required = false) MultipartFile[] productSubImages,
+            @RequestPart(value = "existingProductImage", required = false) String existingProductImage,
+            @RequestPart(value = "existingProductSubImages", required = false) String existingProductSubImages) {
 
         try {
             ProductPatchRequestDTO patchRequest = new ProductPatchRequestDTO();
@@ -160,11 +182,15 @@ public class ProductController {
                 if (productDataDTO.getProductUnavailableSizes() != null) patchRequest.setProductUnavailableSizes(productDataDTO.getProductUnavailableSizes());
             }
 
+            // Handle new main image
             if (productImage != null && !productImage.isEmpty()) {
                 patchRequest.setProductImage(productImage.getBytes());
                 patchRequest.setProductImagePresent(true);
+            } else if (existingProductImage != null) {
+                patchRequest.setExistingProductImage(existingProductImage);
             }
 
+            // Handle new sub images
             if (productSubImages != null && productSubImages.length > 0) {
                 List<byte[]> subImages = new ArrayList<>();
                 for (MultipartFile file : productSubImages) {
@@ -172,6 +198,9 @@ public class ProductController {
                 }
                 patchRequest.setProductSubImages(subImages);
                 patchRequest.setProductSubImagesPresent(true);
+            } else if (existingProductSubImages != null) {
+                List<String> subImageUrls = objectMapper.readValue(existingProductSubImages, new TypeReference<List<String>>(){});
+                patchRequest.setExistingProductSubImages(subImageUrls);
             }
 
             ProductDTO updatedProduct = productService.patchProduct(productId, patchRequest);

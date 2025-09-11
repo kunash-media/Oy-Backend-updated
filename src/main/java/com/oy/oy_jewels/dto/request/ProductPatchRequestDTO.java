@@ -10,8 +10,10 @@ public class ProductPatchRequestDTO {
     private BigDecimal productOldPrice;
     private byte[] productImage;
     private boolean productImagePresent = false;
+    private String existingProductImage;  // New field for existing sub-image URLs
     private List<byte[]> productSubImages;
     private boolean productSubImagesPresent = false;
+    private List<String> existingProductSubImages; // New field for existing sub-image URLs
     private String productDescription;
     private List<String> productFeatures;
     private List<String> productSizes;
@@ -195,5 +197,21 @@ public class ProductPatchRequestDTO {
 
     public void setRating(String rating) {
         this.rating = rating;
+    }
+
+    public String getExistingProductImage() {
+        return existingProductImage;
+    }
+
+    public void setExistingProductImage(String existingProductImage) {
+        this.existingProductImage = existingProductImage;
+    }
+
+    public List<String> getExistingProductSubImages() {
+        return existingProductSubImages;
+    }
+
+    public void setExistingProductSubImages(List<String> existingProductSubImages) {
+        this.existingProductSubImages = existingProductSubImages;
     }
 }

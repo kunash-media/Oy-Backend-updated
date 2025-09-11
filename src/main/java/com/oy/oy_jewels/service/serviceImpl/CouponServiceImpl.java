@@ -12,7 +12,9 @@ import com.oy.oy_jewels.service.WhatsAppService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -39,6 +41,21 @@ public class CouponServiceImpl implements CouponService {
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
     private static final DateTimeFormatter WHATSAPP_DATE_FORMATTER = DateTimeFormatter.ofPattern("dd-MM-yyyy");
+
+
+    // Run daily at midnight for coupon status
+    @Scheduled(cron = "0 0 0 * * ?")
+    @Transactional
+    public void updateExpiredCoupons() {
+        LocalDate today = LocalDate.now();
+        List<CouponEntity> validCoupons = couponRepository.findByStatus("valid");
+        for (CouponEntity coupon : validCoupons) {
+            if (coupon.getValidUntilDate().isBefore(today)) {
+                coupon.setStatus("invalid");
+                couponRepository.save(coupon);
+            }
+        }
+    }
 
     @Override
     public CouponResponseDto createCoupon(CouponRequestDto couponRequestDto) {
@@ -248,6 +265,7 @@ public class CouponServiceImpl implements CouponService {
         }
 
         couponEntity.setIsUsed(true);
+        couponEntity.setStatus("used");
         CouponEntity updatedCoupon = couponRepository.save(couponEntity);
         return convertToResponseDto(updatedCoupon);
     }
@@ -286,7 +304,7 @@ public class CouponServiceImpl implements CouponService {
             UserEntity user = userRepository.findById(userId)
                     .orElseThrow(() -> new RuntimeException("User not found with id: " + userId));
 
-            String generatedCouponCode = couponRequestDto.getCouponCode() + "-" + userId;
+            String generatedCouponCode = couponRequestDto.getCouponCode() + userId;
 
             if (couponRepository.existsByCouponCode(generatedCouponCode)) {
                 skippedUserIds.add(userId.toString());

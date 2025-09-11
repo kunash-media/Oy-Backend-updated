@@ -35,4 +35,6 @@ public interface OrderService {
     public void cancelOrderByShiprocketId(String shiprocketOrderId);
     String createReturnOrder(Long orderId, ReturnRequestDTO returnRequest);
     String createExchangeOrder(Long orderId, ExchangeRequestDTO exchangeRequest);
+
+    Map<String, Object> getOrderStatistics();
 }

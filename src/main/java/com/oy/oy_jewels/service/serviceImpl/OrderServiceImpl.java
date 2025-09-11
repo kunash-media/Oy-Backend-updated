@@ -5,19 +5,20 @@ import com.oy.oy_jewels.dto.response.AllOrderResponseDTO;
 import com.oy.oy_jewels.dto.response.OrderResponse;
 import com.oy.oy_jewels.entity.*;
 import com.oy.oy_jewels.repository.*;
+import com.oy.oy_jewels.service.EmailService;
 import com.oy.oy_jewels.service.OrderService;
 import com.oy.oy_jewels.service.WhatsAppService;
 import jakarta.transaction.Transactional;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -35,8 +36,55 @@ public class OrderServiceImpl implements OrderService {
     private final ReturnRepository returnRepository;
     private final ExchangeRepository exchangeRepository;
 
-    @Autowired
-    private WhatsAppService whatsAppService;
+    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+
+    private final EmailService emailService;
+    private final WhatsAppService whatsAppService;
+
+
+    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
+                            UserRepository userRepository, ProductRepository productRepository,
+                            ShiprocketService shiprocketService, ReturnRepository returnRepository,
+                            ExchangeRepository exchangeRepository, WhatsAppService whatsAppService, EmailService emailService) {
+        this.orderRepository = orderRepository;
+        this.orderItemRepository = orderItemRepository;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.shiprocketService = shiprocketService;
+        this.returnRepository = returnRepository;
+        this.exchangeRepository = exchangeRepository;
+        this.whatsAppService = whatsAppService;
+        this.emailService = emailService;
+    }
+
+    //---------------------dashboard data api -------------------//
+    @Override
+    public Map<String, Object> getOrderStatistics() {
+        LocalDate today = LocalDate.now(); // August 10, 2025
+        LocalDate yesterday = today.minusDays(1); // August 9, 2025
+        int thisYear = today.getYear(); // 2025
+        int thisMonth = today.getMonthValue(); // 8 (August)
+        int lastMonth = today.minusMonths(1).getMonthValue(); // 7 (July)
+        int lastMonthYear = today.minusMonths(1).getYear(); // 2025
+
+        Map<String, Object> stats = new HashMap<>();
+        stats.put("todayOrders", orderRepository.countTodayOrders(today));
+        stats.put("yesterdayOrders", orderRepository.countYesterdayOrders(yesterday));
+        stats.put("thisMonthOrders", orderRepository.countThisMonthOrders(thisYear, thisMonth));
+        stats.put("lastMonthOrders", orderRepository.countLastMonthOrders(lastMonthYear, lastMonth));
+        stats.put("allTimeSales", orderRepository.getAllTimeSales().doubleValue());
+        stats.put("totalOrders", orderRepository.countTotalOrders());
+        stats.put("orderPlaced", orderRepository.countOrdersByStatus("placed"));
+        stats.put("orderShipped", orderRepository.countOrdersByStatus("shipped"));
+        stats.put("orderDelivered", orderRepository.countOrdersByStatus("delivered"));
+
+        Map<String, Long> paymentMethods = new HashMap<>();
+        paymentMethods.put("cod", orderRepository.countOrdersByPaymentMethod("cod"));
+        paymentMethods.put("razorpay", orderRepository.countOrdersByPaymentMethod("prepaid"));
+        stats.put("paymentMethods", paymentMethods);
+
+        return stats;
+    }
 
     @Override
     @Transactional
@@ -93,6 +141,7 @@ public class OrderServiceImpl implements OrderService {
             order.setShippingState(request.getShippingState());
             order.setShippingPincode(request.getShippingPincode());
             order.setShippingCountry(request.getShippingCountry());
+            order.setCouponAppliedCode(request.getCouponAppliedCode());
 
             if (request.getShippingIsBilling() != null && request.getShippingIsBilling()) {
                 order.setBillingCustomerName(request.getCustomerFirstName());
@@ -205,11 +254,30 @@ public class OrderServiceImpl implements OrderService {
                             savedOrder.getOrderId().toString(),
                             savedOrder.getTotalAmount().toPlainString(),
                             productNames, // Pass product names
-                            "order_confirmation"
+                            "order_confirmation_1"
                     );
                     logger.info("WhatsApp confirmation sent successfully for order ID: {}", savedOrder.getOrderId());
                 } catch (Exception e) {
                     logger.error("Failed to send WhatsApp confirmation for order ID: {}. Error: {}", savedOrder.getOrderId(), e.getMessage());
+                }
+
+                // Send email confirmation after successful Shiprocket order creation
+                try {
+                    logger.info("Sending order confirmation email for order ID: {}", savedOrder.getOrderId());
+                    String fullName = savedOrder.getCustomerFirstName() + " " +
+                            (savedOrder.getCustomerLastName() != null ? savedOrder.getCustomerLastName() : "");
+                    emailService.sendOrderConfirmationEmail(
+                            savedOrder.getCustomerEmail(),
+                            fullName.trim(),
+                            savedOrder.getOrderId().toString(),
+                            savedOrder.getTotalAmount(),
+                            productNames,
+                            savedOrder.getCustomerPhone()  // Add this parameter
+                    );
+                    logger.info("Order confirmation email sent successfully for order ID: {}", savedOrder.getOrderId());
+                } catch (Exception e) {
+                    logger.error("Failed to send order confirmation email for order ID: {}. Error: {}", savedOrder.getOrderId(), e.getMessage());
+                    // Don't throw exception here - email failure shouldn't break order creation
                 }
             } catch (Exception e) {
                 logger.error("Failed to create Shiprocket order for order ID: {}", savedOrder.getOrderId());
@@ -287,20 +355,6 @@ public class OrderServiceImpl implements OrderService {
         return shiprocketRequest;
     }
 
-    private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
-
-    public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
-                            UserRepository userRepository, ProductRepository productRepository,
-                            ShiprocketService shiprocketService, ReturnRepository returnRepository,
-                            ExchangeRepository exchangeRepository) {
-        this.orderRepository = orderRepository;
-        this.orderItemRepository = orderItemRepository;
-        this.userRepository = userRepository;
-        this.productRepository = productRepository;
-        this.shiprocketService = shiprocketService;
-        this.returnRepository = returnRepository;
-        this.exchangeRepository = exchangeRepository;
-    }
 
     @Override
     public List<AllOrderResponseDTO> getAllOrders() {

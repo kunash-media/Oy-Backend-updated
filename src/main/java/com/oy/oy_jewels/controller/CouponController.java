@@ -3,7 +3,10 @@ package com.oy.oy_jewels.controller;
 import com.oy.oy_jewels.dto.request.CouponRequestDto;
 import com.oy.oy_jewels.dto.response.CouponResponseDto;
 import com.oy.oy_jewels.dto.response.UserCouponsResponseDto;
+import com.oy.oy_jewels.repository.OrderRepository;
 import com.oy.oy_jewels.service.CouponService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +23,12 @@ public class CouponController {
     @Autowired
     private CouponService couponService;
 
+    @Autowired
+    private OrderRepository orderRepository;
+
+    private static final Logger logger = LoggerFactory.getLogger(CouponController.class);
+
+
     // Create a new coupon
     @PostMapping("/create-Coupon")
     public ResponseEntity<CouponResponseDto> createCoupon(@RequestBody CouponRequestDto couponRequestDto) {
@@ -30,6 +39,35 @@ public class CouponController {
             return new ResponseEntity<>(null, HttpStatus.BAD_REQUEST);
         }
     }
+
+
+    // Endpoint to check if a coupon code is used by a specific user
+    @GetMapping("/coupon-code-used")
+    public ResponseEntity<Boolean> isCouponCodeUsed(
+            @RequestParam("couponCode") String couponCode,
+            @RequestParam("userId") Long userId) {
+        try {
+            // Check if any order exists with the given coupon code and user ID
+            boolean isUsed = orderRepository.existsByCouponAppliedCodeAndUserId(couponCode, userId);
+            return ResponseEntity.ok(isUsed);
+        } catch (Exception e) {
+            logger.error("Error checking coupon code usage for coupon: {} and user: {}", couponCode, userId, e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+        }
+    }
+
+//    // Endpoint to check if a coupon code is used
+//    @GetMapping("/coupon-code-used")
+//    public ResponseEntity<Boolean> isCouponCodeUsed(@RequestParam("couponCode") String couponCode) {
+//        try {
+//            // Check if any order exists with the given coupon code
+//            boolean isUsed = orderRepository.existsByCouponAppliedCode(couponCode);
+//            return ResponseEntity.ok(isUsed);
+//        } catch (Exception e) {
+//            logger.error("Error checking coupon code usage: {}", couponCode, e);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(false);
+//        }
+//    }
 
     // Get all coupons
     @GetMapping("/get-All-Coupons")

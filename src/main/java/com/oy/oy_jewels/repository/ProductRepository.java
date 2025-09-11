@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -21,7 +22,6 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>, J
 
     Optional<ProductEntity> findBySkuNo(String skuNo);
     Optional<ProductEntity> findByProductTitle(String productTitle);
-
 
     // Override default delete methods to prevent accidental hard deletes
     @Override
@@ -46,5 +46,7 @@ public interface ProductRepository extends JpaRepository<ProductEntity, Long>, J
         return findAll(ProductEntity.notDeleted(), pageable);
     }
 
-
+    // New method to fetch non-deleted products by category
+    @Query("SELECT p FROM ProductEntity p WHERE p.productCategory = :category AND p.isDeleted = false")
+    List<ProductEntity> findByProductCategoryAndNotDeleted(@Param("category") String category);
 }

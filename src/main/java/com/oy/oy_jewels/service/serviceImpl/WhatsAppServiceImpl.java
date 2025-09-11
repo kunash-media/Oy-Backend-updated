@@ -28,7 +28,7 @@ public class WhatsAppServiceImpl implements WhatsAppService {
     @Value("${aisensy.api.url}")
     private String apiUrl;
 
-    @Value("${aisensy.template.order_confirmation}")
+    @Value("${aisensy.template.order_confirmation_1}")
     private String orderConfirmationTemplate;
 
     @Value("${aisensy.template.order_cancelled}")
@@ -46,7 +46,7 @@ public class WhatsAppServiceImpl implements WhatsAppService {
     @Value("${aisensy.template.anniversary_wishes1}")
     private String anniversaryWishesTemplate;
 
-    @Value("${aisensy.template.festival_coupon}")
+    @Value("${aisensy.template.festival_coupon_1}")
     private String festivalWishesTemplate;
 
     private static final String TRACKING_URL = "https://www.shiprocket.in/shipment-tracking/";
@@ -504,6 +504,11 @@ public class WhatsAppServiceImpl implements WhatsAppService {
         }
     }
 
+    @Override
+    public void sendOtpMessage(String userPhone, String userName, String otp) {
+
+    }
+
     private void checkDeliveryStatus(String responseBody, String context) {
         if (responseBody != null && responseBody.contains("submitted_message_id")) {
             String messageId = extractMessageId(responseBody);
@@ -532,7 +537,7 @@ public class WhatsAppServiceImpl implements WhatsAppService {
 
     private String resolveCampaignName(String templateName) {
         switch (templateName) {
-            case "order_confirmation":
+            case "order_confirmation_1":
                 return orderConfirmationTemplate;
             case "order_cancelled":
                 return orderCancelledTemplate;
@@ -544,7 +549,7 @@ public class WhatsAppServiceImpl implements WhatsAppService {
                 return birthdayWishesTemplate;
             case "anniversary_wishes1":
                 return anniversaryWishesTemplate;
-            case "festival_coupon":
+            case "festival_coupon_1":
                 return festivalWishesTemplate;
             default:
                 logger.warn("Unknown template name: {}, using default Order Confirmation", templateName);

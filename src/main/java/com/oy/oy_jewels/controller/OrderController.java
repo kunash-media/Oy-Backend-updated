@@ -55,6 +55,13 @@ public class OrderController {
         }
     }
 
+    //------- get dashboard stats data -----------//
+    @GetMapping("/dashboard-stats")
+    public ResponseEntity<Map<String, Object>> getOrderStatistics() {
+        Map<String, Object> stats = orderService.getOrderStatistics();
+        return ResponseEntity.ok(stats);
+    }
+
     // Get order by ID
     @GetMapping("/get-order/{orderId}")
     public ResponseEntity<OrderResponse> getOrderById(@PathVariable Long orderId) {

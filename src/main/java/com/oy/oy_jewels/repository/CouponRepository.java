@@ -27,4 +27,7 @@ public interface CouponRepository extends JpaRepository<CouponEntity, Long> {
     boolean existsByCouponCode(String couponCode);
 
     List<CouponEntity> findByUserUserId(Long userId);
+
+    @Query("SELECT c FROM CouponEntity c WHERE c.status = 'valid' AND c.validUntilDate < CURRENT_DATE")
+    List<CouponEntity> findExpiredValidCoupons();
 }

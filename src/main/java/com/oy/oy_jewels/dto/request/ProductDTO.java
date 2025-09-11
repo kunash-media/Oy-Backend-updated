@@ -21,10 +21,16 @@ public class ProductDTO {
     private BigDecimal productOldPrice;
 
     @JsonProperty("ProductImage")
-    private byte[] productImage;
+    private String productImage; // Changed to String (URL)
 
     @JsonProperty("ProductSubImages")
-    private List<byte[]> productSubImages = new ArrayList<>();
+    private List<String> productSubImages; // Changed to List<String> (URLs)
+
+//    @JsonProperty("ProductImage")
+//    private byte[] productImage;
+//
+//    @JsonProperty("ProductSubImages")
+//    private List<byte[]> productSubImages = new ArrayList<>();
 
     @JsonProperty("ProductDescription")
     private String productDescription;
@@ -71,7 +77,7 @@ public class ProductDTO {
     // Constructors, Getters and Setters
 
     public ProductDTO(Long productId, String productTitle, BigDecimal productPrice, BigDecimal productOldPrice,
-                      byte[] productImage, List<byte[]> productSubImages, String productDescription,
+                      String productImage, List<String> productSubImages, String productDescription,
                       List<String> productFeatures, List<String> productSizes, List<String> productUnavailableSizes, String productCategory, String productStock,
                       Integer productQuantity, String shopBy, String productDiscount, String productCouponCode,
                       String stoneColor, String metalColor, String skuNo, String rating) {
@@ -129,19 +135,19 @@ public class ProductDTO {
         this.productOldPrice = productOldPrice;
     }
 
-    public byte[] getProductImage() {
+    public String getProductImage() {
         return productImage;
     }
 
-    public void setProductImage(byte[] productImage) {
+    public void setProductImage(String productImage) {
         this.productImage = productImage;
     }
 
-    public List<byte[]> getProductSubImages() {
+    public List<String> getProductSubImages() {
         return productSubImages;
     }
 
-    public void setProductSubImages(List<byte[]> productSubImages) {
+    public void setProductSubImages(List<String> productSubImages) {
         this.productSubImages = productSubImages;
     }
 

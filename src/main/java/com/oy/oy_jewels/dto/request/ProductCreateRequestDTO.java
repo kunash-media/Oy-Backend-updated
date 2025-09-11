@@ -1,5 +1,7 @@
 package com.oy.oy_jewels.dto.request;
 
+import jakarta.persistence.Column;
+
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -10,6 +12,8 @@ public class ProductCreateRequestDTO {
     private BigDecimal productPrice;
     private BigDecimal productOldPrice;
     private byte[] productImage;
+
+    @Column(nullable = true)
     private List<byte[]> productSubImages = new ArrayList<>();
     private String productDescription;
     private List<String> productFeatures = new ArrayList<>();

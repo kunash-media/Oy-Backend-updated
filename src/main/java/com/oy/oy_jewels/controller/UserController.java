@@ -77,6 +77,35 @@ public class UserController {
         }
     }
 
+    /**
+     * Get total count of all users
+     * @return ResponseEntity with user count
+     */
+    @GetMapping("/user-count")
+    public ResponseEntity<Long> getUserCount() {
+        try {
+            Long userCount = userService.getTotalUserCount();
+            return new ResponseEntity<>(userCount, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(0L, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    /**
+     * Get count of users by status
+     * @param status - User status (active/inactive)
+     * @return ResponseEntity with user count by status
+     */
+    @GetMapping("/user-count/status")
+    public ResponseEntity<Long> getUserCountByStatus(@RequestParam String status) {
+        try {
+            Long userCount = userService.getUserCountByStatus(status);
+            return new ResponseEntity<>(userCount, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(0L, HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
     @DeleteMapping("/delete-user/{userId}")
     public ResponseEntity<String> deleteUser(@PathVariable Long userId) {
         userService.deleteUser(userId);

@@ -20,6 +20,9 @@ public class OrderEntity {
     @JoinColumn(name = "user_id", nullable = false)
     private UserEntity user;
 
+    @Column(name = "coupon_applied_code")
+    private String couponAppliedCode;
+
     // Enhanced shipping address fields for Shiprocket
     @Column(name = "shipping_address")
     private String shippingAddress;
@@ -152,7 +155,7 @@ public class OrderEntity {
     // Constructors
     public OrderEntity() {}
 
-    public OrderEntity(Long orderId, UserEntity user, String shippingAddress, String shippingCity,
+    public OrderEntity(Long orderId,String couponAppliedCode, UserEntity user, String shippingAddress, String shippingCity,
                        String shippingState, String shippingPincode, String shippingCountry,
                        String customerFirstName, String customerLastName, String customerPhone,
                        String customerEmail, String paymentMethod, BigDecimal totalAmount,
@@ -168,6 +171,7 @@ public class OrderEntity {
                        Integer packageBreadth, Integer packageHeight, Integer packageWeight,
                        List<OrderItemEntity> orderItems) {
         this.orderId = orderId;
+        this.couponAppliedCode = couponAppliedCode;
         this.user = user;
         this.shippingAddress = shippingAddress;
         this.shippingCity = shippingCity;
@@ -215,6 +219,14 @@ public class OrderEntity {
     // Getters and Setters
     public Long getOrderId() { return orderId; }
     public void setOrderId(Long orderId) { this.orderId = orderId; }
+
+    public String getCouponAppliedCode() {
+        return couponAppliedCode;
+    }
+
+    public void setCouponAppliedCode(String couponAppliedCode) {
+        this.couponAppliedCode = couponAppliedCode;
+    }
 
     public UserEntity getUser() { return user; }
     public void setUser(UserEntity user) { this.user = user; }

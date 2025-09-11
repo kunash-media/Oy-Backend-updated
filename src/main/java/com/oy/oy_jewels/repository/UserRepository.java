@@ -35,6 +35,8 @@ public interface UserRepository extends JpaRepository<UserEntity, Long> {
     Optional<UserEntity> findByUserId(Long userId);
     Optional<UserEntity> findUserByEmail(String email);
 
+    Long countByStatus(String status);
+
 }
 
 

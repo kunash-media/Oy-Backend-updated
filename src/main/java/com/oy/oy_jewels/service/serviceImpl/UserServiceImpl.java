@@ -51,6 +51,23 @@ public class UserServiceImpl implements UserService {
         return userRepository.findAll();
     }
 
+    /**
+     * Get total count of all users
+     * @return Total user count
+     */
+    public Long getTotalUserCount() {
+        return userRepository.count();
+    }
+
+    /**
+     * Get count of users by status
+     * @param status - User status
+     * @return User count by status
+     */
+    public Long getUserCountByStatus(String status) {
+        return userRepository.countByStatus(status);
+    }
+
     @Override
     public Optional<UserEntity> authenticateUserByMobileAndPassword(String mobile, String password) {
         UserEntity user = userRepository.findByMobile(mobile);

@@ -28,6 +28,8 @@ public class CreateOrderRequest {
     private String billingPhone;
     private Boolean shippingIsBilling = true;
 
+    private String couponAppliedCode;
+
     // Constructors
     public CreateOrderRequest() {}
 
@@ -107,4 +109,13 @@ public class CreateOrderRequest {
 
     public Boolean getShippingIsBilling() { return shippingIsBilling; }
     public void setShippingIsBilling(Boolean shippingIsBilling) { this.shippingIsBilling = shippingIsBilling; }
+
+
+    public String getCouponAppliedCode() {
+        return couponAppliedCode;
+    }
+
+    public void setCouponAppliedCode(String couponAppliedCode) {
+        this.couponAppliedCode = couponAppliedCode;
+    }
 }
