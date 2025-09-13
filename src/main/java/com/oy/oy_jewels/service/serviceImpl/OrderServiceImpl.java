@@ -15,6 +15,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -174,7 +175,7 @@ public class OrderServiceImpl implements OrderService {
             order.setPickupLocation("Home");
             order.setChannelId("");
 
-            BigDecimal totalAmount = BigDecimal.ZERO;
+            BigDecimal productTotal = BigDecimal.ZERO;
             List<OrderItemEntity> orderItems = new ArrayList<>();
             List<String> productNames = new ArrayList<>(); // Collect product names
 
@@ -211,6 +212,8 @@ public class OrderServiceImpl implements OrderService {
                     discount = BigDecimal.ZERO;
                 }
                 orderItem.setDiscount(discount);
+
+                // Set tax to zero for now; we'll handle tax at the order level
                 orderItem.setTax(BigDecimal.ZERO);
 
                 BigDecimal subtotal = product.getProductPrice().multiply(new BigDecimal(itemRequest.getProductQuantity()));
@@ -218,14 +221,24 @@ public class OrderServiceImpl implements OrderService {
 
                 orderItems.add(orderItem);
                 productNames.add(product.getProductTitle()); // Add product name to list
-                totalAmount = totalAmount.add(subtotal);
+                productTotal = productTotal.add(subtotal);
 
                 int newQuantity = product.getProductQuantity() - itemRequest.getProductQuantity();
                 product.setProductQuantity(newQuantity);
                 productRepository.save(product);
             }
 
-            order.setTotalAmount(totalAmount);
+            // Calculate tax (3%) on product total
+            BigDecimal taxRate = new BigDecimal("0.03");
+            BigDecimal taxAmount = productTotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
+
+            // Apply convenience fee if product total < ₹499
+            BigDecimal convenienceFee = productTotal.compareTo(new BigDecimal("499")) < 0 ? new BigDecimal("99") : BigDecimal.ZERO;
+
+            // Calculate grand total
+            BigDecimal grandTotal = productTotal.add(taxAmount).add(convenienceFee);
+
+            order.setTotalAmount(grandTotal);
             order.setOrderItems(orderItems);
 
             OrderEntity savedOrder = orderRepository.save(order);
@@ -272,7 +285,7 @@ public class OrderServiceImpl implements OrderService {
                             savedOrder.getOrderId().toString(),
                             savedOrder.getTotalAmount(),
                             productNames,
-                            savedOrder.getCustomerPhone()  // Add this parameter
+                            savedOrder.getCustomerPhone()
                     );
                     logger.info("Order confirmation email sent successfully for order ID: {}", savedOrder.getOrderId());
                 } catch (Exception e) {
@@ -332,9 +345,9 @@ public class OrderServiceImpl implements OrderService {
             shiprocketItem.setName(item.getItemName());
             shiprocketItem.setSku(item.getSku());
             shiprocketItem.setUnits(item.getUnits());
-            shiprocketItem.setSelling_price(item.getSellingPrice());
+            shiprocketItem.setSelling_price(item.getProductPrice()); // Use original product price (₹300)
             shiprocketItem.setDiscount(item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO);
-            shiprocketItem.setTax(item.getTax() != null ? item.getTax() : BigDecimal.ZERO);
+            shiprocketItem.setTax(BigDecimal.ZERO); // Tax is included in sub_total
             shiprocketItems.add(shiprocketItem);
         }
         shiprocketRequest.setOrder_items(shiprocketItems);
@@ -342,9 +355,9 @@ public class OrderServiceImpl implements OrderService {
         shiprocketRequest.setPayment_method(order.getPaymentMethod() != null ? order.getPaymentMethod() : "Prepaid");
         shiprocketRequest.setShipping_charges(BigDecimal.ZERO);
         shiprocketRequest.setGiftwrap_charges(BigDecimal.ZERO);
-        shiprocketRequest.setTransaction_charges(BigDecimal.ZERO);
+        shiprocketRequest.setTransaction_charges(BigDecimal.ZERO); // Set to zero to avoid double-counting
         shiprocketRequest.setTotal_discount(BigDecimal.ZERO);
-        shiprocketRequest.setSub_total(order.getTotalAmount());
+        shiprocketRequest.setSub_total(order.getTotalAmount()); // Includes product total + tax + convenience fee (₹408)
 
         shiprocketRequest.setLength((int) 10.0);
         shiprocketRequest.setBreadth((int) 10.0);
@@ -354,6 +367,278 @@ public class OrderServiceImpl implements OrderService {
         logger.info("Shiprocket order request created successfully for order ID: {}", order.getOrderId());
         return shiprocketRequest;
     }
+
+//    @Override
+//    @Transactional
+//    public OrderResponse createOrder(CreateOrderRequest request) {
+//        try {
+//            logger.info("Starting order creation for user ID: {}", request.getUserId());
+//
+//            // Validate required fields
+//            if ((request.getCustomerFirstName() == null && request.getCustomerLastName() == null) &&
+//                    (request.getCustomerFirstName() == null || request.getCustomerFirstName().trim().isEmpty()) &&
+//                    (request.getCustomerLastName() == null || request.getCustomerLastName().trim().isEmpty())) {
+//                throw new RuntimeException("Customer name is required");
+//            }
+//            if (request.getCustomerPhone() == null || request.getCustomerPhone().trim().isEmpty()) {
+//                throw new RuntimeException("Customer phone is required");
+//            }
+//            if (!request.getCustomerPhone().matches("^\\d{10,14}$")) {
+//                logger.warn("Invalid phone number format for user ID: {}", request.getUserId());
+//                throw new RuntimeException("Invalid phone number format");
+//            }
+//            if (request.getCustomerEmail() == null || request.getCustomerEmail().trim().isEmpty()) {
+//                throw new RuntimeException("Customer email is required");
+//            }
+//            if (request.getShippingAddress() == null || request.getShippingAddress().trim().isEmpty()) {
+//                throw new RuntimeException("Shipping address is required");
+//            }
+//            if (request.getShippingCity() == null || request.getShippingCity().trim().isEmpty()) {
+//                throw new RuntimeException("Shipping city is required");
+//            }
+//            if (request.getShippingState() == null || request.getShippingState().trim().isEmpty()) {
+//                throw new RuntimeException("Shipping state is required");
+//            }
+//            if (request.getShippingPincode() == null || request.getShippingPincode().trim().isEmpty()) {
+//                throw new RuntimeException("Shipping pincode is required");
+//            }
+//
+//            logger.debug("Order request validation passed for user ID: {}", request.getUserId());
+//
+//            UserEntity user = userRepository.findById(request.getUserId())
+//                    .orElseThrow(() -> new RuntimeException("User not found with id: " + request.getUserId()));
+//
+//            if (!"active".equalsIgnoreCase(user.getStatus())) {
+//                throw new RuntimeException("User is not active. Cannot create order.");
+//            }
+//
+//            OrderEntity order = new OrderEntity();
+//            order.setUser(user);
+//            order.setCustomerFirstName(request.getCustomerFirstName());
+//            order.setCustomerLastName(request.getCustomerLastName());
+//            order.setCustomerPhone(request.getCustomerPhone());
+//            order.setCustomerEmail(request.getCustomerEmail());
+//            order.setShippingAddress(request.getShippingAddress());
+//            order.setShippingCity(request.getShippingCity());
+//            order.setShippingState(request.getShippingState());
+//            order.setShippingPincode(request.getShippingPincode());
+//            order.setShippingCountry(request.getShippingCountry());
+//            order.setCouponAppliedCode(request.getCouponAppliedCode());
+//
+//            if (request.getShippingIsBilling() != null && request.getShippingIsBilling()) {
+//                order.setBillingCustomerName(request.getCustomerFirstName());
+//                order.setBillingLastName(request.getCustomerLastName());
+//                order.setBillingAddress(request.getShippingAddress());
+//                order.setBillingCity(request.getShippingCity());
+//                order.setBillingState(request.getShippingState());
+//                order.setBillingPincode(request.getShippingPincode());
+//                order.setBillingCountry(request.getShippingCountry());
+//                order.setBillingEmail(request.getCustomerEmail());
+//                order.setBillingPhone(request.getCustomerPhone());
+//                logger.debug("Using shipping address as billing address for order");
+//            } else {
+//                order.setBillingCustomerName(request.getBillingCustomerName());
+//                order.setBillingLastName(request.getBillingLastName());
+//                order.setBillingAddress(request.getBillingAddress());
+//                order.setBillingCity(request.getBillingCity());
+//                order.setBillingState(request.getBillingState());
+//                order.setBillingPincode(request.getBillingPincode());
+//                order.setBillingCountry(request.getBillingCountry());
+//                order.setBillingEmail(request.getBillingEmail());
+//                order.setBillingPhone(request.getBillingPhone());
+//                logger.debug("Using separate billing address for order");
+//            }
+//
+//            order.setPaymentMethod(request.getPaymentMethod());
+//            order.setOrderDate(LocalDate.now());
+//            order.setOrderStatus("placed");
+//            order.setShippingIsBilling(request.getShippingIsBilling());
+//            order.setPickupLocation("Home");
+//            order.setChannelId("");
+//
+//            BigDecimal totalAmount = BigDecimal.ZERO;
+//            BigDecimal tax = request.getTax();
+//
+//            List<OrderItemEntity> orderItems = new ArrayList<>();
+//            List<String> productNames = new ArrayList<>(); // Collect product names
+//
+//            for (OrderItemRequest itemRequest : request.getItems()) {
+//                ProductEntity product = productRepository.findById(itemRequest.getProductId())
+//                        .orElseThrow(() -> new RuntimeException("Product not found with id: " + itemRequest.getProductId()));
+//
+//                if (itemRequest.getProductQuantity() > product.getProductQuantity()) {
+//                    logger.warn("Insufficient stock for product {}: requested={}, available={}",
+//                            product.getProductTitle(), itemRequest.getProductQuantity(), product.getProductQuantity());
+//                    return new OrderResponse("insufficient_stock",
+//                            "Product '" + product.getProductTitle() + "' only has " + product.getProductQuantity() +
+//                                    " items in stock (requested: " + itemRequest.getProductQuantity() + ")",
+//                            product.getProductId());
+//                }
+//
+//                OrderItemEntity orderItem = new OrderItemEntity();
+//                orderItem.setOrder(order);
+//                orderItem.setProduct(product);
+//                orderItem.setQuantity(itemRequest.getProductQuantity());
+//                orderItem.setProductPrice(product.getProductPrice());
+//                orderItem.setItemName(product.getProductTitle());
+//                orderItem.setSku(product.getSkuNo());
+//                orderItem.setUnits(itemRequest.getProductQuantity());
+//                orderItem.setSellingPrice(product.getProductPrice());
+//
+//                BigDecimal discount;
+//                try {
+//                    String discountStr = product.getProductDiscount();
+//                    discount = (discountStr != null && !discountStr.isEmpty())
+//                            ? new BigDecimal(discountStr)
+//                            : BigDecimal.ZERO;
+//                } catch (NumberFormatException e) {
+//                    discount = BigDecimal.ZERO;
+//                }
+//                orderItem.setDiscount(discount);
+//
+//                orderItem.setTax(tax);
+//
+//                BigDecimal subtotal = product.getProductPrice().multiply(new BigDecimal(itemRequest.getProductQuantity()));
+//                orderItem.setSubtotal(subtotal);
+//
+//                orderItems.add(orderItem);
+//                productNames.add(product.getProductTitle()); // Add product name to list
+//                totalAmount = totalAmount.add(subtotal);
+//
+//                int newQuantity = product.getProductQuantity() - itemRequest.getProductQuantity();
+//                product.setProductQuantity(newQuantity);
+//                productRepository.save(product);
+//            }
+//
+//            order.setTotalAmount(totalAmount);
+//            order.setOrderItems(orderItems);
+//
+//            OrderEntity savedOrder = orderRepository.save(order);
+//            logger.info("Order saved to database with ID: {}", savedOrder.getOrderId());
+//
+//            String shiprocketOrderId = null;
+//            try {
+//                logger.info("Starting Shiprocket order creation for order ID: {}", savedOrder.getOrderId());
+//                ShiprocketOrderRequest shiprocketRequest = createShiprocketOrderRequest(savedOrder);
+//                shiprocketService.validateOrderRequest(shiprocketRequest);
+//                shiprocketOrderId = shiprocketService.createOrder(shiprocketRequest);
+//                logger.info("Shiprocket order created successfully with ID: {}", shiprocketOrderId);
+//
+//                savedOrder.setShiprocketOrderId(shiprocketOrderId);
+//                orderRepository.save(savedOrder);
+//                logger.info("Updated order ID: {} with Shiprocket order ID: {}", savedOrder.getOrderId(), shiprocketOrderId);
+//
+//                // Send WhatsApp confirmation message after successful Shiprocket order creation
+//                try {
+//                    logger.info("Sending WhatsApp confirmation for order ID: {}", savedOrder.getOrderId());
+//                    String fullName = savedOrder.getCustomerFirstName() + " " +
+//                            (savedOrder.getCustomerLastName() != null ? savedOrder.getCustomerLastName() : "");
+//                    whatsAppService.sendOrderConfirmationMessage(
+//                            savedOrder.getCustomerPhone(),
+//                            fullName.trim(),
+//                            savedOrder.getOrderId().toString(),
+//                            savedOrder.getTotalAmount().toPlainString(),
+//                            productNames, // Pass product names
+//                            "order_confirmation_1"
+//                    );
+//                    logger.info("WhatsApp confirmation sent successfully for order ID: {}", savedOrder.getOrderId());
+//                } catch (Exception e) {
+//                    logger.error("Failed to send WhatsApp confirmation for order ID: {}. Error: {}", savedOrder.getOrderId(), e.getMessage());
+//                }
+//
+//                // Send email confirmation after successful Shiprocket order creation
+//                try {
+//                    logger.info("Sending order confirmation email for order ID: {}", savedOrder.getOrderId());
+//                    String fullName = savedOrder.getCustomerFirstName() + " " +
+//                            (savedOrder.getCustomerLastName() != null ? savedOrder.getCustomerLastName() : "");
+//                    emailService.sendOrderConfirmationEmail(
+//                            savedOrder.getCustomerEmail(),
+//                            fullName.trim(),
+//                            savedOrder.getOrderId().toString(),
+//                            savedOrder.getTotalAmount(),
+//                            productNames,
+//                            savedOrder.getCustomerPhone()  // Add this parameter
+//                    );
+//                    logger.info("Order confirmation email sent successfully for order ID: {}", savedOrder.getOrderId());
+//                } catch (Exception e) {
+//                    logger.error("Failed to send order confirmation email for order ID: {}. Error: {}", savedOrder.getOrderId(), e.getMessage());
+//                    // Don't throw exception here - email failure shouldn't break order creation
+//                }
+//            } catch (Exception e) {
+//                logger.error("Failed to create Shiprocket order for order ID: {}", savedOrder.getOrderId());
+//                logger.error("Shiprocket error details: {}", e.getMessage());
+//                logger.error("Full Shiprocket exception: ", e);
+//                throw new RuntimeException("Failed to create Shiprocket order: " + e.getMessage());
+//            }
+//
+//            logger.info("Order creation completed successfully for order ID: {}", savedOrder.getOrderId());
+//            return new OrderResponse(savedOrder);
+//
+//        } catch (Exception e) {
+//            logger.error("Error creating order for user ID: {}", request.getUserId());
+//            logger.error("Error details: {}", e.getMessage());
+//            logger.error("Full exception: ", e);
+//            throw new RuntimeException("Failed to create order: " + e.getMessage());
+//        }
+//    }
+//
+//    private ShiprocketOrderRequest createShiprocketOrderRequest(OrderEntity order) {
+//        logger.info("Creating Shiprocket order request for order ID: {}", order.getOrderId());
+//        ShiprocketOrderRequest shiprocketRequest = new ShiprocketOrderRequest();
+//
+//        shiprocketRequest.setOrder_id(order.getOrderId().toString());
+//        shiprocketRequest.setOrder_date(order.getOrderDate().toString());
+//        shiprocketRequest.setPickup_location(order.getPickupLocation() != null ? order.getPickupLocation() : "Home");
+//        shiprocketRequest.setChannel_id(order.getChannelId() != null ? order.getChannelId() : "");
+//
+//        shiprocketRequest.setBilling_customer_name(order.getBillingCustomerName());
+//        shiprocketRequest.setBilling_last_name(order.getBillingLastName());
+//        shiprocketRequest.setBilling_address(order.getBillingAddress());
+//        shiprocketRequest.setBilling_city(order.getBillingCity());
+//        shiprocketRequest.setBilling_pincode(order.getBillingPincode());
+//        shiprocketRequest.setBilling_state(order.getBillingState());
+//        shiprocketRequest.setBilling_country(order.getBillingCountry() != null ? order.getBillingCountry() : "India");
+//        shiprocketRequest.setBilling_email(order.getBillingEmail());
+//        shiprocketRequest.setBilling_phone(order.getBillingPhone());
+//
+//        shiprocketRequest.setShipping_is_billing(order.getShippingIsBilling() != null ? order.getShippingIsBilling() : false);
+//        shiprocketRequest.setShipping_customer_name(order.getCustomerFirstName());
+//        shiprocketRequest.setShipping_address(order.getShippingAddress());
+//        shiprocketRequest.setShipping_city(order.getShippingCity());
+//        shiprocketRequest.setShipping_pincode(order.getShippingPincode());
+//        shiprocketRequest.setShipping_state(order.getShippingState());
+//        shiprocketRequest.setShipping_country(order.getShippingCountry() != null ? order.getShippingCountry() : "India");
+//        shiprocketRequest.setShipping_email(order.getCustomerEmail());
+//        shiprocketRequest.setShipping_phone(order.getCustomerPhone());
+//
+//        List<ShiprocketOrderItem> shiprocketItems = new ArrayList<>();
+//        for (OrderItemEntity item : order.getOrderItems()) {
+//            ShiprocketOrderItem shiprocketItem = new ShiprocketOrderItem();
+//            shiprocketItem.setName(item.getItemName());
+//            shiprocketItem.setSku(item.getSku());
+//            shiprocketItem.setUnits(item.getUnits());
+//            shiprocketItem.setSelling_price(item.getSellingPrice());   //selling price
+//            shiprocketItem.setDiscount(item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO);
+//            shiprocketItem.setTax(item.getTax() != null ? item.getTax() : BigDecimal.ZERO);
+//            shiprocketItems.add(shiprocketItem);
+//        }
+//        shiprocketRequest.setOrder_items(shiprocketItems);
+//
+//        shiprocketRequest.setPayment_method(order.getPaymentMethod() != null ? order.getPaymentMethod() : "Prepaid");
+//        shiprocketRequest.setShipping_charges(BigDecimal.ZERO);
+//        shiprocketRequest.setGiftwrap_charges(BigDecimal.ZERO);
+//        shiprocketRequest.setTransaction_charges(BigDecimal.ZERO);
+//        shiprocketRequest.setTotal_discount(BigDecimal.ZERO);
+//        shiprocketRequest.setSub_total(order.getTotalAmount());
+//
+//        shiprocketRequest.setLength((int) 10.0);
+//        shiprocketRequest.setBreadth((int) 10.0);
+//        shiprocketRequest.setHeight((int) 5.0);
+//        shiprocketRequest.setWeight(0.5);
+//
+//        logger.info("Shiprocket order request created successfully for order ID: {}", order.getOrderId());
+//        return shiprocketRequest;
+//    }
 
 
     @Override

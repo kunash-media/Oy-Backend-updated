@@ -1,5 +1,6 @@
 package com.oy.oy_jewels.dto.request;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class CreateOrderRequest {
@@ -29,6 +30,8 @@ public class CreateOrderRequest {
     private Boolean shippingIsBilling = true;
 
     private String couponAppliedCode;
+
+    private BigDecimal tax;
 
     // Constructors
     public CreateOrderRequest() {}
@@ -117,5 +120,13 @@ public class CreateOrderRequest {
 
     public void setCouponAppliedCode(String couponAppliedCode) {
         this.couponAppliedCode = couponAppliedCode;
+    }
+
+    public BigDecimal getTax() {
+        return tax;
+    }
+
+    public void setTax(BigDecimal tax) {
+        this.tax = tax;
     }
 }
