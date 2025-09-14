@@ -1,5 +1,6 @@
 package com.oy.oy_jewels.service.serviceImpl;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.oy.oy_jewels.dto.request.*;
 import com.oy.oy_jewels.dto.response.AllOrderResponseDTO;
 import com.oy.oy_jewels.dto.response.OrderResponse;
@@ -38,6 +39,7 @@ public class OrderServiceImpl implements OrderService {
     private final ExchangeRepository exchangeRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(OrderServiceImpl.class);
+    private final ObjectMapper objectMapper;
 
     private final EmailService emailService;
     private final WhatsAppService whatsAppService;
@@ -46,7 +48,7 @@ public class OrderServiceImpl implements OrderService {
     public OrderServiceImpl(OrderRepository orderRepository, OrderItemRepository orderItemRepository,
                             UserRepository userRepository, ProductRepository productRepository,
                             ShiprocketService shiprocketService, ReturnRepository returnRepository,
-                            ExchangeRepository exchangeRepository, WhatsAppService whatsAppService, EmailService emailService) {
+                            ExchangeRepository exchangeRepository,ObjectMapper objectMapper, WhatsAppService whatsAppService, EmailService emailService) {
         this.orderRepository = orderRepository;
         this.orderItemRepository = orderItemRepository;
         this.userRepository = userRepository;
@@ -54,8 +56,10 @@ public class OrderServiceImpl implements OrderService {
         this.shiprocketService = shiprocketService;
         this.returnRepository = returnRepository;
         this.exchangeRepository = exchangeRepository;
+        this.objectMapper = objectMapper;
         this.whatsAppService = whatsAppService;
         this.emailService = emailService;
+
     }
 
     //---------------------dashboard data api -------------------//
@@ -87,6 +91,7 @@ public class OrderServiceImpl implements OrderService {
         return stats;
     }
 
+
     @Override
     @Transactional
     public OrderResponse createOrder(CreateOrderRequest request) {
@@ -94,8 +99,8 @@ public class OrderServiceImpl implements OrderService {
             logger.info("Starting order creation for user ID: {}", request.getUserId());
 
             // Validate required fields
-            if ((request.getCustomerFirstName() == null && request.getCustomerLastName() == null) &&
-                    (request.getCustomerFirstName() == null || request.getCustomerFirstName().trim().isEmpty()) &&
+            if ((request.getCustomerFirstName() == null && request.getCustomerLastName() == null) ||
+                    (request.getCustomerFirstName() == null || request.getCustomerFirstName().trim().isEmpty()) ||
                     (request.getCustomerLastName() == null || request.getCustomerLastName().trim().isEmpty())) {
                 throw new RuntimeException("Customer name is required");
             }
@@ -143,6 +148,7 @@ public class OrderServiceImpl implements OrderService {
             order.setShippingPincode(request.getShippingPincode());
             order.setShippingCountry(request.getShippingCountry());
             order.setCouponAppliedCode(request.getCouponAppliedCode());
+            order.setDiscountAmount(request.getDiscountAmount());
 
             if (request.getShippingIsBilling() != null && request.getShippingIsBilling()) {
                 order.setBillingCustomerName(request.getCustomerFirstName());
@@ -177,7 +183,7 @@ public class OrderServiceImpl implements OrderService {
 
             BigDecimal productTotal = BigDecimal.ZERO;
             List<OrderItemEntity> orderItems = new ArrayList<>();
-            List<String> productNames = new ArrayList<>(); // Collect product names
+            List<String> productNames = new ArrayList<>();
 
             for (OrderItemRequest itemRequest : request.getItems()) {
                 ProductEntity product = productRepository.findById(itemRequest.getProductId())
@@ -202,25 +208,22 @@ public class OrderServiceImpl implements OrderService {
                 orderItem.setUnits(itemRequest.getProductQuantity());
                 orderItem.setSellingPrice(product.getProductPrice());
 
-                BigDecimal discount;
-                try {
-                    String discountStr = product.getProductDiscount();
-                    discount = (discountStr != null && !discountStr.isEmpty())
-                            ? new BigDecimal(discountStr)
-                            : BigDecimal.ZERO;
-                } catch (NumberFormatException e) {
-                    discount = BigDecimal.ZERO;
-                }
-                orderItem.setDiscount(discount);
+                // Log product discount to identify interference
+                logger.info("Product {} (ID: {}) discount from DB: {}",
+                        product.getProductTitle(), product.getProductId(), product.getProductDiscount());
 
-                // Set tax to zero for now; we'll handle tax at the order level
+                // Explicitly set item-level discount and tax to zero
+                orderItem.setDiscount(request.getDiscountAmount());
                 orderItem.setTax(BigDecimal.ZERO);
 
-                BigDecimal subtotal = product.getProductPrice().multiply(new BigDecimal(itemRequest.getProductQuantity()));
+                // Use raw product price, ignoring product.getProductDiscount()
+                BigDecimal subtotal = product.getProductPrice().multiply(new BigDecimal(itemRequest.getProductQuantity()))
+                        .setScale(2, RoundingMode.HALF_UP);
                 orderItem.setSubtotal(subtotal);
+                logger.info("Item subtotal for product {}: {}", product.getProductTitle(), subtotal);
 
                 orderItems.add(orderItem);
-                productNames.add(product.getProductTitle()); // Add product name to list
+                productNames.add(product.getProductTitle());
                 productTotal = productTotal.add(subtotal);
 
                 int newQuantity = product.getProductQuantity() - itemRequest.getProductQuantity();
@@ -228,26 +231,52 @@ public class OrderServiceImpl implements OrderService {
                 productRepository.save(product);
             }
 
-            // Calculate tax (3%) on product total
+            // Log product total
+            logger.info("Total product amount before discount: {}", productTotal);
+
+            // Apply discount from DTO
+            BigDecimal discountAmount = request.getDiscountAmount() != null ? request.getDiscountAmount() : BigDecimal.ZERO;
+            if (discountAmount.compareTo(productTotal) > 0) {
+                logger.warn("Discount amount {} exceeds product total {}", discountAmount, productTotal);
+                throw new RuntimeException("Discount amount cannot exceed product total");
+            }
+            BigDecimal discountedTotal = productTotal.subtract(discountAmount);
+
+            // Calculate tax (3%) on discounted total
             BigDecimal taxRate = new BigDecimal("0.03");
-            BigDecimal taxAmount = productTotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal taxAmount = discountedTotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
 
-            // Apply convenience fee if product total < ₹499
-            BigDecimal convenienceFee = productTotal.compareTo(new BigDecimal("499")) < 0 ? new BigDecimal("99") : BigDecimal.ZERO;
+            // Calculate convenience fee based on discounted total
+            BigDecimal convenienceFee = discountedTotal.compareTo(new BigDecimal("499")) < 0 ? new BigDecimal("99") : BigDecimal.ZERO;
 
-            // Calculate grand total
-            BigDecimal grandTotal = productTotal.add(taxAmount).add(convenienceFee);
+            // Calculate grand total explicitly
+            BigDecimal grandTotal = discountedTotal
+                    .add(taxAmount)
+                    .add(convenienceFee)
+                    .setScale(2, RoundingMode.HALF_UP);
+
+            // Log detailed calculation breakdown
+            logger.info("=== ORDER CALCULATION BREAKDOWN ===");
+            logger.info("Product total: {}", productTotal);
+            logger.info("Discount amount: {}", discountAmount);
+            logger.info("Discounted total: {}", discountedTotal);
+            logger.info("Tax amount (3%): {}", taxAmount);
+            logger.info("Convenience fee: {}", convenienceFee);
+            logger.info("Final grand total: {}", grandTotal);
+            logger.info("===================================");
 
             order.setTotalAmount(grandTotal);
             order.setOrderItems(orderItems);
 
             OrderEntity savedOrder = orderRepository.save(order);
-            logger.info("Order saved to database with ID: {}", savedOrder.getOrderId());
+            logger.info("Order saved to database with ID: {}, Total: {}", savedOrder.getOrderId(), savedOrder.getTotalAmount());
 
             String shiprocketOrderId = null;
             try {
                 logger.info("Starting Shiprocket order creation for order ID: {}", savedOrder.getOrderId());
-                ShiprocketOrderRequest shiprocketRequest = createShiprocketOrderRequest(savedOrder);
+                ShiprocketOrderRequest shiprocketRequest = createShiprocketOrderRequest(savedOrder, discountAmount);
+                String requestJson = objectMapper.writeValueAsString(shiprocketRequest);
+                logger.info("Shiprocket order request payload: {}", requestJson);
                 shiprocketService.validateOrderRequest(shiprocketRequest);
                 shiprocketOrderId = shiprocketService.createOrder(shiprocketRequest);
                 logger.info("Shiprocket order created successfully with ID: {}", shiprocketOrderId);
@@ -256,7 +285,7 @@ public class OrderServiceImpl implements OrderService {
                 orderRepository.save(savedOrder);
                 logger.info("Updated order ID: {} with Shiprocket order ID: {}", savedOrder.getOrderId(), shiprocketOrderId);
 
-                // Send WhatsApp confirmation message after successful Shiprocket order creation
+                // Send WhatsApp confirmation message
                 try {
                     logger.info("Sending WhatsApp confirmation for order ID: {}", savedOrder.getOrderId());
                     String fullName = savedOrder.getCustomerFirstName() + " " +
@@ -266,7 +295,7 @@ public class OrderServiceImpl implements OrderService {
                             fullName.trim(),
                             savedOrder.getOrderId().toString(),
                             savedOrder.getTotalAmount().toPlainString(),
-                            productNames, // Pass product names
+                            productNames,
                             "order_confirmation_1"
                     );
                     logger.info("WhatsApp confirmation sent successfully for order ID: {}", savedOrder.getOrderId());
@@ -274,7 +303,7 @@ public class OrderServiceImpl implements OrderService {
                     logger.error("Failed to send WhatsApp confirmation for order ID: {}. Error: {}", savedOrder.getOrderId(), e.getMessage());
                 }
 
-                // Send email confirmation after successful Shiprocket order creation
+                // Send email confirmation
                 try {
                     logger.info("Sending order confirmation email for order ID: {}", savedOrder.getOrderId());
                     String fullName = savedOrder.getCustomerFirstName() + " " +
@@ -290,7 +319,6 @@ public class OrderServiceImpl implements OrderService {
                     logger.info("Order confirmation email sent successfully for order ID: {}", savedOrder.getOrderId());
                 } catch (Exception e) {
                     logger.error("Failed to send order confirmation email for order ID: {}. Error: {}", savedOrder.getOrderId(), e.getMessage());
-                    // Don't throw exception here - email failure shouldn't break order creation
                 }
             } catch (Exception e) {
                 logger.error("Failed to create Shiprocket order for order ID: {}", savedOrder.getOrderId());
@@ -310,7 +338,7 @@ public class OrderServiceImpl implements OrderService {
         }
     }
 
-    private ShiprocketOrderRequest createShiprocketOrderRequest(OrderEntity order) {
+    private ShiprocketOrderRequest createShiprocketOrderRequest(OrderEntity order, BigDecimal discountAmount) {
         logger.info("Creating Shiprocket order request for order ID: {}", order.getOrderId());
         ShiprocketOrderRequest shiprocketRequest = new ShiprocketOrderRequest();
 
@@ -339,25 +367,55 @@ public class OrderServiceImpl implements OrderService {
         shiprocketRequest.setShipping_email(order.getCustomerEmail());
         shiprocketRequest.setShipping_phone(order.getCustomerPhone());
 
+        // Calculate raw product total for Shiprocket
+        BigDecimal rawProductTotal = BigDecimal.ZERO;
         List<ShiprocketOrderItem> shiprocketItems = new ArrayList<>();
+
         for (OrderItemEntity item : order.getOrderItems()) {
             ShiprocketOrderItem shiprocketItem = new ShiprocketOrderItem();
             shiprocketItem.setName(item.getItemName());
             shiprocketItem.setSku(item.getSku());
             shiprocketItem.setUnits(item.getUnits());
-            shiprocketItem.setSelling_price(item.getProductPrice()); // Use original product price (₹300)
-            shiprocketItem.setDiscount(item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO);
-            shiprocketItem.setTax(BigDecimal.ZERO); // Tax is included in sub_total
+            shiprocketItem.setSelling_price(item.getProductPrice());
+            shiprocketItem.setDiscount(BigDecimal.ZERO); // Item-level discount is zero
+            shiprocketItem.setTax(BigDecimal.ZERO); // Tax handled separately
             shiprocketItems.add(shiprocketItem);
+
+            // Calculate raw product total (price × quantity)
+            BigDecimal itemTotal = item.getProductPrice().multiply(new BigDecimal(item.getUnits()));
+            rawProductTotal = rawProductTotal.add(itemTotal);
+
+            logger.info("Shiprocket item: {} - Price: {}, Units: {}, Item Total: {}",
+                    item.getItemName(), item.getProductPrice(), item.getUnits(), itemTotal);
         }
         shiprocketRequest.setOrder_items(shiprocketItems);
 
         shiprocketRequest.setPayment_method(order.getPaymentMethod() != null ? order.getPaymentMethod() : "Prepaid");
         shiprocketRequest.setShipping_charges(BigDecimal.ZERO);
         shiprocketRequest.setGiftwrap_charges(BigDecimal.ZERO);
-        shiprocketRequest.setTransaction_charges(BigDecimal.ZERO); // Set to zero to avoid double-counting
+        shiprocketRequest.setTransaction_charges(BigDecimal.ZERO);
+
+        // OPTION 1: Send final amount with no discount (recommended)
         shiprocketRequest.setTotal_discount(BigDecimal.ZERO);
-        shiprocketRequest.setSub_total(order.getTotalAmount()); // Includes product total + tax + convenience fee (₹408)
+        shiprocketRequest.setSub_total(order.getTotalAmount().setScale(2, RoundingMode.HALF_UP));
+
+    /* OPTION 2: Send raw total with discount (alternative approach)
+    shiprocketRequest.setTotal_discount(discountAmount != null ? discountAmount : BigDecimal.ZERO);
+    // Calculate what Shiprocket expects: final amount + discount = raw amount before Shiprocket applies discount
+    BigDecimal shiprocketSubTotal = order.getTotalAmount().add(discountAmount != null ? discountAmount : BigDecimal.ZERO);
+    shiprocketRequest.setSub_total(shiprocketSubTotal.setScale(2, RoundingMode.HALF_UP));
+    */
+
+        // Log Shiprocket calculation details
+        logger.info("=== SHIPROCKET ORDER DETAILS ===");
+        logger.info("Order ID: {}", order.getOrderId());
+        logger.info("Raw product total: {}", rawProductTotal);
+        logger.info("Our calculated grand total: {}", order.getTotalAmount());
+        logger.info("Sending to Shiprocket - Sub total: {}", shiprocketRequest.getSub_total());
+        logger.info("Sending to Shiprocket - Total discount: {}", shiprocketRequest.getTotal_discount());
+        logger.info("Expected Shiprocket display: {}", shiprocketRequest.getSub_total().subtract(shiprocketRequest.getTotal_discount()));
+        logger.info("Payment method: {}", shiprocketRequest.getPayment_method());
+        logger.info("===============================");
 
         shiprocketRequest.setLength((int) 10.0);
         shiprocketRequest.setBreadth((int) 10.0);
@@ -367,6 +425,7 @@ public class OrderServiceImpl implements OrderService {
         logger.info("Shiprocket order request created successfully for order ID: {}", order.getOrderId());
         return shiprocketRequest;
     }
+
 
 //    @Override
 //    @Transactional
@@ -456,9 +515,7 @@ public class OrderServiceImpl implements OrderService {
 //            order.setPickupLocation("Home");
 //            order.setChannelId("");
 //
-//            BigDecimal totalAmount = BigDecimal.ZERO;
-//            BigDecimal tax = request.getTax();
-//
+//            BigDecimal productTotal = BigDecimal.ZERO;
 //            List<OrderItemEntity> orderItems = new ArrayList<>();
 //            List<String> productNames = new ArrayList<>(); // Collect product names
 //
@@ -496,21 +553,32 @@ public class OrderServiceImpl implements OrderService {
 //                }
 //                orderItem.setDiscount(discount);
 //
-//                orderItem.setTax(tax);
+//                // Set tax to zero for now; we'll handle tax at the order level
+//                orderItem.setTax(BigDecimal.ZERO);
 //
 //                BigDecimal subtotal = product.getProductPrice().multiply(new BigDecimal(itemRequest.getProductQuantity()));
 //                orderItem.setSubtotal(subtotal);
 //
 //                orderItems.add(orderItem);
 //                productNames.add(product.getProductTitle()); // Add product name to list
-//                totalAmount = totalAmount.add(subtotal);
+//                productTotal = productTotal.add(subtotal);
 //
 //                int newQuantity = product.getProductQuantity() - itemRequest.getProductQuantity();
 //                product.setProductQuantity(newQuantity);
 //                productRepository.save(product);
 //            }
 //
-//            order.setTotalAmount(totalAmount);
+//            // Calculate tax (3%) on product total
+//            BigDecimal taxRate = new BigDecimal("0.03");
+//            BigDecimal taxAmount = productTotal.multiply(taxRate).setScale(2, RoundingMode.HALF_UP);
+//
+//            // Apply convenience fee if product total < ₹499
+//            BigDecimal convenienceFee = productTotal.compareTo(new BigDecimal("499")) < 0 ? new BigDecimal("99") : BigDecimal.ZERO;
+//
+//            // Calculate grand total
+//            BigDecimal grandTotal = productTotal.add(taxAmount).add(convenienceFee);
+//
+//            order.setTotalAmount(grandTotal);
 //            order.setOrderItems(orderItems);
 //
 //            OrderEntity savedOrder = orderRepository.save(order);
@@ -557,7 +625,7 @@ public class OrderServiceImpl implements OrderService {
 //                            savedOrder.getOrderId().toString(),
 //                            savedOrder.getTotalAmount(),
 //                            productNames,
-//                            savedOrder.getCustomerPhone()  // Add this parameter
+//                            savedOrder.getCustomerPhone()
 //                    );
 //                    logger.info("Order confirmation email sent successfully for order ID: {}", savedOrder.getOrderId());
 //                } catch (Exception e) {
@@ -581,7 +649,7 @@ public class OrderServiceImpl implements OrderService {
 //            throw new RuntimeException("Failed to create order: " + e.getMessage());
 //        }
 //    }
-//
+
 //    private ShiprocketOrderRequest createShiprocketOrderRequest(OrderEntity order) {
 //        logger.info("Creating Shiprocket order request for order ID: {}", order.getOrderId());
 //        ShiprocketOrderRequest shiprocketRequest = new ShiprocketOrderRequest();
@@ -617,9 +685,9 @@ public class OrderServiceImpl implements OrderService {
 //            shiprocketItem.setName(item.getItemName());
 //            shiprocketItem.setSku(item.getSku());
 //            shiprocketItem.setUnits(item.getUnits());
-//            shiprocketItem.setSelling_price(item.getSellingPrice());   //selling price
+//            shiprocketItem.setSelling_price(item.getProductPrice()); // Use original product price (₹300)
 //            shiprocketItem.setDiscount(item.getDiscount() != null ? item.getDiscount() : BigDecimal.ZERO);
-//            shiprocketItem.setTax(item.getTax() != null ? item.getTax() : BigDecimal.ZERO);
+//            shiprocketItem.setTax(BigDecimal.ZERO); // Tax is included in sub_total
 //            shiprocketItems.add(shiprocketItem);
 //        }
 //        shiprocketRequest.setOrder_items(shiprocketItems);
@@ -627,9 +695,9 @@ public class OrderServiceImpl implements OrderService {
 //        shiprocketRequest.setPayment_method(order.getPaymentMethod() != null ? order.getPaymentMethod() : "Prepaid");
 //        shiprocketRequest.setShipping_charges(BigDecimal.ZERO);
 //        shiprocketRequest.setGiftwrap_charges(BigDecimal.ZERO);
-//        shiprocketRequest.setTransaction_charges(BigDecimal.ZERO);
+//        shiprocketRequest.setTransaction_charges(BigDecimal.ZERO); // Set to zero to avoid double-counting
 //        shiprocketRequest.setTotal_discount(BigDecimal.ZERO);
-//        shiprocketRequest.setSub_total(order.getTotalAmount());
+//        shiprocketRequest.setSub_total(order.getTotalAmount()); // Includes product total + tax + convenience fee (₹408)
 //
 //        shiprocketRequest.setLength((int) 10.0);
 //        shiprocketRequest.setBreadth((int) 10.0);
@@ -652,6 +720,7 @@ public class OrderServiceImpl implements OrderService {
         dto.setSuccess(true);
         dto.setOrderId(order.getOrderId());
         dto.setTotal(order.getTotalAmount());
+        dto.setDiscountAmount(order.getDiscountAmount());
         dto.setStatus(order.getOrderStatus());
         dto.setShiprocketOrderId(order.getShiprocketOrderId());
         dto.setOrderDate(order.getOrderDate());

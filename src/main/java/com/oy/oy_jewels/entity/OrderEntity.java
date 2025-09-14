@@ -68,7 +68,7 @@ public class OrderEntity {
     private LocalDate deliveryDate;
 
     // Shiprocket specific fields
-    @Column(name = "shiprocket_order_id")
+    @Column(name = "shiprocket_orProductOldPriceder_id")
     private String shiprocketOrderId;
 
     @Column(name = "shiprocket_shipment_id")
@@ -148,6 +148,9 @@ public class OrderEntity {
     @Column(name = "package_weight")
     private Integer packageWeight;
 
+    @Column(name = "discount_amount")
+    private BigDecimal discountAmount;
+
     // One order can have many order items
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItemEntity> orderItems = new ArrayList<>();
@@ -168,7 +171,7 @@ public class OrderEntity {
                        String billingPhone, Boolean shippingIsBilling, String shippingLastName,
                        String shippingAddress2, String shippingEmail, String shippingPhone,
                        String pickupLocation, String channelId, Integer packageLength,
-                       Integer packageBreadth, Integer packageHeight, Integer packageWeight,
+                       Integer packageBreadth, Integer packageHeight, Integer packageWeight, BigDecimal discountAmount,
                        List<OrderItemEntity> orderItems) {
         this.orderId = orderId;
         this.couponAppliedCode = couponAppliedCode;
@@ -213,6 +216,7 @@ public class OrderEntity {
         this.packageBreadth = packageBreadth;
         this.packageHeight = packageHeight;
         this.packageWeight = packageWeight;
+        this.discountAmount = discountAmount;
         this.orderItems = orderItems;
     }
 
@@ -347,6 +351,9 @@ public class OrderEntity {
 
     public Integer getPackageWeight() { return packageWeight; }
     public void setPackageWeight(Integer packageWeight) { this.packageWeight = packageWeight; }
+
+    public BigDecimal getDiscountAmount() {return discountAmount;}
+    public void setDiscountAmount(BigDecimal discountAmount) { this.discountAmount = discountAmount;}
 
     public List<OrderItemEntity> getOrderItems() { return orderItems; }
     public void setOrderItems(List<OrderItemEntity> orderItems) { this.orderItems = orderItems; }

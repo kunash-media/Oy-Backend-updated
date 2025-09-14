@@ -32,6 +32,7 @@ public class CreateOrderRequest {
     private String couponAppliedCode;
 
     private BigDecimal tax;
+    private BigDecimal discountAmount; // New field for discount
 
     // Constructors
     public CreateOrderRequest() {}
@@ -128,5 +129,13 @@ public class CreateOrderRequest {
 
     public void setTax(BigDecimal tax) {
         this.tax = tax;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
     }
 }

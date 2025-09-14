@@ -12,6 +12,7 @@ public class OrderResponse {
     private boolean success;
     private Long orderId;
     private BigDecimal total;
+    private BigDecimal discountAmount;
     private String status;
     private String shiprocketOrderId;
 
@@ -31,6 +32,7 @@ public class OrderResponse {
         this.success = true;
         this.orderId = order.getOrderId();
         this.total = order.getTotalAmount();
+        this.discountAmount = order.getDiscountAmount();
         this.status = order.getOrderStatus();
         this.shiprocketOrderId = order.getShiprocketOrderId();
         this.orderDate = order.getOrderDate();
@@ -61,6 +63,9 @@ public class OrderResponse {
 
     public BigDecimal getTotal() { return total; }
     public void setTotal(BigDecimal total) { this.total = total; }
+
+    public BigDecimal getDiscountAmount() {return discountAmount;}
+    public void setDiscountAmount(BigDecimal discountAmount) {this.discountAmount = discountAmount;}
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

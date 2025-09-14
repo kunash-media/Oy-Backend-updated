@@ -8,6 +8,7 @@ public class AllOrderResponseDTO {
     private boolean success;
     private Long orderId;
     private BigDecimal total;
+    private BigDecimal discountAmount;
     private String status;
     private String shiprocketOrderId;
     private LocalDate orderDate;
@@ -99,6 +100,14 @@ public class AllOrderResponseDTO {
 
     public void setTotal(BigDecimal total) {
         this.total = total;
+    }
+
+    public BigDecimal getDiscountAmount() {
+        return discountAmount;
+    }
+
+    public void setDiscountAmount(BigDecimal discountAmount) {
+        this.discountAmount = discountAmount;
     }
 
     public String getStatus() {
